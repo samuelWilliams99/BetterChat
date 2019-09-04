@@ -1,0 +1,11 @@
+{
+	"title"		:	"BetterChat",
+	"type"		:	"tool",
+	"tags"		:	[ "roleplay", "build" ],
+	"ignore"	:
+	[
+		"*.psd",
+		"*.vcproj",
+		"*.svn*"
+	]
+}

@@ -1,0 +1,6 @@
+hook.Add( "BC_plyReady", "BC_SendCommandsInit", function(ply)
+	local tab = chatBox.getRunnableULXCommands(ply)
+	net.Start("BC_sendULXCommands")
+	net.WriteString(util.TableToJSON(tab))
+	net.Send(ply)
+end)

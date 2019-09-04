@@ -1,0 +1,62 @@
+{
+	"spriteWidth": 54,
+	"spriteHeight": 54,
+	"sprites": [
+		{
+			"posX": 0,
+			"posY": 0,
+			"name": "gmod",
+			"chatStrings": [
+
+			]
+		},
+		{
+			"posX": 1,
+			"posY": 0,
+			"name": "melon",
+			"chatStrings": [
+
+			]
+		},
+		{
+			"posX": 2,
+			"posY": 0,
+			"name": "box",
+			"chatStrings": [
+
+			]
+		},
+		{
+			"posX": 3,
+			"posY": 0,
+			"name": "balloon",
+			"chatStrings": [
+
+			]
+		},
+		{
+			"posX": 0,
+			"posY": 1,
+			"name": "physgun",
+			"chatStrings": [
+
+			]
+		},
+		{
+			"posX": 1,
+			"posY": 1,
+			"name": "facepunch",
+			"chatStrings": [
+
+			]
+		},
+		{
+			"posX": 2,
+			"posY": 1,
+			"name": "missing",
+			"chatStrings": [
+
+			]
+		}
+	]
+}
