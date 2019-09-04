@@ -1,6 +1,8 @@
 # BetterChat
 A Better ChatBox that introduces channels, emotes, and many other features!
-NOTE: This chat requires ULX (this will soon be changed though)
+## NOTES: 
+- This chat requires ULX (this will soon be changed though)
+- My name is nowhere in this project, so my "credit" is given by a special join message. If you do not like this feature, it can be removed at lua/betterchat/sh_base.lua, at line 100
 
 ## Feature list:
 - Channels
