@@ -1,10 +1,22 @@
 
+function chatBox.allowedPrivate(ply)
+	if ply:IsAdmin() then
+		return chatBox.getServerSetting("allowPMAdmin")
+	end
+	return chatBox.getServerSetting("allowPM")
+end
+
+function chatBox.canPrivateMessage(from, to)
+	return chatBox.allowedPrivate(from) and chatBox.allowedPrivate(to)
+end
+
 timer.Create("BC_DelayOverload", 5, 1, function()
 	function ulx.psay( calling_ply, target_ply, message )
 		if calling_ply:GetNWBool( "ulx_muted", false ) then
 			ULib.tsayError( calling_ply, "You are muted, and therefore cannot speak! Use asay for admin chat if urgent.", true )
 			return
 		end
+		if not chatBox.canPrivateMessage(calling_ply, target_ply) then return end
 		local plys = {}
 		if not chatBox.chatBoxEnabled[calling_ply] then
 			table.insert(plys, calling_ply)

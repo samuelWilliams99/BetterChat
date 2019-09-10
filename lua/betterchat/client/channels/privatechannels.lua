@@ -41,43 +41,61 @@ chatBox.defaultPrivateChannel = {
 	hideChatText = true,
 }
 
+function chatBox.allowedPrivate(ply)
+	ply = ply or LocalPlayer()
+	if ply:IsAdmin() then
+		return chatBox.getServerSetting("allowPMAdmin")
+	end
+	return chatBox.getServerSetting("allowPM")
+end
+
+function chatBox.canPrivateMessage(ply)
+	return chatBox.allowedPrivate() and chatBox.allowedPrivate(ply)
+end
+
 function chatBox.printOwnPrivate(name, txt)
+	if not chatBox.allowedPrivate() then return end
 	local tab = table.Add({{isController = true, doSound = false}, LocalPlayer(), chatBox.colors.white, ": "}, chatBox.formatText(txt))
 	chatBox.messageChannel( {name, "MsgC"}, unpack(tab))
 end
 
-hook.Add("BC_PlayerConnect", "BC_PrivateChannelPlayerReload", function(ply)
-	if not chatBox.enabled then return end
-	for k, v in pairs(chatBox.channels) do
-		if v.plySID then
-			v.ply = player.GetBySteamID(v.plySID)
+hook.Add("BC_PreInitPanels", "BC_PrivateAddHooks", function()
+	if not chatBox.allowedPrivate() then return end
+	hook.Add("BC_PlayerConnect", "BC_PrivateChannelPlayerReload", function(ply)
+		if not chatBox.enabled then return end
+		for k, v in pairs(chatBox.channels) do
+			if v.plySID then
+				v.ply = player.GetBySteamID(v.plySID)
+			end
 		end
-	end
+	end)
+
+	net.Receive("BC_PM", function(len)
+		local ply = net.ReadEntity()
+		local sender = net.ReadEntity()
+		local text = net.ReadString()
+
+		local chan = chatBox.getChannel( "Player - " .. ply:SteamID())
+		if not chan or chan.needsData then
+			chan = chatBox.createPrivateChannel( ply )
+		end
+
+		local plySettings = chatBox.playerSettings[ply:SteamID()]
+
+		if not plySettings or plySettings.ignore == 0 then
+			if not chatBox.isChannelOpen(chan) then
+				chatBox.addPrivateChannel(chan)
+			end
+			local tab = table.Add({{isController = true, doSound = (ply == sender) and (ply != LocalPlayer())}, sender, chatBox.colors.white, ": "}, chatBox.formatText(text))
+			chatBox.messageChannel( {chan.name, "MsgC"}, unpack(tab) )
+			chatBox.lastPrivate = chan
+		end
+	end)
 end)
 
-net.Receive("BC_PM", function(len)
-	local ply = net.ReadEntity()
-	local sender = net.ReadEntity()
-	local text = net.ReadString()
-
-	local chan = chatBox.getChannel( "Player - " .. ply:SteamID())
-	if not chan or chan.needsData then
-		chan = chatBox.createPrivateChannel( ply )
-	end
-
-	local plySettings = chatBox.playerSettings[ply:SteamID()]
-
-	if not plySettings or plySettings.ignore == 0 then
-		if not chatBox.isChannelOpen(chan) then
-			chatBox.addPrivateChannel(chan)
-		end
-		local tab = table.Add({{isController = true, doSound = (ply == sender) and (ply != LocalPlayer())}, sender, chatBox.colors.white, ": "}, chatBox.formatText(text))
-		chatBox.messageChannel( {chan.name, "MsgC"}, unpack(tab) )
-		chatBox.lastPrivate = chan
-	end
-end)
 
 function chatBox.createPrivateChannel( ply )
+	if not chatBox.allowedPrivate() then return nil end
 	local name = "Player - " .. ply:SteamID()
 	local channel = chatBox.getChannel(name)
 	if not channel then
@@ -102,6 +120,7 @@ function chatBox.createPrivateChannel( ply )
 end
 
 function chatBox.addPrivateChannel(channel)
+	if not channel then return end
 	chatBox.addChannel(channel)
 	chatBox.messageChannelDirect("All", {isController = true, doSound = false}, chatBox.colors.printBlue, "Private channel with ", channel.ply, " has been opened.")
 	chatBox.messageChannelDirect(channel, {isController = true, doSound = false}, chatBox.colors.printBlue, "This is a private channel with ", channel.ply, ". Any messages posted here will not affect Expression2 or Starfall chips.")

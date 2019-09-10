@@ -3,6 +3,7 @@ include("betterchat/client/channels/mainchannels.lua")
 include("betterchat/client/channels/privatechannels.lua")
 include("betterchat/client/channels/adminchannel.lua")
 include("betterchat/client/channels/groupchannels.lua")
+include("betterchat/client/channels/teamoverload.lua")
 
 chatBox.channelOrder = {"All", "Players", "Team", "Admin"}
 
@@ -168,6 +169,7 @@ function chatBox.getChannel( chanName )
 end
 
 function chatBox.isChannelOpen(channel)
+	if not channel then return false end
 	return table.HasValue(chatBox.openChannels, channel.name)
 end
 
@@ -445,6 +447,7 @@ function chatBox.addChannel(data)
 			if dataType == "Player" then
 				local ply = player.GetBySteamID( dataArg )
 				if not ply then return end
+				if not chatBox.canPrivateMessage(ply) then return end
 
 				channel = chatBox.createPrivateChannel( ply )
 
@@ -464,17 +467,20 @@ function chatBox.addChannel(data)
 				m:AddOption("Copy SteamID", function()
 					SetClipboardText(dataArg)
 				end)
-				m:AddOption("Open Private Channel", function()
-					local ply = player.GetBySteamID( dataArg )
-					if not ply then return end
+				local ply = player.GetBySteamID( dataArg )
+				if ply and chatBox.canPrivateMessage(ply) then
+					m:AddOption("Open Private Channel", function()
+						local ply = player.GetBySteamID( dataArg )
+						if not ply then return end
 
-					channel = chatBox.createPrivateChannel( ply )
+						channel = chatBox.createPrivateChannel( ply )
 
-					if not chatBox.isChannelOpen(channel) then
-						chatBox.addPrivateChannel(channel)
-					end
-					chatBox.focusChannel(channel.name)
-				end)
+						if not chatBox.isChannelOpen(channel) then
+							chatBox.addPrivateChannel(channel)
+						end
+						chatBox.focusChannel(channel.name)
+					end)
+				end
 			end
 		end
 		hook.Run("BC_ChatTextClick", eventType, dataType, dataArg)
@@ -647,17 +653,19 @@ function chatBox.getAndOpenChannel(chanName)
 		local nameType = string.sub(chanName, 1, dashPos-1)
 		local nameArg = string.sub(chanName, dashPos+3)
 
-		if nameType == "Group" then
+		if nameType == "Group" and chatBox.allowedGroups() then
 			local id = tonumber(nameArg)
 			local found = false
 			for k, v in pairs(chatBox.group.groups) do
 				if v.id == id then
 					found = true
-					chatBox.addChannel(chatBox.createGroupChannel(v))
+					local c = chatBox.createGroupChannel(v)
+					if not c then continue end
+					chatBox.addChannel(c)
 				end
 			end
 			if not found then return nil end
-		elseif nameType == "Player" then
+		elseif nameType == "Player" and chatBox.allowedPrivate() then
 			local sId = nameArg
 			local ply = player.GetBySteamID(sId)
 			if not ply then return nil end

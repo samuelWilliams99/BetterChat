@@ -104,6 +104,44 @@ chatBox.globalSettingsTemplate = {
 	}
 }
 
+chatBox.serverSettings = {
+	{
+		name = "Allow Group chats",
+		value = "allowGroups",
+		type = "boolean",
+		extra = "Should players be able to create group chats",
+		default = true
+	},
+	{
+		name = "Allow Admin Group chats",
+		value = "allowGroupsAdmin",
+		type = "boolean",
+		extra = "Should admins be able to create group chats",
+		default = true
+	},
+	{
+		name = "Allow Private chats",
+		value = "allowPM",
+		type = "boolean",
+		extra = "Should players be able to open private chats",
+		default = true
+	},
+	{
+		name = "Allow Admin Private chats",
+		value = "allowPMAdmin",
+		type = "boolean",
+		extra = "Should admins be able to open private chats",
+		default = true
+	},
+	{
+		name = "Replace Team chat",
+		value = "replaceTeam",
+		type = "boolean",
+		extra = "Should BetterChat replace the team channel (This stops other addons like DarkRP overwriting/removing team chat)",
+		default = false
+	}
+}
+
 if CLIENT then
 
 	concommand.Add("bc_disable", function()
@@ -192,15 +230,24 @@ if CLIENT then
 		end )
 	end )
 
-	function chatBox.getSetting(name)
-		local var = GetConVar("bc_" .. name)
-		--for now, all settings are boolean, maybe in the future change this to lookup the setting and get the type
-		if not var then 
-			return false 
-		end
-		return var:GetBool()
-	end
+end
 
+function chatBox.getSetting(name)
+	local var = GetConVar("bc_" .. name)
+	--for now, all settings are boolean, maybe in the future change this to lookup the setting and get the type
+	if not var then 
+		return false 
+	end
+	return var:GetBool()
+end
+
+function chatBox.getServerSetting(name)
+	local var = GetConVar("bc_server_" .. name)
+	--for now, all settings are boolean, maybe in the future change this to lookup the setting and get the type
+	if not var then 
+		return false 
+	end
+	return var:GetBool()
 end
 
 hook.Add("BC_SharedInit", "BC_InitConvars", function()
@@ -211,5 +258,11 @@ hook.Add("BC_SharedInit", "BC_InitConvars", function()
 			if type(def) == "boolean" then def = def and 1 or 0 end
 			CreateConVar("bc_" .. v.value .. "_default", def, FCVAR_REPLICATED+FCVAR_ARCHIVE+FCVAR_PROTECTED)
 		end
+	end
+
+	for k, v in pairs(chatBox.serverSettings) do
+		local def = v.default
+		if type(def) == "boolean" then def = def and 1 or 0 end
+		CreateConVar("bc_server_" .. v.value, def, FCVAR_REPLICATED+FCVAR_ARCHIVE+FCVAR_PROTECTED)
 	end
 end)

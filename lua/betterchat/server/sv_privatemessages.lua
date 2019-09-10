@@ -21,6 +21,17 @@ function sendPrivate(chan, from, to, text)
 	end
 end
 
+function chatBox.allowedPrivate(ply)
+	if ply:IsAdmin() then
+		return chatBox.getServerSetting("allowPMAdmin")
+	end
+	return chatBox.getServerSetting("allowPM")
+end
+
+function chatBox.canPrivateMessage(from, to)
+	return chatBox.allowedPrivate(from) and chatBox.allowedPrivate(to)
+end
+
 hook.Add("PostGamemodeLoaded", "BC_RPOverload", function()
 	if DarkRP then
 		local chatcommands = DarkRP.getChatCommands()
@@ -43,6 +54,7 @@ hook.Add("PostGamemodeLoaded", "BC_RPOverload", function()
 				    end
 
 				    local target = DarkRP.findPlayer(name)
+				    if not chatBox.canPrivateMessage(ply, target) then return "" end
 				    if target == ply then 
 				    	if chatBox.chatBoxEnabled[ply] then
 				    		sendPrivate(ply, ply, ply, msg)
@@ -51,14 +63,6 @@ hook.Add("PostGamemodeLoaded", "BC_RPOverload", function()
 				    end
 
 				    if target then
-				    	-- Normal PM
-				        -- local col = team.GetColor(ply:Team())
-				        -- local pname = ply:Nick()
-				        -- local col2 = Color(255, 255, 255, 255)
-				        -- DarkRP.talkToPerson(target, col, "(PM) " .. pname, col2, msg, ply)
-				        -- DarkRP.talkToPerson(ply, col, "(PM) " .. pname, col2, msg, ply)
-
-				        -- BetterChat PM
 				        sendPrivate(ply, ply, target, msg)
 				        sendPrivate(target, ply, ply, msg)
 				    else

@@ -27,6 +27,9 @@ chatBox.playerSettingsTemplate = {
 				chatBox.addPrivateChannel(channel)
 			end
 			chatBox.focusChannel(channel.name)
+		end,
+		extraCanRun = function(ply)
+			return chatBox.canPrivateMessage(ply)
 		end
 	},
 	{

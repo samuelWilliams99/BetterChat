@@ -47,7 +47,23 @@ chatBox.group.defaultChannel = {
 	hideChatText = true,
 }
 
+function chatBox.allowedGroups()
+	if LocalPlayer():IsAdmin() then
+		return chatBox.getServerSetting("allowGroupsAdmin")
+	end
+	return chatBox.getServerSetting("allowGroups")
+end
+
+function chatBox.removeGroupHooks()
+	hook.Remove("BC_ShowChat", "BC_showGroupButton")
+	hook.Remove("BC_HideChat", "BC_hideGroupButton")
+	hook.Remove("BC_KeyCodeTyped", "BC_GroupMenuShortcut")
+	hook.Remove("PlayerConnect", "BC_ReloadMembersConnect")
+	hook.Remove("BC_PlayerDisconnect", "BC_ReloadMembersDisconnect")
+end
+
 hook.Add("BC_PostInitPanels", "BC_groupAddButton", function() -- add group change check
+	if not chatBox.allowedGroups() then chatBox.removeGroupHooks() return end
 	local g = chatBox.graphics
 	local comboBox = vgui.Create("DComboBox", g.chatFrame)
 	comboBox:SetSortItems(false)
@@ -114,160 +130,163 @@ hook.Add("BC_PostInitPanels", "BC_groupAddButton", function() -- add group chang
 	chatBox.group.changed = true
 
 	g.groupButton = comboBox
-end)
 
-hook.Add("BC_ShowChat", "BC_showGroupButton", function() chatBox.graphics.groupButton:Show() end)
-hook.Add("BC_HideChat", "BC_hideGroupButton", function() 
-	chatBox.graphics.groupButton:Hide() 
-	chatBox.graphics.groupButton:CloseMenu()
-end)
+	hook.Add("BC_ShowChat", "BC_showGroupButton", function() chatBox.graphics.groupButton:Show() end)
+	hook.Add("BC_HideChat", "BC_hideGroupButton", function() 
+		chatBox.graphics.groupButton:Hide() 
+		chatBox.graphics.groupButton:CloseMenu()
+	end)
 
-hook.Add("BC_KeyCodeTyped", "BC_GroupMenuShortcut", function(code, ctrl, shift, entry)
-	if ctrl and code == KEY_G then
-		local b = chatBox.graphics.groupButton
-		if b:IsMenuOpen() then
-			b:CloseMenu()
-		else
-			b:OpenMenu()
-		end
-		return true
-	end
-end)
-
-hook.Add("PlayerConnect", "BC_ReloadMembersConnect", function()
-	for k, v in pairs(chatBox.channels) do
-		if chatBox.isChannelOpen(v) and v.group then
-			chatBox.reloadGroupMemberMenu(v)
-		end
-	end
-end)
-
-hook.Add("BC_PlayerDisconnect", "BC_ReloadMembersDisconnect", function()
-	for k, v in pairs(chatBox.channels) do
-		if chatBox.isChannelOpen(v) and v.group then
-			chatBox.reloadGroupMemberMenu(v)
-		end
-	end
-end)
-
-net.Receive("BC_sendGroups", function(len)
-	chatBox.group.groups = util.JSONToTable(net.ReadString())
-	local ids = {}
-
-	for k, v in ipairs(chatBox.group.groups) do
-		table.insert(ids, v.id)
-	end
-
-	for k, v in pairs(chatBox.channels) do
-		if v.group then
-			if not table.HasValue(ids, v.group.id) then
-				chatBox.deleteGroup(v.group)
+	hook.Add("BC_KeyCodeTyped", "BC_GroupMenuShortcut", function(code, ctrl, shift, entry)
+		if ctrl and code == KEY_G then
+			local b = chatBox.graphics.groupButton
+			if b:IsMenuOpen() then
+				b:CloseMenu()
 			else
-				local index = table.KeyFromValue(ids, v.group.id)
-				local newGroup = chatBox.group.groups[index]
-				v.group = newGroup
-				if chatBox.getSidePanelChild("Group Members", v.name) then
-					chatBox.reloadGroupMemberMenu(v)
-				end
+				b:OpenMenu()
+			end
+			return true
+		end
+	end)
 
-				if table.HasValue(newGroup.admins, LocalPlayer():SteamID()) then
-					v.disabledSettings = {}
+
+	hook.Add("PlayerConnect", "BC_ReloadMembersConnect", function()
+		for k, v in pairs(chatBox.channels) do
+			if chatBox.isChannelOpen(v) and v.group then
+				chatBox.reloadGroupMemberMenu(v)
+			end
+		end
+	end)
+
+	hook.Add("BC_PlayerDisconnect", "BC_ReloadMembersDisconnect", function()
+		for k, v in pairs(chatBox.channels) do
+			if chatBox.isChannelOpen(v) and v.group then
+				chatBox.reloadGroupMemberMenu(v)
+			end
+		end
+	end)
+
+
+	net.Receive("BC_sendGroups", function(len)
+		chatBox.group.groups = util.JSONToTable(net.ReadString())
+		local ids = {}
+
+		for k, v in ipairs(chatBox.group.groups) do
+			table.insert(ids, v.id)
+		end
+
+		for k, v in pairs(chatBox.channels) do
+			if v.group then
+				if not table.HasValue(ids, v.group.id) then
+					chatBox.deleteGroup(v.group)
 				else
-					v.disabledSettings = {"displayName"}
+					local index = table.KeyFromValue(ids, v.group.id)
+					local newGroup = chatBox.group.groups[index]
+					v.group = newGroup
+					if chatBox.getSidePanelChild("Group Members", v.name) then
+						chatBox.reloadGroupMemberMenu(v)
+					end
+
+					if table.HasValue(newGroup.admins, LocalPlayer():SteamID()) then
+						v.disabledSettings = {}
+					else
+						v.disabledSettings = {"displayName"}
+					end
+					chatBox.reloadChannelSettings(v)
+
 				end
-				chatBox.reloadChannelSettings(v)
-
 			end
 		end
-	end
 
-	chatBox.group.changed = true
-end)
+		chatBox.group.changed = true
+	end)
 
-net.Receive("BC_updateGroup", function(len)
-	if not chatBox.enabled then return end
-	local group = util.JSONToTable(net.ReadString())
-	local foundLocal = false
-	for k, v in pairs(chatBox.group.groups) do
-		if v.id == group.id then
-			foundLocal = true
-			if table.HasValue(group.members, LocalPlayer():SteamID()) then
-				chatBox.group.groups[k] = group
-				break
-			else
-				chatBox.deleteGroup(group)
-				chatBox.group.changed = true
-				return
+	net.Receive("BC_updateGroup", function(len)
+		if not chatBox.enabled then return end
+		local group = util.JSONToTable(net.ReadString())
+		local foundLocal = false
+		for k, v in pairs(chatBox.group.groups) do
+			if v.id == group.id then
+				foundLocal = true
+				if table.HasValue(group.members, LocalPlayer():SteamID()) then
+					chatBox.group.groups[k] = group
+					break
+				else
+					chatBox.deleteGroup(group)
+					chatBox.group.changed = true
+					return
+				end
+				
 			end
-			
 		end
-	end
-	if not foundLocal then
-		table.insert(chatBox.group.groups, group)
-	end
-
-	local chan = chatBox.getChannel("Group - " .. group.id)
-	if chan then
-		chan.group = group
-		chan.displayName = group.name
-		chan.dataChanged.displayName = true
-		if chatBox.getSidePanelChild("Group Members", chan.name) then
-			chatBox.reloadGroupMemberMenu(chan)
+		if not foundLocal then
+			table.insert(chatBox.group.groups, group)
 		end
 
-		if chatBox.isChannelOpen(chan) then
-			if table.HasValue(group.admins, LocalPlayer():SteamID()) then
-				chan.disabledSettings = {}
-			else
-				chan.disabledSettings = {"displayName"}
+		local chan = chatBox.getChannel("Group - " .. group.id)
+		if chan then
+			chan.group = group
+			chan.displayName = group.name
+			chan.dataChanged.displayName = true
+			if chatBox.getSidePanelChild("Group Members", chan.name) then
+				chatBox.reloadGroupMemberMenu(chan)
 			end
-			chatBox.reloadChannelSettings(chan)
-		end
-	end
 
-	if group.openNow then
+			if chatBox.isChannelOpen(chan) then
+				if table.HasValue(group.admins, LocalPlayer():SteamID()) then
+					chan.disabledSettings = {}
+				else
+					chan.disabledSettings = {"displayName"}
+				end
+				chatBox.reloadChannelSettings(chan)
+			end
+		end
+
+		if group.openNow then
+			if not chan or chan.needsData then
+				chan = chatBox.createGroupChannel(group)
+			end
+			if not chatBox.isChannelOpen(chan) then
+				chatBox.addChannel(chan)
+			end
+			chatBox.focusChannel(chan)
+		end
+
+		chatBox.group.changed = true
+	end)
+
+	net.Receive("BC_GM", function(len)
+		if not chatBox.enabled then return end
+		local groupId = net.ReadUInt(16)
+		local ply = net.ReadEntity()
+		local text = net.ReadString()
+
+		local chan = chatBox.getChannel("Group - " .. groupId)
 		if not chan or chan.needsData then
-			chan = chatBox.createGroupChannel(group)
+			for k, v in pairs(chatBox.group.groups) do
+				if v.id == groupId then
+					chan = chatBox.createGroupChannel(v)
+					break
+				end
+			end
 		end
+
+		if not chan then return end
+
+		if chan.openOnMessage == false then return end
+
 		if not chatBox.isChannelOpen(chan) then
 			chatBox.addChannel(chan)
 		end
-		chatBox.focusChannel(chan)
-	end
 
-	chatBox.group.changed = true
-end)
-
-net.Receive("BC_GM", function(len)
-	if not chatBox.enabled then return end
-	local groupId = net.ReadUInt(16)
-	local ply = net.ReadEntity()
-	local text = net.ReadString()
-
-	local chan = chatBox.getChannel("Group - " .. groupId)
-	if not chan or chan.needsData then
-		for k, v in pairs(chatBox.group.groups) do
-			if v.id == groupId then
-				chan = chatBox.createGroupChannel(v)
-				break
-			end
-		end
-	end
-
-	if not chan then return end
-
-	if chan.openOnMessage == false then return end
-
-	if not chatBox.isChannelOpen(chan) then
-		chatBox.addChannel(chan)
-	end
-
-	local tab = chatBox.formatMessage(ply, text, not ply:Alive())
-	table.insert(tab, 1, {isController = true, doSound = ply != LocalPlayer()})
-	chatBox.messageChannel( {chan.name, "MsgC"}, unpack(tab) )
+		local tab = chatBox.formatMessage(ply, text, not ply:Alive())
+		table.insert(tab, 1, {isController = true, doSound = ply != LocalPlayer()})
+		chatBox.messageChannel( {chan.name, "MsgC"}, unpack(tab) )
+	end)
 end)
 
 function chatBox.deleteGroup(group)
+	if not chatBox.allowedGroups() then return end
 	for k, v in pairs(chatBox.group.groups) do --table.RemoveByValue wasn't working so delete by id instead
 		if v.id == group.id then 
 			table.remove(chatBox.group.groups, k) 
@@ -285,6 +304,7 @@ function chatBox.deleteGroup(group)
 end
 
 function chatBox.createGroupChannel(group)
+	if not chatBox.allowedGroups() then return nil end
 	local name = "Group - " .. group.id
 	local channel = chatBox.getChannel(name)
 	if not channel then

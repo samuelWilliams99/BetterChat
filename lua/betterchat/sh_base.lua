@@ -10,6 +10,7 @@ if SERVER then
 	include("betterchat/server/sv_sendcommands.lua")
 	include("betterchat/server/sv_sidepanelsinit.lua")
 	include("betterchat/server/sv_groups.lua")
+	include("betterchat/server/sv_teamoverload.lua")
 
 	--addfiles
 	AddCSLuaFile("betterchat/sh_base.lua")
@@ -26,6 +27,7 @@ if SERVER then
 	AddCSLuaFile("betterchat/client/channels/adminchannel.lua")
 	AddCSLuaFile("betterchat/client/channels/privatechannels.lua")
 	AddCSLuaFile("betterchat/client/channels/groupchannels.lua")
+	AddCSLuaFile("betterchat/client/channels/teamoverload.lua")
 
 	AddCSLuaFile("betterchat/client/input/input.lua")
 	AddCSLuaFile("betterchat/client/input/autocomplete.lua")
@@ -64,6 +66,7 @@ if SERVER then
 	util.AddNetworkString( "BC_leaveGroup" )
 	util.AddNetworkString( "BC_deleteGroup" )
 	util.AddNetworkString( "BC_forwardMessage" )
+	util.AddNetworkString( "BC_TM" )
 
 	function chatBox.getEnabledPlayers()
 		local out = {}
@@ -549,8 +552,16 @@ hook.Add( "PlayerBindPress", "chatBox_overrideChatbind", function( ply, bind, pr
 			chan = chatBox.lastPrivate.name
 			chatBox.lastPrivate = nil
 		else
-			if DarkRP then return true end -- Dont open normal team chat, do nothing to allow for bind
-			chan = "Team"
+			if DarkRP then
+				if chatBox.getServerSetting("replaceTeam") then
+					local t = chatBox.teamName(LocalPlayer())
+					chan = "TeamOverload-"..t
+				else
+					return true 
+				end
+			else -- Dont open normal team chat, do nothing to allow for bind
+				chan = "Team"
+			end
 		end
 	else
 		return
