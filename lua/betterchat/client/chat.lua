@@ -232,6 +232,8 @@ function chatBox.ConvertLinks(v)
 		if string.match(preQ, "^[0-9.:]+$") and not string.match(preQ, "^([0-9]+%.[0-9]+%.[0-9]+%.[0-9]+:?[0-9]*)$") then
 			badQ = true
 		else
+			local preQE = string.Explode(".", preQ)
+			for k, v in pairs(preQE) do if #v == 0 then badQ = true end end -- Check nothin like a...a
 			for k2 = 1, #word do
 				if k2 < qPos then
 					if not table.HasValue(preQChars, word[k2]) then

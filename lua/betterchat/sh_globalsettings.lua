@@ -78,13 +78,6 @@ chatBox.globalSettingsTemplate = {
 		extra = "Should messages starting with ! be dimmed",
 		default = true,
 	},
-	{
-		name = "Hide Bug/workshop message",
-		value = "hideBugMessage",
-		type = "boolean",
-		extra = "Stop the \"Found a bug?\" message from periodically showing in chat",
-		default = false,
-	},
 	{	
 		name = "Enable/Restart BetterChat",
 		type = "button",

@@ -51,18 +51,3 @@ hook.Add("BC_PreInitPanels", "BC_InitAddMainChannels", function()
 		})
 	end
 end)
-
-local skipNext = false
-
-timer.Create("BC_BugMessage", 300, 0, function()
-	if not chatBox.getSetting("hideBugMessage") and not skipNext then
-		skipNext = true
-		chatBox.messageChannelDirect("All", chatBox.colors.printBlue, "Found a bug with ",chatBox.colors.yellow,"BetterChat", 
-			chatBox.colors.printBlue,"? Get in touch with ", {formatter=true, type="clickable", signal="Link-https://steamcommunity.com/id/bobdinator/", text="me", color=chatBox.colors.yellow},
-			" or put it in discussions on the ", {formatter=true, type="clickable", signal="Link-https://steamcommunity.com/sharedfiles/filedetails/?id=1841694244", text="workshop page", color=chatBox.colors.yellow},"!")
-	end
-end)
-
-hook.Add("OnPlayerChat", "BC_BugMessageChat", function()
-	skipNext = false
-end)
