@@ -1,5 +1,14 @@
 chatBox.globalSettingsTemplate = {
 	{
+		name = "Chat Fade time",
+		value = "fadeTime",
+		type = "number",
+		extra = "Time for a chat message to fade (0 for never)",
+		default = 10,
+		min = 0,
+		max = 30,
+	},
+	{
 		name = "Team chat opens recent PM",
 		value = "teamOpenPM",
 		type = "boolean",
@@ -177,7 +186,11 @@ if CLIENT then
 				if not ConVarExists(val) then
 					local def
 					if ConVarExists(val .. "_default") then
-						def = GetConVar(val .. "_default"):GetBool()
+						if setting.type == "boolean" then
+							def = GetConVar(val .. "_default"):GetBool()
+						elseif setting.type == "number" then
+							def = GetConVar(val .. "_default"):GetInt()
+						end
 					else
 						def = setting.default
 					end
@@ -222,6 +235,8 @@ if CLIENT then
 							end
 						end
 					end
+				elseif setting.type == "number" then
+					c = panel:NumSlider(setting.name, val, setting.min or 0, setting.max or 100, 0)
 				end
 
 				c:SetTooltip(setting.extra)
@@ -238,7 +253,20 @@ function chatBox.getSetting(name)
 	if not var then 
 		return false 
 	end
-	return var:GetBool()
+
+	local data
+	for k, v in pairs(chatBox.globalSettingsTemplate) do
+		if v.value == name then
+			data = v
+		end
+	end
+	if not data then return false end
+
+	if data.type == "boolean" then
+		return var:GetBool()
+	elseif data.type == "number" then
+		return var:GetInt()
+	end
 end
 
 function chatBox.getServerSetting(name)

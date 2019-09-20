@@ -42,14 +42,24 @@ chatBox.playerSettingsTemplate = {
 		end
 	},
 	{
+		name = "Mute",
+		toggleName = "Unmute",
+		toggle = true,
+		command = "ulx mute",
+		toggleCommand = "ulx unmute",
+		type = "command",
+		value = "isMuted",
+		default = false,
+		addToPlayerContext = true
+	},
+	{
 		name = "Jail",
 		toggle = true,
 		command = "ulx jail",
 		toggleCommand = "ulx unjail",
 		type = "command",
 		value = "jailed",
-		default = false,
-		//extraCanRun = function(ply) return ply != LocalPlayer() end
+		default = false
 	},
 	{
 		name = "God",
@@ -65,7 +75,8 @@ chatBox.playerSettingsTemplate = {
 		name = "Goto",
 		command = "ulx goto",
 		type = "command",
-		extraCanRun = function(ply) return ply != LocalPlayer() end
+		extraCanRun = function(ply) return ply != LocalPlayer() end,
+		addToPlayerContext = true
 	},
 	{
 		name = "Bring",
@@ -131,6 +142,25 @@ chatBox.playerSettingsTemplate = {
 		type = "command",
 	},
 }
+
+hook.Add("BC_PlayerRightClick", "BC_AddPlySettings", function(ply, menu)
+	for k, v in pairs(chatBox.playerSettingsTemplate) do
+		if v.addToPlayerContext and v.type == "button" then
+
+			if not chatBox.canAddPlayerSetting(ply, v) then continue end
+
+			local d = chatBox.playerSettings[ply:SteamID()]
+			if not d then continue end
+			local name = v.name
+			if v.toggle then
+				name = d[v.value] and v.toggleName or v.name
+			end
+			menu:AddOption(name, function()
+				v.onClick(d, v)
+			end)
+		end
+	end
+end)
 
 function chatBox.validatePlayerSettings()
 	for k, v in pairs(chatBox.playerSettingsTemplate) do

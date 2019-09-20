@@ -188,17 +188,23 @@ function chatBox.generatePlayerPanelEntry(ply)
 	local k = 3.7 -- weird number simple used for positioning, not index
 	local settingsAdded = {}
 	for idx, v in pairs(chatBox.playerSettingsTemplate) do
-		if v.command and not chatBox.canRunULX(v.command, ply) then continue end
-		if v.extraCanRun and not v.extraCanRun(ply, v) then continue end
-		if v.parentSetting then
-			if not table.HasValue(settingsAdded, v.parentSetting) then
-				continue
-			end	
-		end
+		if not chatBox.canAddPlayerSetting(ply, v, settingsAdded) then continue end
 		table.insert(settingsAdded, v.name)
 		chatBox.renderSetting(p, data, v, k)
 		k = k + 1
 	end
+end
+
+function chatBox.canAddPlayerSetting(ply, setting, settingsAdded)
+	settingsAdded = settingsAdded or {}
+	if setting.command and not chatBox.canRunULX(setting.command, ply) then return false end
+	if setting.extraCanRun and not setting.extraCanRun(ply, setting) then return false end
+	if setting.parentSetting then
+		if not table.HasValue(settingsAdded, setting.parentSetting) then
+			return false
+		end	
+	end
+	return true
 end
 
 function chatBox.removePlayerPanel(id)

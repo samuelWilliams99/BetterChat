@@ -108,7 +108,7 @@ function chatBox.handleInvites(group)
 			--send invite
 			local ply = player.GetBySteamID(k)
 			if not ply then continue end
-			if not chatBox.allowedGroup(ply) then continue end
+			if not chatBox.allowedGroups(ply) then continue end
 			ULib.clientRPC(ply, "chatBox.messageChannel", "All", 
 				chatBox.colors.printYellow, "You have been invited to group \"", chatBox.colors.group, group.name, 
 				chatBox.colors.printYellow, "\".\n\t", 

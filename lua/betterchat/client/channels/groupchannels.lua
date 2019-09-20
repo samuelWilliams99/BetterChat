@@ -227,6 +227,7 @@ hook.Add("BC_PostInitPanels", "BC_groupAddButton", function() -- add group chang
 		if chan then
 			chan.group = group
 			chan.displayName = group.name
+			chan.dataChanged = chan.dataChanged or {}
 			chan.dataChanged.displayName = true
 			if chatBox.getSidePanelChild("Group Members", chan.name) then
 				chatBox.reloadGroupMemberMenu(chan)

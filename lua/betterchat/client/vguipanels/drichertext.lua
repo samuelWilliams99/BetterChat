@@ -312,8 +312,8 @@ function orderChars(s, e)
 	
 end
 
-function RICHERTEXT:createContextMenu(dontOpen)
-	local m = DermaMenu()
+function RICHERTEXT:createContextMenu(dontOpen, m)
+	m = m or DermaMenu()
 	local mPos = {self:ScreenToCanvas(gui.MousePos())}
 
 	local c = self:getCharacter(mPos[1], mPos[2])
@@ -678,8 +678,12 @@ function RICHERTEXT:MakeClickable(element)
 			end
 		elseif keyCode == MOUSE_RIGHT then
 			if rText.EventHandler then
-				local m = rText:createContextMenu(true)
-				local dontOpen = rText.EventHandler("RightClick", clickVal, m)
+				local m = DermaMenu()
+				local dontOpen = rText.EventHandler("RightClickPreMenu", clickVal, m)
+
+				rText:createContextMenu(true, m)
+
+				dontOpen = dontOpen or rText.EventHandler("RightClick", clickVal, m)
 				if not dontOpen then
 					m:Open()
 				end

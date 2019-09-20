@@ -114,90 +114,92 @@ function chatBox.formatText(text, defaultColor)
 	local madeChange = true
 	local loopCounter = 1
 
-	while madeChange do
-		madeChange = false
-		loopCounter = loopCounter + 1
-		if loopCounter > 30 then
-			MsgC(Color(255,0,0), "[BetterChat] A message with too many images has been prevented from rendering fully to prevent lag")
-			break
-		end
-		local newTab = {}
-		for k, v in pairs(tab) do
-			if type(v) == "string" then
-				local inpStr = v
+	if chatBox.spriteLookup then
+		while madeChange do
+			madeChange = false
+			loopCounter = loopCounter + 1
+			if loopCounter > 30 then
+				MsgC(Color(255,0,0), "[BetterChat] A message with too many images has been prevented from rendering fully to prevent lag")
+				break
+			end
+			local newTab = {}
+			for k, v in pairs(tab) do
+				if type(v) == "string" then
+					local inpStr = v
 
-				local found = true
-				while found do
-					found = false
-					for l = 1, #chatBox.spriteLookup.list do
-						local str = chatBox.spriteLookup.list[l]
+					local found = true
+					while found do
+						found = false
+						for l = 1, #chatBox.spriteLookup.list do
+							local str = chatBox.spriteLookup.list[l]
 
-						local isShort = str[1] != ":" or str[#str] != ":"
+							local isShort = str[1] != ":" or str[#str] != ":"
 
-						local s, e = string.find(inpStr, str, 1, true)
+							local s, e = string.find(inpStr, str, 1, true)
 
-						if s then 
-							-- This section is kind of gross, might wanna try fix it
-							-- accept
-							-- 	:)
-							-- 	test :)
-							--  test :) lol
-							--  \:)
-							--  test \:)
-							--  test \:) lol
-							-- deny
-							--  a\:)
-							--  \:lol
-							-- etc
-							if isShort then
-								if not chatBox.getSetting("convertEmotes") then continue end
-								if s > 1 then
-									if s > 2 then 
-										if inpStr[s-1] != " " then
-											if not (inpStr[s-1] == "\\" and inpStr[s-2] == " ") then continue end
+							if s then 
+								-- This section is kind of gross, might wanna try fix it
+								-- accept
+								-- 	:)
+								-- 	test :)
+								--  test :) lol
+								--  \:)
+								--  test \:)
+								--  test \:) lol
+								-- deny
+								--  a\:)
+								--  \:lol
+								-- etc
+								if isShort then
+									if not chatBox.getSetting("convertEmotes") then continue end
+									if s > 1 then
+										if s > 2 then 
+											if inpStr[s-1] != " " then
+												if not (inpStr[s-1] == "\\" and inpStr[s-2] == " ") then continue end
+											end
+										else
+											if inpStr[s-1] != " " and inpStr[s-1] != "\\" then continue end
 										end
-									else
-										if inpStr[s-1] != " " and inpStr[s-1] != "\\" then continue end
 									end
+
+									//if s > 1 and inpStr[s-1] != " " and inpStr[s-1] != "\\" then continue end -- This could also work? it would accept a\:) -> a:) tho
+
+									if e < #inpStr and inpStr[e+1] != " " then continue end
 								end
+								
+								found = true
 
-								//if s > 1 and inpStr[s-1] != " " and inpStr[s-1] != "\\" then continue end -- This could also work? it would accept a\:) -> a:) tho
-
-								if e < #inpStr and inpStr[e+1] != " " then continue end
+								-- push string start to s
+								-- push image table
+								-- set string to e to end
+								
+								if s > 1 and inpStr[s-1] == "\\" then 
+									table.insert(newTab, string.sub(inpStr, 1, s-2))
+									table.insert(newTab, {formatter=true, type="text", text=string.sub(inpStr, s, e)})
+								else
+									table.insert(newTab, string.sub(inpStr, 1, s-1))
+									local data = chatBox.spriteLookup.lookup[str]
+									table.insert(newTab, {formatter=true, type="image", sheet=data.sheet, idx=data.idx, text=str})
+								end
+								inpStr = string.sub(inpStr, e+1, #inpStr)
+								
+								madeChange = true
+								break
 							end
-							
-							found = true
-
-							-- push string start to s
-							-- push image table
-							-- set string to e to end
-							
-							if s > 1 and inpStr[s-1] == "\\" then 
-								table.insert(newTab, string.sub(inpStr, 1, s-2))
-								table.insert(newTab, {formatter=true, type="text", text=string.sub(inpStr, s, e)})
-							else
-								table.insert(newTab, string.sub(inpStr, 1, s-1))
-								local data = chatBox.spriteLookup.lookup[str]
-								table.insert(newTab, {formatter=true, type="image", sheet=data.sheet, idx=data.idx, text=str})
-							end
-							inpStr = string.sub(inpStr, e+1, #inpStr)
-							
-							madeChange = true
-							break
 						end
+
 					end
 
+					if #inpStr > 0 then
+						table.insert(newTab, inpStr)
+					end
+				else
+					table.insert(newTab, v)
 				end
-
-				if #inpStr > 0 then
-					table.insert(newTab, inpStr)
-				end
-			else
-				table.insert(newTab, v)
 			end
-		end
-		tab = newTab
+			tab = newTab
 
+		end
 	end
 
 	return tab
@@ -223,17 +225,22 @@ function chatBox.ConvertLinks(v)
 			qPos = #word
 		end
 
-		for k2 = 1, #word do
-			if k2 < qPos then
-				if not table.HasValue(preQChars, word[k2]) then
-					badQ = true
-				end
+		local preQ = string.sub(word, 1, qPos)
+		if string.match(preQ, "^[0-9.:]+$") and not string.match(preQ, "^([0-9]+%.[0-9]+%.[0-9]+%.[0-9]+:?[0-9]*)$") then
+			badQ = true
+		else
+			for k2 = 1, #word do
+				if k2 < qPos then
+					if not table.HasValue(preQChars, word[k2]) then
+						badQ = true
+					end
 
-			elseif k2 > qPos then
-				if not table.HasValue(preQChars, word[k2]) and not table.HasValue(postQChars, word[k2]) then
-					badQ = true
-				end
+				elseif k2 > qPos then
+					if not table.HasValue(preQChars, word[k2]) and not table.HasValue(postQChars, word[k2]) then
+						badQ = true
+					end
 
+				end
 			end
 		end
 

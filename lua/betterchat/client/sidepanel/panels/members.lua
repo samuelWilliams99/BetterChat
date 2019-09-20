@@ -147,7 +147,7 @@ function chatBox.generateGroupMemberMenu(panel, group)
 		end
 		local ply = player.GetBySteamID(id)
 		if ply then
-			local chatEnabled = chatBox.playerSettings[id].isChatEnabled
+			local chatEnabled = chatBox.playerSettings[id] and chatBox.playerSettings[id].isChatEnabled or false
 			if not chatEnabled then 
 				setting.nameColor = Color(255,0,0)
 				setting.extra = setting.extra .. ". This person currently has BetterChat disabled"

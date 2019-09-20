@@ -176,20 +176,38 @@ function chatBox.addPlayerSetting(ply)
 	--Require confirm
 	local confirmLabel = vgui.Create( "DLabel", frame)
 	confirmLabel:SetText( "Require Confirm:")
-	confirmLabel:SetPos(10, 251)
+	confirmLabel:SetPos(10, 249)
 	confirmLabel:SetSize(85,20)
 	confirmLabel.Paint = function(self, w, h)
 		local tw, th = self:GetTextSize()
 		draw.DrawText(self:GetText(), self:GetFont(), w - tw, 0, self:GetTextColor())
 		return true
 	end
+	confirmLabel:SetTooltip("Should the button require two clicks to runs")
 
 	local confirm = vgui.Create( "DCheckBox", frame)
 	confirm:SetPos(80 + 15 + 15, 249)
 	confirm:SetValue(0)
 	confirm:SetTooltip("Should the button require two clicks to runs")
 
+	--Add to player context
+	local plyContextLabel = vgui.Create( "DLabel", frame)
+	plyContextLabel:SetText( "Add to Player Context:")
+	plyContextLabel:SetPos(230, 249)
+	plyContextLabel:SetSize(120,20)
+	plyContextLabel.Paint = function(self, w, h)
+		local tw, th = self:GetTextSize()
+		draw.DrawText(self:GetText(), self:GetFont(), w - tw, 0, self:GetTextColor())
+		return true
+	end
+	plyContextLabel:SetTooltip("Should this button show in the player right click menu")
 
+	local plyContext = vgui.Create( "DCheckBox", frame)
+	plyContext:SetPos(sx - 20 - 15, 249)
+	plyContext:SetValue(0)
+	plyContext:SetTooltip("Should this button show in the player right click menu")
+
+	-- Cancel
 	local cancelBtn = vgui.Create( "DButton", frame )
 	cancelBtn:SetText( "Cancel" )
 	cancelBtn:SetSize( 100, 20 )	
@@ -240,6 +258,7 @@ function chatBox.addPlayerSetting(ply)
 			targetType = targType,
 			selected = selected,
 			require_confirm = confirm:GetChecked(),
+			addToPlayerContext = plyContext:GetChecked(),
 			call_ply = ply,
 		})
 		frame:Close()
@@ -268,6 +287,7 @@ function chatBox.createPlayerSetting(data)
 	setting.requireConfirm = data.require_confirm
 
 	setting.customCommand = data.command
+	setting.addToPlayerContext = data.addToPlayerContext
 
 	setting.onClick = function(d, setting)
 		local ply = d.ply

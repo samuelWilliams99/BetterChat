@@ -482,6 +482,11 @@ function chatBox.addChannel(data)
 					end)
 				end
 			end
+		elseif eventType == "RightClickPreMenu" then
+			if dataType == "Player" then
+				local ply = player.GetBySteamID( dataArg )
+				hook.Run("BC_PlayerRightClick", ply, m)
+			end
 		end
 		hook.Run("BC_ChatTextClick", eventType, dataType, dataArg)
 	end
@@ -497,12 +502,16 @@ function chatBox.addChannel(data)
 			else
 				local col = self:GetTextColor()
 				local dt = CurTime() - self.timeCreated
-				if dt > 12 then 
+				local fadeTime = chatBox.getSetting("fadeTime")
+				if fadeTime == 0 then 
+					col.a = 255
+				elseif dt > fadeTime + 1 then
 					col.a = 0
 				else
-					dt = math.Max(dt - 10, 0)
+					dt = math.Max(dt - fadeTime, 0)
 					col.a = math.Max(255 - dt*255, 0)
 				end
+				
 				self:SetTextColor(col)
 			end
 		end
