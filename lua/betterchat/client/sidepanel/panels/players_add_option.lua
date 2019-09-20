@@ -346,6 +346,9 @@ function chatBox.createPlayerSetting(data)
 			end
 			chatBox.saveData()
 		end)
+		m:AddOption(setting.addToPlayerContext and "Remove from Player Context" or "Add to Player Context", function()
+			setting.addToPlayerContext = not setting.addToPlayerContext
+		end)
 		m:Open()
 	end
 

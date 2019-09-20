@@ -203,6 +203,10 @@ function chatBox.addEmotesToPanel(panel, data, usage)
 				local cPos = entry:GetCaretPos()
 
 				local newTxt = string.sub(txt, 0, cPos) .. self.str .. string.sub(txt, cPos+1)
+				if #newTxt > entry.maxCharacters then
+					surface.PlaySound("resource/warning.wav")
+					return
+				end
 				local newCPos = cPos + #self.str
 
 				entry:SetText(newTxt)

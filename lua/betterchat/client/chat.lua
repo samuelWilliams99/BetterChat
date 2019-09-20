@@ -1,6 +1,9 @@
 chatBox.linkColour = Color(180,200,255)
 
 function chatBox.formatMessage(ply, text, dead, defaultColor, dontRecolorColon, data)
+
+	local text = table.concat(string.Explode("\t[\t]+", text, true), "\t")
+
 	local tab = {}
 	defaultColor = defaultColor or Color(255,255,255,255)
 	data = data or {ply, text, false, dead}

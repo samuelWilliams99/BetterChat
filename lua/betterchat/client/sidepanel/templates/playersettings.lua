@@ -209,7 +209,15 @@ function chatBox.validatePlayerSettings()
 
 				RunConsoleCommand(unpack(cmdCopy))
 			end
-		
+		end
+		if v.type == "button" then
+			v.onRightClick = function(ply, setting)
+				local m = DermaMenu()
+				m:AddOption(setting.addToPlayerContext and "Remove from Player Context" or "Add to Player Context", function()
+					setting.addToPlayerContext = not setting.addToPlayerContext
+				end)
+				m:Open()
+			end
 		end
 	end
 end
