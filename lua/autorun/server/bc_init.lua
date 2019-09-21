@@ -5,6 +5,8 @@ resource.AddSingleFile("materials/icons/menu.png")
 resource.AddSingleFile("materials/icons/triple_arrows.png")
 resource.AddSingleFile("materials/icons/groupbw.png")
 resource.AddSingleFile("materials/icons/emojibutton.png")
+resource.AddFile("resource/fonts/lucidaconsole.ttf")
+resource.AddFile("resource/fonts/verdana.ttf")
 
 local files, _ = file.Find( "materials/spritesheets/*.vmt", "GAME" )
 for k, v in pairs(files) do
