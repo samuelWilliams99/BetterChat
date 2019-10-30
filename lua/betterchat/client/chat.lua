@@ -288,15 +288,14 @@ function chatBox.defaultFormatMessage(ply, text, teamChat, dead, col1, col2, dat
 			table.insert(tab, Color(0,170,0) )
 			table.insert(tab, "(TEAM) " )
 		end
-
-		if type(ply) == "Player" then
-			if not ply:IsValid() then
-				table.insert(tab, chatBox.colors.printBlue)
-				table.insert(tab, "Console")
-			else
-				table.insert(tab, GAMEMODE:GetTeamColor(ply))
-				table.insert(tab, ply)
-			end
+		
+		if type(ply) == "Player" and ply:IsValid() then
+			table.insert(tab, GAMEMODE:GetTeamColor(ply))
+			table.insert(tab, ply)
+			table.insert(tab, Color(255,255,255))
+		elseif type(ply) == "Entity" and not ply:IsValid() then
+			table.insert(tab, chatBox.colors.printBlue)
+			table.insert(tab, "Console")
 			table.insert(tab, Color(255,255,255))
 		else
 			table.insert(tab, col1)
