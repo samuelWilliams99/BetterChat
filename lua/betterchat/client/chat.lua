@@ -312,13 +312,14 @@ end
 hook.Add("OnPlayerChat", "BC_PlayerChat", function(...) -- pre, col1 and col2 are supplied by DarkRP
 	if (not chatBox.enabled) then return end
 	ply, text, teamChat, dead, pre, col1, col2 = ...
-	if chatBox.playerSettings[ply:SteamID()] and chatBox.playerSettings[ply:SteamID()].ignore != 0 then return true end
+	local plyValid = ply and ply:IsValid()
+	if plyValid and chatBox.playerSettings[ply:SteamID()] and chatBox.playerSettings[ply:SteamID()].ignore != 0 then return true end
 	
 	local tab
 	if pre then
 		tab = chatBox.formatMessage(ply, text, false, col2, true, {...})
 		tab[2] = {formatter = true, type = "escape"}
-		tab[3] = {formatter=true, type="clickable", signal="Player-"..ply:SteamID(), text=pre, color=col1}
+		tab[3] = {formatter=true, type=( plyValid and "clickable" or "text" ), signal="Player-"..(plyValid and ply:SteamID() or ""), text=pre, color=col1}
 	else
 		tab = chatBox.formatMessage(ply, text, dead)
 	end
