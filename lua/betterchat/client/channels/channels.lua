@@ -68,7 +68,7 @@ function updateRPListener()
 		elseif chan.plySID then
 			return chan.plySID == ply:SteamID()
 		elseif chan.name == "Admin" then
-			return FAdmin.Access.PlayerHasPrivilege(LocalPlayer(), "SeeAdmins") and (ply:IsAdmin() or FAdmin.Access.PlayerHasPrivilege(ply, "AdminChat"))
+			return ply:IsAdmin() or (FAdmin and FAdmin.Access.PlayerHasPrivilege(ply, "AdminChat"))
 		else
 			return false
 		end

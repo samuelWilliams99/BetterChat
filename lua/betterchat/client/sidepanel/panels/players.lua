@@ -23,7 +23,7 @@ net.Receive("BC_UserRankChange", function()
 	chatBox.closeChatBox()
 	chatBox.removeAllPlayerPanels()
 
-	local canUseAdminChat = LocalPlayer():IsAdmin() and FAdmin.Access.PlayerHasPrivilege(LocalPlayer(), "AdminChat")
+	local canUseAdminChat = LocalPlayer():IsAdmin() or (FAdmin and FAdmin.Access.PlayerHasPrivilege(LocalPlayer(), "AdminChat"))
 	local adminChannel = chatBox.getChannel("Admin")
 	if canUseAdminChat and not adminChannel then
 		chatBox.addAdminChannel()
@@ -119,10 +119,10 @@ function chatBox.generatePlayerPanelEntry(ply)
 		end
 	end
 
-	nameLabel.OnMousePressed = function(self, keyCode) 
+	nameLabel.id = ply:SteamID()
+	nameLabel.OnMousePressed = function(self, keyCode)
 		if keyCode == MOUSE_RIGHT then
-			local _, ply = self:GetSelected()
-			SetClipboardText(ply:SteamID())
+			SetClipboardText(self.id)
 		elseif keyCode == MOUSE_LEFT then
 			self:DoClick()
 		end
