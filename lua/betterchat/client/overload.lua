@@ -43,6 +43,33 @@ function chatBox.overloadFunctions()
 		return chatBox.playersOpen[ply]
 	end
 
+	chatBox.overloadedFuncs.hookAdd = hook.Add
+	chatBox.hookOverloads = { OnPlayerChat = table.Copy(hook.GetTable().OnPlayerChat or {}) }
+	for k, v in pairs(hook.GetTable().OnPlayerChat or {}) do
+		hook.Remove("OnPlayerChat", k)
+	end
+	hook.Add("OnPlayerChat", "BC_ChatHook", function(...)
+		if chatBox.OnPlayerSayHook then
+			return chatBox.OnPlayerSayHook(...)
+		end
+	end)
+	hook.Add = function(event, id, func)
+		if event == "OnPlayerChat" then
+			chatBox.hookOverloads.OnPlayerChat[id] = func
+		else
+			chatBox.overloadedFuncs.hookAdd( event, id, func )
+		end
+	end
+
+	chatBox.overloadedFuncs.hookRemove = hook.Remove
+	hook.Remove = function(event, id)
+		if event == "OnPlayerChat" then
+			table.remove( chatBox.hookOverloads.OnPlayerChat, id )
+		else
+			chatBox.overloadedFuncs.hookRemove( event, id )
+		end
+	end
+
 	hook.Run("BC_Overload")
 
 	chatBox.overloaded = true
@@ -53,6 +80,11 @@ function chatBox.returnFunctions()
 	chat.AddText = chatBox.overloadedFuncs.oldAddText
 	chat.GetChatBoxSize = chatBox.overloadedFuncs.oldGetChatBoxSize
 	chat.GetChatBoxPos = chatBox.overloadedFuncs.oldGetChatBoxPos
+
+	hook.Add = chatBox.overloadedFuncs.hookAdd
+	hook.Remove = chatBox.overloadedFuncs.hookRemove
+	hook.GetTable().OnPlayerChat = table.Copy(chatBox.hookOverloads.OnPlayerChat)
+
 	chatBox.overloadedFuncs.plyMeta.ChatPrint = chatBox.overloadedFuncs.plyChatPrint
 	chatBox.overloadedFuncs.plyMeta.IsTyping = chatBox.overloadedFuncs.plyIsTyping
 	chatBox.overloadedFuncs = {}

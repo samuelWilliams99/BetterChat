@@ -9,6 +9,15 @@ chatBox.globalSettingsTemplate = {
 		max = 30,
 	},
 	{
+		name = "Maximum history",
+		value = "chatHistory",
+		type = "number",
+		extra = "Number of messages received before old messages are deleted",
+		default = 200,
+		min = 20,
+		max = 1000,
+	},
+	{
 		name = "Team chat opens recent PM",
 		value = "teamOpenPM",
 		type = "boolean",

@@ -107,31 +107,29 @@ function RICHERTEXT:Init()
 				self.scrollToBottomBtn:Hide()
 			end
 		end
+		if self.STBButtonAnim == 0 then self.STBHide = false end
+		self.scrollToBottomBtn.m_Image:SetImageColor(Color(255,255,255, self.STBHide and 0 or self.STBButtonAnim*2.55))
 
-		self.scrollToBottomBtn.m_Image:SetImageColor(Color(255,255,255, self.STBButtonAnim*2.55))
-
-		if self.lastScroll != scrollBar.Scroll then
+		if self.lastScroll ~= scrollBar.Scroll then
 			self.lastScroll = scrollBar.Scroll
 
 			local sPanel = self.scrollPanel
-	
 			local sx,sy = sPanel:GetSize()
 
 			local csx, csy = sPanel:GetCanvas():GetSize()
-			local vBar = sPanel:GetVBar()
-			local scrollProp = vBar.Scroll / vBar.CanvasSize
 
-			local minY = math.max(0, scrollProp * (csy - sy))
-			local maxY = minY + csy
+			-- before
+			local scrollProp = self.lastScroll / scrollBar.CanvasSize
+			local minYB = math.max(0, scrollProp * (csy - sy))
+			local maxYB = minYB + sy
+			self:SetDoRenderInRange(minYB, maxYB, false)
 
-			for k, v in pairs(self.graphics) do
-				
-				local _, y = v:GetPos()
-				local h = v:GetTall()
-
-				v:SetDoRender(y+h >= minY and y<= maxY)
-				
-			end
+			-- after
+			self.lastScroll = scrollBar.Scroll
+			scrollProp = self.lastScroll / scrollBar.CanvasSize
+			local minYA = math.max(0, scrollProp * (csy - sy))
+			local maxYA = minYA + sy
+			self:SetDoRenderInRange(minYA, maxYA, true)
 
 		end
 
@@ -230,10 +228,13 @@ function RICHERTEXT:Init()
 	self.lines = {{}}
 	self.offset = {x = 0, y = 0}
 	self.fontHeight = 20
+	self.linesYs = {{top = 0, bottom=self.fontHeight}}
 	self.innerFont = "Default"
 	self.addNewLine = false
 	self.doFormatting = true
 	self.showImages = true
+	self.maxLines = 200
+	self.yRemoved = 0
 
 	self.textColor = Color(255,255,255,255)
 	self.clickable = nil
@@ -242,12 +243,33 @@ function RICHERTEXT:Init()
 	self.ready = true
 end
 
+function RICHERTEXT:SetDoRenderInRange(minY, maxY, value)
+	local inArea = false
+	for k, v in ipairs(self.linesYs) do
+		if (v.bottom - self.yRemoved) > minY then
+			inArea = true
+		end
+		if inArea then
+			if (v.top - self.yRemoved) > maxY then
+				break
+			end
+			for i, el in pairs(self.lines[k]) do
+				el:SetDoRender(value)
+			end
+		end
+	end
+end
+
 function RICHERTEXT:SetFormattingEnabled( val )
 	self.doFormatting = val
 end
 
 function RICHERTEXT:SetImagesEnabled( val )
 	self.showImages = val
+end
+
+function RICHERTEXT:SetMaxLines(val)
+	self.maxLines = val
 end
 
 function RICHERTEXT:Reload() -- Clear the text, reset a bunch of shit, then run through the logs again
@@ -259,12 +281,14 @@ function RICHERTEXT:Reload() -- Clear the text, reset a bunch of shit, then run 
 	end
 
 	self.lines = {{}}
+	self.linesYs = {{top = 0, bottom=self.fontHeight}}
 	self.select.hasSelection = false
 	self.textColor = Color(255,255,255,255)
 	self.clickable = nil
 	self.offset = {x = 0, y = 0}
 	self.addNewLine = false
 	self.graphics = {}
+	self.yRemoved = 0
 
 	local funcs = {
 		["text"] = RICHERTEXT.AppendText,
@@ -617,7 +641,27 @@ end
 function RICHERTEXT:AddLine()
 	self.offset.y = self.offset.y + self.fontHeight -- Set offset to start of next line
 	self.offset.x = 0
+	table.insert(self.linesYs, {top = self.offset.y, bottom=self.offset.y + self.fontHeight})
 	table.insert(self.lines, {}) -- Add empty line to lines stack
+
+	if #self.lines > self.maxLines then
+		local offset = 0
+		while(#self.lines > self.maxLines) do
+			for k, v in pairs(self.lines[1]) do
+				v:Remove()
+			end
+			table.remove(self.lines, 1)
+			offset = offset + (self.linesYs[1].bottom - self.linesYs[1].top)
+			table.remove(self.linesYs, 1)
+		end
+		self.yRemoved = self.yRemoved + offset
+		for k, line in pairs(self.lines) do
+			for i, el in pairs(line) do
+				local x, y = el:GetPos()
+				el:SetPos(x, y-offset)
+			end
+		end
+	end
 
 	if self.NewLine then
 		self.NewLine(self.lines[#self.lines], #self.lines) -- Call newLine event
@@ -641,6 +685,17 @@ function RICHERTEXT:PrepNewElement()
 		return lastElement.rawTextIdx + #lastElement.rawText
 	else
 		return 1
+	end
+end
+
+function RICHERTEXT:UpdateLineHeight()
+	local l = #self.lines
+	local line = self.lines[l]
+	local lastEl = line[#line]
+	local h = lastEl:GetTall()
+	local yData = self.linesYs[l]
+	if (yData.bottom - yData.top) < h then
+		yData.bottom = yData.top + h
 	end
 end
 
@@ -704,10 +759,14 @@ function RICHERTEXT:AddLabel()
 	label:SetText("")
 	label.rawText = ""
 	label.rawTextIdx = idx
-	label:SetPos(5 + self.offset.x, self.offset.y)
+	label:SetPos(5 + self.offset.x, self.offset.y - self.yRemoved)
 	label:SetSize(self:GetWide() - self.offset.x - 40, self.fontHeight)
 	label:SetMouseInputEnabled( true )
 	label:MoveToFront()
+
+	label.SetDoRender = function(self, v)
+		self:SetVisible(v)
+	end
 
 	self:setClickEvents(label) -- Set its events (right click menu and text select events)
 
@@ -724,10 +783,12 @@ function RICHERTEXT:AddLabel()
 	if scrollBar.Scroll >= scrollBar.CanvasSize-1 then -- If current scroll at bottom, update for new message
 		self:scrollToBottom()
 	end
+
+	self:UpdateLineHeight()
 	return label
 end
 
-function RICHERTEXT:scrollToBottom()
+function RICHERTEXT:scrollToBottom(hideBtn)
 	if not self:IsReady() then return end
 	local id = "richTextScrollBottom - "..self.id
 	if timer.Exists(id) then timer.Destroy(id) end
@@ -742,6 +803,9 @@ function RICHERTEXT:scrollToBottom()
 		if not element then return end
 		self.scrollPanel:ScrollToChild(element)
 	end)
+	if hideBtn then
+		self.STBHide = true
+	end
 end
 
 function RICHERTEXT:IsReady()
@@ -927,13 +991,13 @@ function RICHERTEXT:AddGraphic(element, rawText)
 	element.rawTextIdx = self:PrepNewElement()
 	element.rawText = rawText
 
-	if h > self.fontHeight then
+	if h > self.fontHeight then -- Image has own line
 		self:AddLine()
 		line = self.lines[#self.lines]
 
-		table.insert(line, element) -- pop new label in line stack
+		table.insert(line, element) -- pop new element on line stack
 
-		element:SetPos(5 + imagePadding + self.offset.x, self.offset.y)
+		element:SetPos(5 + imagePadding + self.offset.x, self.offset.y - self.yRemoved)
 		local newLines = math.ceil(h / self.fontHeight)
 		for k=1, newLines do
 			self:AddLine()
@@ -946,7 +1010,7 @@ function RICHERTEXT:AddGraphic(element, rawText)
 
 		line = self.lines[#self.lines]
 
-		element:SetPos(5 + imagePadding + self.offset.x, self.offset.y)
+		element:SetPos(5 + imagePadding + self.offset.x, self.offset.y - self.yRemoved)
 
 		self.offset.x = self.offset.x + (imagePadding*2)
 		table.insert(line, element) -- pop new element in line stack
@@ -969,6 +1033,8 @@ function RICHERTEXT:AddGraphic(element, rawText)
 		self:scrollToBottom()
 	end
 	table.insert(self.graphics, element)
+
+	self:UpdateLineHeight()
 	return element
 end
 

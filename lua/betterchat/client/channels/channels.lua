@@ -310,6 +310,7 @@ function chatBox.messageChannelDirect( channel, controller, ...)
 	local richText = chatBox.channelPanels[chanName].text
 	local prevCol = Color(255,255,255,255)
 	richText:InsertColorChange(prevCol.r, prevCol.g, prevCol.b, 255)
+	richText:SetMaxLines(chatBox.getSetting("chatHistory"))
 	local ignoreNext = false
 	for _, obj in pairs(data) do
 		if type(obj) == "table" then --colour/formatter
@@ -422,6 +423,7 @@ function chatBox.addChannel(data)
 	richText:SetPos(10, 10)
 	richText:SetSize(g.chatFrame:GetWide() - 20, g.chatFrame:GetTall() - 42 - 37)
 	richText:SetFont(data.font or chatBox.graphics.font)
+	richText:SetMaxLines(chatBox.getSetting("chatHistory"))
 	richText.EventHandler = function(eventType, data, m) 
 		local idx = string.find(data, "-")
 		local dataType = string.sub(data, 1, idx-1)

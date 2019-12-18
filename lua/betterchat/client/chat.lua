@@ -308,32 +308,34 @@ function chatBox.defaultFormatMessage(ply, text, teamChat, dead, col1, col2, dat
 	end
 end
 
-hook.Add("OnPlayerChat", "BC_PlayerChat", function(...) -- pre, col1 and col2 are supplied by DarkRP
-	if (not chatBox.enabled) then return end
+chatBox.OnPlayerSayHook = function(...) -- pre, col1 and col2 are supplied by DarkRP
+	for k, v in pairs(chatBox.hookOverloads.OnPlayerChat) do
+		local ret = v(...)
+		if ret then
+			return ret
+		end
+	end
+
 	ply, text, teamChat, dead, pre, col1, col2 = ...
 	local plyValid = ply and ply:IsValid()
 	if plyValid and chatBox.playerSettings[ply:SteamID()] and chatBox.playerSettings[ply:SteamID()].ignore != 0 then return true end
-	
+
 	local tab
 	if pre then
 		tab = chatBox.formatMessage(ply, text, false, col2, true, {...})
 		tab[2] = {formatter = true, type = "escape"}
-		tab[3] = {formatter=true, type=( plyValid and "clickable" or "text" ), signal="Player-"..(plyValid and ply:SteamID() or ""), text=pre, color=col1}
+		tab[3] = {formatter = true, type = ( plyValid and "clickable" or "text" ), signal = "Player-"..(plyValid and ply:SteamID() or ""), text=pre, color=col1}
 	else
 		tab = chatBox.formatMessage(ply, text, dead)
 	end
-	
-	-- if ply == LocalPlayer then --?? this does nothing
-	-- 	table.insert(tab, {isController = true, doSound = false})
-	-- end
-	
+
 	chatBox.messageChannel({(teamChat and not DarkRP) and "Team" or "Players"}, unpack(tab))
 
 	if chatBox.overloadedFuncs.oldAddText then
 		chatBox.overloadedFuncs.oldAddText( unpack(chatBox.defaultFormatMessage(pre or ply, text, teamChat, pre and false or dead, col1, col2, {...})) ) --Keep old chat up to date
 	end
 	return true
-end)
+end
 
 local colourNames = {
 	["maroon"] = Color(128,0,0),
