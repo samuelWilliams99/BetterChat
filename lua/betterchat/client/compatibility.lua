@@ -4,12 +4,10 @@ hook.Add("BC_Overload", "BC_ATAG_ChatOverload", function()
 	timer.Simple(0.5, function()
 		if ATAG then
 			print("[BetterChat] Found ATAG, attempting overload")
-			local hookTbl = hook.GetTable()
-
-		    if not hookTbl.OnPlayerChat then return end
-		    if hookTbl.OnPlayerChat.ATAG_ChatTags then
+			
+		    if chatBox.hookOverloads.OnPlayerChat.ATAG_ChatTags then
 	        	print("[BetterChat] Found ATAG_ChatTags hook, overloading")
-	        	chatBox.compatibility.atagHook = hookTbl.OnPlayerChat.ATAG_ChatTags
+	        	chatBox.compatibility.atagHook = chatBox.hookOverloads.OnPlayerChat.ATAG_ChatTags
 	        	hook.Remove("OnPlayerChat", "ATAG_ChatTags")
 		    end
 		end
@@ -35,12 +33,12 @@ function captureAddText(f, ...)
 end
 
 hook.Add("BC_GetPreTab", "BC_ATAG_PreTab", function(ply, msg, teamChat, dead, d)
-	if not chatBox.compatibility.atagHook then return end
-	if hook.GetTable().OnPlayerChat.ATAG_ChatTags then
+	if chatBox.hookOverloads.OnPlayerChat.ATAG_ChatTags then
 		print("[BetterChat] Found ATAG_ChatTags hook while processing message, overloading")
-	    chatBox.compatibility.atagHook = hook.GetTable().OnPlayerChat.ATAG_ChatTags
+	    chatBox.compatibility.atagHook = chatBox.hookOverloads.OnPlayerChat.ATAG_ChatTags
 	    hook.Remove("OnPlayerChat", "ATAG_ChatTags")
 	end
+	if not chatBox.compatibility.atagHook then return end
 
 	local data, madeChange = captureAddText(chatBox.compatibility.atagHook, ply, msg, teamChat, dead, unpack(d or {}))
 	if not madeChange then return end

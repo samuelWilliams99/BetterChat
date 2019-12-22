@@ -64,7 +64,7 @@ function chatBox.overloadFunctions()
 	chatBox.overloadedFuncs.hookRemove = hook.Remove
 	hook.Remove = function(event, id)
 		if event == "OnPlayerChat" then
-			table.remove( chatBox.hookOverloads.OnPlayerChat, id )
+			chatBox.hookOverloads.OnPlayerChat[id] = nil
 		else
 			chatBox.overloadedFuncs.hookRemove( event, id )
 		end
