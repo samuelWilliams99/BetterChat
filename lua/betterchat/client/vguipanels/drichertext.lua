@@ -829,7 +829,7 @@ function RICHERTEXT:addNewLines( txt ) -- Goes through big bit of text, puts in 
 		local word = data[k] .. ( k == #data and "" or " " )
 		local sizeX = getFrom(1, surface.GetTextSize(word))
 		if offsetX + sizeX > limitX then
-			if not isNewLineObj(out[#out]) and #out > 0 then
+			if not isNewLineObj(out[#out]) and offsetX > 0 then
 				table.insert(out, {isNewLine=true})
 				k = k - 1
 				offsetX = 0
