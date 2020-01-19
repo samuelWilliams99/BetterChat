@@ -150,6 +150,19 @@ chatBox.serverSettings = {
 		type = "boolean",
 		extra = "Should BetterChat replace the team channel (This stops other addons like DarkRP overwriting/removing team chat)",
 		default = false
+	},
+	{
+		name = "Maximum message length",
+		value = "maxLength",
+		type = "number", 
+		extra = "Maximum length of message",
+		default = 126,
+		onChange = function(self, old, new)
+			if new ~= self.default and DarkRP then
+				print("Custom message length not supported when using DarkRP, reverted to 126")
+				return self.default
+			end
+		end
 	}
 }
 
@@ -249,35 +262,30 @@ if CLIENT then
 
 end
 
-function chatBox.getSetting(name)
-	local var = GetConVar("bc_" .. name)
-	--for now, all settings are boolean, maybe in the future change this to lookup the setting and get the type
-	if not var then 
-		return false 
-	end
-
-	local data
-	for k, v in pairs(chatBox.globalSettingsTemplate) do
-		if v.value == name then
-			data = v
-		end
-	end
-	if not data then return false end
-
-	if data.type == "boolean" then
+function chatBox.getSetting(name, isServer)
+	local setting = chatBox.getSettingObject(name, isServer)
+	if not setting then return nil end
+	local var = GetConVar("bc_" .. (isServer and "server_" or "") .. name)
+	if not var then return setting.default end
+	if setting.type == "boolean" then
 		return var:GetBool()
-	elseif data.type == "number" then
+	elseif setting.type == "number" then
 		return var:GetInt()
 	end
+	return nil
 end
 
-function chatBox.getServerSetting(name)
-	local var = GetConVar("bc_server_" .. name)
-	--for now, all settings are boolean, maybe in the future change this to lookup the setting and get the type
-	if not var then 
-		return false 
+function chatBox.getServerSetting(name) 
+	return chatBox.getSetting(name, true)
+end
+
+function chatBox.getSettingObject(name, isServer) 
+	for k, v in pairs(isServer and chatBox.serverSettings or chatBox.globalSettingsTemplate) do
+		if v.value == name then
+			return v
+		end
 	end
-	return var:GetBool()
+	return nil
 end
 
 hook.Add("BC_SharedInit", "BC_InitConvars", function()
@@ -293,6 +301,18 @@ hook.Add("BC_SharedInit", "BC_InitConvars", function()
 	for k, v in pairs(chatBox.serverSettings) do
 		local def = v.default
 		if type(def) == "boolean" then def = def and 1 or 0 end
-		CreateConVar("bc_server_" .. v.value, def, FCVAR_REPLICATED+FCVAR_ARCHIVE+FCVAR_PROTECTED)
+		local cvar = CreateConVar("bc_server_" .. v.value, def, FCVAR_REPLICATED+FCVAR_ARCHIVE+FCVAR_PROTECTED)
+		if v.onChange then
+			cvars.AddChangeCallback("bc_server_" .. v.value, function(_, old, new) 
+				local ret = v.onChange(v, old, new)
+				if ret ~= nil then
+					if v.type == "bool" then
+						cvar:SetBool(ret)
+					elseif v.type == "number" then
+						cvar:SetInt(ret)
+					end
+				end
+			end)
+		end
 	end
 end)
