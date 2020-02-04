@@ -17,7 +17,7 @@ end)
 
 hook.Add("BC_KeyCodeTyped", "BC_AutoCompleteHook", function(code, ctrl, shift, entry)
 	local txt = entry:GetText()
-	if entry:GetCaretPos() != #txt then return end
+	if entry:GetCaretPos() ~= #txt then return end
 	local txtEx = string.Explode(" ", txt)
 	if code == KEY_TAB then
 		if not ctrl then
@@ -50,8 +50,6 @@ hook.Add("BC_KeyCodeTyped", "BC_AutoCompleteHook", function(code, ctrl, shift, e
 				chatBox.saveData()
 			end
 		end
-
-
 	end
 end)
 
@@ -60,7 +58,7 @@ hook.Add("BC_MessageSent", "BC_AutoCompleteUsageTracker", function(channel, txt)
 	local change = false
 	for k, v in pairs(tab) do
 		if type(v) == "table" and v.formatter and v.type == "image" then
-			if chatBox.autoComplete.emoteUsage[v.text] != nil then
+			if chatBox.autoComplete.emoteUsage[v.text] ~= nil then
 				chatBox.autoComplete.emoteUsage[v.text] = chatBox.autoComplete.emoteUsage[v.text] + 1
 				change = true
 			end
@@ -77,21 +75,18 @@ hook.Add("BC_ChannelChanged", "BC_HideAutocomplete", function()
 	hook.Run("ChatTextChanged", chatBox.graphics.textEntry:GetText())
 end)
 
-hook.Add("ChatTextChanged", "AutoCompletePreview", function(txt)
+hook.Add("BC_ChatTextChanged", "AutoCompletePreview", function(txt)
 	if not chatBox.enabled then return end
-	
 	local txtEx = string.Explode(" ", txt)
 	local options
 	if #txtEx == 1 and txtEx[1][1] == "!" then
 		options = getSimilarCommands(txtEx[1])
-
 	elseif #txtEx[#txtEx] > 2 then
 		if txtEx[#txtEx][1] == ":" then
 			options = getSimilarEmotes(txtEx[#txtEx])
 		else
 			options = getSimilarNames(txtEx[#txtEx])
 		end
-
 	else
 		setSuggestions()
 		return

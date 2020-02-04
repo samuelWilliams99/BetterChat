@@ -1,14 +1,35 @@
+chatBox.admin = {}
+chatBox.admin.defaultChannel = {
+	name = "Admin", 
+	icon = "shield.png",
+	send = function(self, txt)
+		net.Start("BC_AM")
+		net.WriteString(txt)
+		net.SendToServer()
+	end,
+	doPrints = false,
+	addNewLines = true,
+	allFunc = function(self, tab, idx)
+		table.insert(tab, idx, Color(255,0,0) )
+		table.insert(tab, idx+1, "(ADMIN) " )
+	end,
+	openOnStart = function()
+		return LocalPlayer():IsAdmin() or (DarkRP and FAdmin.Access.PlayerHasPrivilege(LocalPlayer(), "AdminChat"))
+	end,
+	runCommandSeparately = true,
+	hideChatText = true,
+}
+
 net.Receive("BC_AM",function()
 	local ply = net.ReadEntity()
 	local text = net.ReadString()
-
 	local chan = chatBox.getChannel("Admin")
 
-	if not chan then
-		chan = chatBox.addAdminChannel()
-	end
+	if not chan then return end
 
-	if not chatBox.isChannelOpen(chan) then
+	if not chan.openOnMessage then return end
+
+	if not chatBox.isChannelOpen(chan) and (ply:IsAdmin() or (DarkRP and FAdmin.Access.PlayerHasPrivilege(ply, "AdminChat"))) then
 		chatBox.addChannel(chan)
 	end
 
@@ -17,33 +38,26 @@ net.Receive("BC_AM",function()
 end)
 
 function chatBox.addAdminChannel()
-	local c = {
-		name = "Admin", 
-		icon = "shield.png",
-		send = function(self, txt)
-			net.Start("BC_AM")
-			net.WriteString(txt)
-			net.SendToServer()
-		end,
-		doPrints = false,
-		addNewLines = true,
-		allFunc = function(self, tab, idx)
-			table.insert(tab, idx, Color(255,0,0) )
-			table.insert(tab, idx+1, "(ADMIN) " )
-		end,
-		openOnStart = true,
-		disallowClose = true,
-		runCommandSeparately = true,
-		hideChatText = true,
-	}
-	table.insert(chatBox.channels, c)
-	return c
+	local channel = chatBox.getChannel("Admin")
+	if not channel then
+		channel = table.Copy(chatBox.admin.defaultChannel)
+		table.insert(chatBox.channels, channel)
+	end
+	if channel.needsData then
+		for k, v in pairs(chatBox.admin.defaultChannel) do
+			if channel[k] == nil then 
+				channel[k] = v 
+			end
+		end
+		channel.needsData = nil
+	end
+	chatBox.applyDefaults(channel)
+	if not channel.dataChanged then channel.dataChanged = {} end
+	return channel
 end
 
 hook.Add("BC_PreInitPanels", "BC_InitAddAdminChannel", function()
-	if LocalPlayer():IsAdmin() or (DarkRP and FAdmin.Access.PlayerHasPrivilege(LocalPlayer(), "AdminChat")) then
-		chatBox.addAdminChannel()
-	end
+	chatBox.addAdminChannel()
 end)
 
 -- Overloads

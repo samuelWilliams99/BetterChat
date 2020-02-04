@@ -60,6 +60,7 @@ chatBox.channelSettingsTemplate = {
 		extra = "Set whether this channel should display color, links, images, etc.",
 		onChange = function(data)
 			local txt = chatBox.channelPanels[data.name].text
+			if not txt or not IsValid(txt) then return end
 			txt:SetFormattingEnabled(data.doFormatting)
 			txt:Reload()
 		end,
@@ -76,6 +77,7 @@ chatBox.channelSettingsTemplate = {
 		extra = "Set whether this channel should display color, links, images, etc.",
 		onChange = function(data)
 			local txt = chatBox.channelPanels[data.name].text
+			if not txt or not IsValid(txt) then return end
 			txt:SetImagesEnabled(data.showImages)
 			txt:Reload()
 		end,
@@ -102,6 +104,7 @@ chatBox.channelSettingsTemplate = {
 		extra = "Set the font of this channel",
 		onChange = function(data)
 			local txt = chatBox.channelPanels[data.name].text
+			if not txt or not IsValid(txt) then return end
 			txt:SetFont(data.font)
 			txt:Reload()
 		end,
@@ -123,7 +126,7 @@ chatBox.channelSettingsTemplate = {
 		extra = "Should this channel automatically open when you receive a message",
 		shouldSave = true,
 		shouldAdd = function(data)
-			return data.group and true or false
+			return (data.group or data.name == "Admin") and true or false
 		end,
 	}
 }

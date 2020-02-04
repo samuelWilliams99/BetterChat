@@ -7,7 +7,7 @@ net.Receive("BC_SayOverload", function(len, ply)
 	local ret = hook.Run("PlayerSay", ply, msg, isTeam)
 	if ret ~= nil then msg = ret end
 
-	if not msg then return end
+	if not msg or msg == "" then return end
 
 	net.Start("BC_SayOverload")
 	net.WriteEntity(ply)

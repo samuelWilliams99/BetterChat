@@ -19,7 +19,6 @@ chatBox.group.defaultChannel = {
 	tickMode = 0,
 	popMode = 1,
 	hideRealName = true,
-	runCommandSeparately = true,
 	postAdd = function(data, panel)
 		local g = chatBox.graphics
 		local membersBtn = vgui.Create("DButton", panel)
@@ -44,6 +43,7 @@ chatBox.group.defaultChannel = {
 			surface.DrawTexturedRect( 0, 0, w, h)
 		end
 	end,
+	runCommandSeparately = true,
 	hideChatText = true,
 }
 
@@ -274,7 +274,7 @@ hook.Add("BC_PostInitPanels", "BC_groupAddButton", function() -- add group chang
 
 		if not chan then return end
 
-		if chan.openOnMessage == false then return end
+		if not chan.openOnMessage then return end
 
 		if not chatBox.isChannelOpen(chan) then
 			chatBox.addChannel(chan)
@@ -319,12 +319,13 @@ function chatBox.createGroupChannel(group)
 				channel[k] = v 
 			end
 		end
-
 		channel.needsData = nil
 	end
 	if not table.HasValue(group.admins, LocalPlayer():SteamID()) then
 		channel.disabledSettings = {"displayName"}
 	end
+	chatBox.applyDefaults(channel)
+
 	channel.displayName = group.name
 	channel.group = group
 	chatBox.reloadGroupMemberMenu(channel)

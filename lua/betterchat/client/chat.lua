@@ -167,7 +167,7 @@ function chatBox.formatText(text, defaultColor)
 
 									//if s > 1 and inpStr[s-1] != " " and inpStr[s-1] != "\\" then continue end -- This could also work? it would accept a\:) -> a:) tho
 
-									if e < #inpStr and inpStr[e+1] != " " then continue end
+									if e < #inpStr and inpStr[e+1] ~= " " then continue end
 								end
 								
 								found = true
@@ -282,7 +282,7 @@ chatBox.OnPlayerSayHook = function(...) -- pre, col1 and col2 are supplied by Da
 			print("Error in OnPlayerChat hook: " .. k)
 			print(e)
 		end, ...)
-		if success and ret then
+		if success and ret ~= nil then
 			return ret
 		end
 	end

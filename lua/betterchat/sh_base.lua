@@ -283,11 +283,6 @@ function chatBox.buildBox()
 
 			if vgui.GetKeyboardFocus() and vgui.GetKeyboardFocus():GetName() == "BC_SettingsKeyEntry" then
 				chatBox.graphics.textEntry:RequestFocus()
-			-- elseif chatBox.settings.isOpen then --This bit doesnt really work since multiple sidePanels
-			-- 	chatBox.closeSettings()
-			-- 	timer.Create("BC_MoveMouseBack", 0.01, 1, function()
-			-- 		gui.SetMousePos(mx, my)
-			-- 	end)
 			else
 				chatBox.graphics.textEntry:SetText( "" )
 				chatBox.closeChatBox()
@@ -405,6 +400,7 @@ function chatBox.buildBox()
 			else
 				hook.Run("ChatTextChanged", self:GetText() or "")
 			end
+			hook.Run("BC_ChatTextChanged", self:GetText() or "")
 		end
 	end
 
