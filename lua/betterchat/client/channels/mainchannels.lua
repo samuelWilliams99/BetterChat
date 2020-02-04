@@ -35,7 +35,7 @@ hook.Add("BC_PreInitPanels", "BC_InitAddMainChannels", function()
 		doPrints = true,
 		addNewLines = true,
 		trim = true,
-		disabledSettings = {"relayAll", "openKey"},
+		disabledSettings = {"relayAll", "openKey", "replicateAll", "showAllPrefix"},
 		tickMode = 2,
 		popMode = 2,
 		openOnStart = true,
@@ -68,6 +68,8 @@ hook.Add("BC_PreInitPanels", "BC_InitAddMainChannels", function()
 			end,
 			openOnStart = true,
 			disallowClose = true,
+			textEntryColor = Color(100,200,100),
+			replicateAll = true,
 		})
 	end
 end)

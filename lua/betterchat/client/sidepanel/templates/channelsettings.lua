@@ -95,11 +95,19 @@ chatBox.channelSettingsTemplate = {
 		shouldSave = true,
 	},
 	{
+		name = "Input background color",
+		value = "textEntryColor",
+		type = "color",
+		extra = "Set the color of the text input background",
+		shouldSave = false,
+		default = Color( 140, 140, 140)
+	},
+	{
 		name = "Font",
 		value = "font",
 		type = "options",
-		options = {"ChatFont", "New ChatFont", "Mono-space"},
-		optionValues = {"ChatFont", "chatFont_18", "Monospace"},
+		options = {"ChatFont", "Old ChatFont", "Mono-space"},
+		optionValues = {"chatFont_18", "ChatFont", "Monospace"},
 		default = "chatFont_18",
 		extra = "Set the font of this channel",
 		onChange = function(data)
@@ -108,6 +116,22 @@ chatBox.channelSettingsTemplate = {
 			txt:SetFont(data.font)
 			txt:Reload()
 		end,
+		shouldSave = true,
+	},
+	{
+		name = "Show All prefix",
+		value = "showAllPrefix",
+		type = "boolean",
+		default = false,
+		extra = "Should the prefix added in the All channel be shown here",
+		shouldSave = true,
+	},
+	{
+		name = "Replicate All",
+		value = "replicateAll",
+		type = "boolean",
+		default = false,
+		extra = "Should this channel replicate messages from the All channel (This channel's settings will still be used)",
 		shouldSave = true,
 	},
 	{

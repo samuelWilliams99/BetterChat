@@ -46,6 +46,13 @@ chatBox.globalSettingsTemplate = {
 		default = true,
 	},
 	{
+		name = "Show channel events",
+		value = "printChannelEvents",
+		type = "boolean",
+		extra = "Should messages like \"Channel All created\" be shown",
+		default = true
+	},
+	{
 		name = "Console Commands with '¬'",
 		value = "allowConsole",
 		type = "boolean",

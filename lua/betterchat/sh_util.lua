@@ -71,6 +71,16 @@ function chatBox.canRunULX(cmd, target, ply)
 	return table.HasValue(users or {}, target)
 end
 
+function chatBox.padString(str, chars, padChar, post)
+	padChar = padChar or " "
+	str = tostring(str)
+	if post then
+		return str .. string.rep(padChar, math.max(0, chars-#str))
+	else
+		return string.rep(padChar, math.max(0, chars-#str)) .. str
+	end
+end
+
 if SERVER then
 
 	function chatBox.getRunnableULXCommands(ply)
@@ -179,6 +189,15 @@ if CLIENT then
 		font = "Lucida Console",
 		size = 15,
 		weight = 500,
+		antialias = false,
+		shadow = false,
+		extended = true,
+	} )
+
+	surface.CreateFont( "MonospaceSmall", {
+		font = "Lucida Console",
+		size = 10,
+		weight = 300,
 		antialias = false,
 		shadow = false,
 		extended = true,

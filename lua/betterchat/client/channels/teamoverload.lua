@@ -22,7 +22,9 @@ chatBox.defaultTeamChannel = {
 	end,
 	openOnStart = true,
 	disallowClose = true,
-	hideRealName = true
+	hideRealName = true,
+	textEntryColor = Color(100,200,100),
+	replicateAll = true,
 }
 
 hook.Add("BC_PreInitPanels", "BC_InitAddTeamOverloadChannel", function()

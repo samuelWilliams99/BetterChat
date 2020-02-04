@@ -65,6 +65,8 @@ hook.Add("BC_MessageSent", "BC_AutoCompleteUsageTracker", function(channel, txt)
 		end
 	end
 
+	setSuggestions()
+
 	if change then
 		chatBox.reloadUsedEmotesMenu()
 		chatBox.saveData()

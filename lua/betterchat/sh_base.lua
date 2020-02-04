@@ -230,6 +230,7 @@ end
 
 
 function chatBox.buildBox()
+	chatBox.initializing = true
 	if chatBox.overloaded then
 		chatBox.returnFunctions()
 	end
@@ -310,7 +311,13 @@ function chatBox.buildBox()
 		--left text bg
 		draw.RoundedBox( 0, 0, h-31, w - 32, 31, Color( 30, 30, 30, 200 ) )
 		--left text fg
-		draw.RoundedBox( 0, 5, h-26, w-42, 21, Color( 140, 140, 140, 100 ) )
+		local c = chatBox.getActiveChannel()
+		local col = Color( 140, 140, 140, 100 )
+		if c.textEntryColor then
+			col = c.textEntryColor
+			col.a = 100
+		end
+		draw.RoundedBox( 0, 5, h-26, w-42, 21, col )
 		--right bg
 		draw.RoundedBox( 0, w-30, h-31, 30, 31, Color( 30, 30, 30, 200 ) )
 		
@@ -377,8 +384,8 @@ function chatBox.buildBox()
 		end 
 		return hook.Run("BC_KeyCodeTyped", code, ctrl, shift, self)
 	end
-	g.textEntry.maxCharacters = chatBox.getServerSetting("maxLength")
 	g.textEntry.OnTextChanged = function( self )
+		self.maxCharacters = chatBox.getServerSetting("maxLength")
 		if self and self:GetText() then
 			if getChatTextLength(self:GetText()) > self.maxCharacters then
 				self:SetText(chatBox.shortenChatText(self:GetText(), self.maxCharacters))
@@ -420,7 +427,12 @@ function chatBox.buildBox()
 
 	hook.Run( "BC_PostInitPanels" )
 
-	chatBox.messageChannel(nil, chatBox.colors.yellow, "BetterChat", chatBox.colors.printBlue, " initialisation complete.")
+	-- Wait for other prints
+	timer.Simple(0, function()
+		chatBox.messageChannel(nil, chatBox.colors.yellow, "BetterChat", chatBox.colors.printBlue, " initialisation complete.")
+	end)
+
+	chatBox.initializing = false
 
 	chatBox.closeChatBox()
 end

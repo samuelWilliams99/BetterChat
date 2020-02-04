@@ -416,7 +416,7 @@ function chatBox.print( ... )
 	end
 	if not chatBox.enabled then return end
 	for k, v in pairs(chatBox.channels) do
-		if v.doPrints then
+		if v.doPrints and not v.replicateAll then
 			chatBox.messageChannelDirect(v.name, unpack(data))
 		end
 	end

@@ -148,7 +148,6 @@ function chatBox.generateGroupMemberMenu(panel, group)
 		local ply = player.GetBySteamID(id)
 		if ply then
 			local chatEnabled = chatBox.playerSettings[id] and chatBox.playerSettings[id].isChatEnabled or false
-			p(chatBox.playerSettings[id])
 			if not chatEnabled then 
 				setting.nameColor = Color(255,0,0)
 				setting.extra = setting.extra .. ". This person currently has BetterChat disabled"
@@ -162,7 +161,7 @@ function chatBox.generateGroupMemberMenu(panel, group)
 		setting.value = id
 		setting.default = role
 
-		if role != lastRole then
+		if role ~= lastRole then
 			lastRole = role
 			local w, h = panel:GetSize()
 			local line = vgui.Create("DShape", canvas)

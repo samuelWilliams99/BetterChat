@@ -3,7 +3,6 @@
 		chatBox.extraPlayerSettings
 		chatBox.playerSettings
 		chatBox.channelSettings
-	maybe
 ]]--
 
 function chatBox.saveData()
@@ -56,7 +55,6 @@ function chatBox.loadData()
 
 	if data.channelSettings then
 		for k, v in pairs(data.channelSettings) do --load remaining channels slowly
-			if not v then continue end --idk if setting nil removes it, cba to check
 			channel = {}
 			channel.name = k
 			channel.needsData = true

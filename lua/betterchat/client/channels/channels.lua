@@ -202,16 +202,17 @@ function chatBox.getActiveChannelIdx()
 	return nil
 end
 
-function chatBox.messageChannel( channels, ... )
+function chatBox.messageChannel( channelNames, ... )
 	if not chatBox.ready then return end
-	if channels == nil then
+	if channelNames == nil then
 		for k, v in pairs(chatBox.channels) do
+			if v.replicateAll then continue end
 			chatBox.messageChannelDirect( v, ...)
 		end
 		return
 	end
-	if type(channels) == "string" then
-		channels = {channels} --if passed single channel, pack into array
+	if type(channelNames) == "string" then
+		channelNames = {channelNames} --if passed single channel, pack into array
 	end
 
 	
@@ -234,8 +235,10 @@ function chatBox.messageChannel( channels, ... )
 	local editChan = nil
 	local relayToMsgC = false
 
-	for k=1, #channels do
-		local chanName = channels[k]
+	local channels = {}
+
+	for k=1, #channelNames do
+		local chanName = channelNames[k]
 		if chanName == "MsgC" then
 			relayToMsgC = true
 			continue
@@ -257,16 +260,28 @@ function chatBox.messageChannel( channels, ... )
 			useEditFunc = false
 			continue
 		end
-		chatBox.messageChannelDirect( channel, unpack(data) )
+		if channel.replicateAll then continue end
+		table.insert(channels, channel)
 	end
 	
-	if relayToAll then
-		local dCopy = table.Copy(data)
-		if editChan and useEditFunc then
-			editChan.allFunc(editChan, dCopy, editIdx or 1)
-		end
-		chatBox.messageChannelDirect( "All", unpack(dCopy) )
+	local dataAll = table.Copy(data)
+
+	if editChan and useEditFunc then
+		editChan.allFunc(editChan, dataAll, editIdx or 1)
 	end
+
+	if relayToAll then
+		chatBox.messageChannelDirect( "All", unpack(dataAll) )
+	end
+
+	for k, c in pairs(channels) do
+		if c.showAllPrefix then
+			chatBox.messageChannelDirect( c, unpack(dataAll) )
+		else
+			chatBox.messageChannelDirect( c, unpack(data) )
+		end
+	end
+
 	if relayToMsgC then
 		if editChan and useEditFunc then
 			editChan.allFunc(editChan, data, editIdx or 1, true)
@@ -283,6 +298,14 @@ function chatBox.messageChannelDirect( channel, controller, ...)
 	end
 
 	if not channel or not table.HasValue(chatBox.openChannels, channel.name) then return end
+
+	if channel.name == "All" then
+		for k, v in pairs(chatBox.channels) do
+			if v.replicateAll then
+				chatBox.messageChannelDirect( v, controller, ... )
+			end
+		end
+	end
 
 	local data = {...}
 
@@ -384,7 +407,7 @@ function chatBox.removeChannel(channel) --rename to closeChannel
 	table.RemoveByValue(chatBox.openChannels, channel.name)
 	if not channel.hideInitMessage then
 		local chanName = channel.hideRealName and channel.displayName or channel.name
-		if channel.name != "All" then
+		if channel.name ~= "All" and chatBox.getSetting("printChannelEvents") then
 			chatBox.messageChannelDirect("All", chatBox.colors.printBlue, "Channel ", chatBox.colors.yellow, chanName, chatBox.colors.printBlue, " removed.")
 		end
 	end
@@ -557,9 +580,7 @@ function chatBox.addChannel(data)
 	v.Tab.Paint = function(self, w, h)
 		local a = self:IsActive()
 		local c = a and 150 or 200
-
-		--tColor isnt used??
-		local tColor = a and chatBox.colors.white or (self:IsHovered() and chatBox.colors.hTabText or chatBox.colors.tabText)
+		
 		draw.RoundedBox( 0, 2, 0, w-4, h, Color( c,c,c,50 ) )
 		if self:GetText() != " " .. self.data.displayName then
 			self:SetText(" " .. self.data.displayName)
@@ -606,11 +627,21 @@ function chatBox.addChannel(data)
 		v.Tab:Hide()
 	end
 
-	if not data.hideInitMessage then
+	if not data.hideInitMessage and chatBox.getSetting("printChannelEvents") then
 		local chanName = data.hideRealName and data.displayName or data.name
-		chatBox.messageChannelDirect(data.name, chatBox.colors.printBlue, "Channel ", chatBox.colors.yellow, chanName, chatBox.colors.printBlue, " created.")
-		if data.name != "All" then
-			chatBox.messageChannelDirect("All", chatBox.colors.printBlue, "Channel ", chatBox.colors.yellow, chanName, chatBox.colors.printBlue, " created.")
+
+		local function createdPrint()
+			if not data.replicateAll then
+				chatBox.messageChannelDirect(data.name, chatBox.colors.printBlue, "Channel ", chatBox.colors.yellow, chanName, chatBox.colors.printBlue, " created.")
+			end
+			if data.name ~= "All" then
+				chatBox.messageChannelDirect("All", chatBox.colors.printBlue, "Channel ", chatBox.colors.yellow, chanName, chatBox.colors.printBlue, " created.")
+			end
+		end
+		if chatBox.initializing then
+			timer.Simple(0, createdPrint) -- Delay messages to allow other channels to be created before prints
+		else
+			createdPrint()
 		end
 	end
 end

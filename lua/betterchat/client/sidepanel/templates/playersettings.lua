@@ -30,7 +30,8 @@ chatBox.playerSettingsTemplate = {
 		end,
 		extraCanRun = function(ply)
 			return chatBox.canPrivateMessage(ply)
-		end
+		end,
+		disallowPlayerContext = true
 	},
 	{
 		name = "Custom command",
@@ -39,7 +40,8 @@ chatBox.playerSettingsTemplate = {
 		extra = "Add a custom console command for quick access on players",
 		onClick = function(data)
 			chatBox.addPlayerSetting(data.ply)
-		end
+		end,
+		disallowPlayerContext = true
 	},
 	{
 		name = "Mute",
@@ -212,6 +214,7 @@ function chatBox.validatePlayerSettings()
 		end
 		if v.type == "button" then
 			v.onRightClick = function(ply, setting)
+				if setting.disallowPlayerContext then return end
 				local m = DermaMenu()
 				m:AddOption(setting.addToPlayerContext and "Remove from Player Context" or "Add to Player Context", function()
 					setting.addToPlayerContext = not setting.addToPlayerContext

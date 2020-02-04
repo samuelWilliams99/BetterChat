@@ -45,6 +45,7 @@ chatBox.group.defaultChannel = {
 	end,
 	runCommandSeparately = true,
 	hideChatText = true,
+	textEntryColor = Color(100,200,200),
 }
 
 function chatBox.allowedGroups()
@@ -108,12 +109,10 @@ hook.Add("BC_PostInitPanels", "BC_groupAddButton", function() -- add group chang
 		end
 
 		if not group then return end
-
 		local chan = chatBox.getChannel("Group - " .. val)
 		if not chan or chan.needsData then
 			chan = chatBox.createGroupChannel(group)
 		end
-
 		if not chatBox.isChannelOpen(chan) then
 			chatBox.addChannel(chan)
 		end

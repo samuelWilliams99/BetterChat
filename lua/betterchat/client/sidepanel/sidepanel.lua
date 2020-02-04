@@ -36,6 +36,7 @@ renderSettingFuncs = {
 			if setting.onChange then setting.onChange(data) end
 			chatBox.saveData()
 		end
+		textEntry.OnLoseFocus = function(self) self:OnValueChange(self:GetText()) end
 		textEntry.AllowInput = function(self, char)
 			local txt = self:GetText()
 			if self.trim then
@@ -276,6 +277,130 @@ renderSettingFuncs = {
 		button.DoRightClick = function(self)
 			if setting.onRightClick then
 				setting.onRightClick(data.ply, setting)
+			end
+		end
+
+		return bw
+	end,
+	["color"] = function(sPanel, panel, data, y, w, h, setting)
+		local curCol = data[setting.value]
+		local width = setting.overrideWidth or 100
+		local allowedAlpha = setting.allowAlpha
+
+		local button = vgui.Create( "DColorButton", panel )
+
+		button:SetDisabled(setting.disabled or false)
+
+		local bw, bh = width, 18
+		button:SetSize(bw, bh)
+		button:SetPos(w - bw, y-2)
+		button:SetFont("MonospaceSmall")
+		button:SetTooltip(setting.extra)
+		button:SetColor( data[setting.value], true )
+
+		button.Paint = function(self, w, h)
+			local col = self:GetColor()
+			draw.RoundedBox( 2, 0, 0, w, h, Color(0,0,0) )
+			draw.RoundedBox( 2, 1, 1, w-2, h-2, col )
+			draw.DrawText( self:GetText(), self:GetFont(), w/2, h/4, Color( 210, 210, 210, 255 ), TEXT_ALIGN_CENTER )
+			return true
+		end
+		button.DoClick = function(self)
+			CloseDermaMenus()
+			local btnH = 20
+			local w,h = 267,186 + btnH
+			local mixerFrame = vgui.Create( "DFrame" )
+
+			mixerFrame:SetTitle("")
+			mixerFrame:SetSize( w, h )
+			mixerFrame:SetPos(gui.MouseX(), gui.MouseY()-h)
+			mixerFrame:MakePopup()
+			mixerFrame:SetDraggable(false)
+			mixerFrame:ShowCloseButton(false)
+			mixerFrame:SetIsMenu(true)
+
+			local mixer -- Init here so mixerFrame can grab it
+
+			mixerFrame.Paint = function(self, w, h)
+				chatBox.blur( self, 10, 20, 255 )
+				draw.RoundedBox( 0, 0, 0, w, h, Color( 30, 30, 30, 200 ) )
+			end
+
+			mixerFrame.Think = function(self)
+				if not chatBox.isOpen then
+					self:Remove()
+				end
+			end
+
+			mixerFrame.OnRemove = function(self)
+				timer.Remove("BC_ColorHideTimer")
+			end
+
+			mixer = vgui.Create( "DColorMixer", mixerFrame )
+			mixer:SetPos(2,2)
+			mixer:SetSize(w-4,h-4 - btnH)
+			mixer:SetColor(table.Copy(data[setting.value]))
+			mixer:SetPalette( false ) 		--Show/hide the palette			DEF:true
+			mixer:SetAlphaBar(allowedAlpha)
+
+			local lastDown = false
+			timer.Create("BC_ColorHideTimer", 1/30, 0, function()
+				if not input.IsMouseDown(MOUSE_LEFT) and not input.IsMouseDown(MOUSE_RIGHT) then 
+					lastDown = false
+					return 
+				end
+				if lastDown then return end
+				lastDown = true
+				local mx, my = gui.MousePos()
+				if not Vector(mx, my):WithinAABox(Vector(mixerFrame:LocalToScreen(0,0)), Vector(mixerFrame:LocalToScreen(w, h))) then
+					mixerFrame:Remove()
+				end
+			end)
+
+			local backBtn = vgui.Create( "DButton", mixerFrame )
+			backBtn:SetText("Back")
+			backBtn:SetSize(87, btnH - 2)
+			backBtn:SetPos(2, h-btnH)
+			backBtn.DoClick = function(self)
+				mixerFrame:Remove()
+			end
+
+			local defaultBtn = vgui.Create( "DButton", mixerFrame )
+			defaultBtn:SetText("Default")
+			defaultBtn:SetSize(87, btnH - 2)
+			defaultBtn:SetPos(w/2 - 40, h-btnH)
+			defaultBtn.DoClick = function(self)
+				mixer:SetColor(table.Copy(setting.default))
+			end
+
+			local confirmBtn = vgui.Create( "DButton", mixerFrame )
+			confirmBtn:SetText("Confirm")
+			confirmBtn:SetSize(81, btnH - 2)
+			confirmBtn:SetPos(w - 80 - 3, h-btnH)
+			confirmBtn.DoClick = function(self)
+				if data[setting.value] != mixer:GetColor() then
+					data[setting.value] = table.Copy(mixer:GetColor())
+					if setting.onChange then setting.onChange(data) end
+					chatBox.saveData()
+				end
+				mixerFrame:Remove()
+			end
+
+		end
+
+		button.Think = function(self)
+			self:SetColor(data[setting.value], true)
+			local col = data[setting.value]
+			self:SetText(chatBox.padString(col.r, 3, nil, true) .. 
+				"|" .. chatBox.padString(col.g, 3, nil, true) .. 
+				"|" .. chatBox.padString(col.b, 3, nil, true) .. 
+				(allowedAlpha and ("|" .. chatBox.padString(col.a, 3, nil, true)) or "")
+			)
+			self:SetCursor( self:GetDisabled() and "no" or "Hand")
+
+			if data.dataChanged[val] then
+				data.dataChanged[val] = false -- This one just auto updates
+				CloseDermaMenus() -- Just to be sure ;)
 			end
 		end
 

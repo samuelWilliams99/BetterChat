@@ -23,19 +23,20 @@ net.Receive("BC_UserRankChange", function()
 	chatBox.closeChatBox()
 	chatBox.removeAllPlayerPanels()
 
-	local canUseAdminChat = LocalPlayer():IsAdmin() or (FAdmin and FAdmin.Access.PlayerHasPrivilege(LocalPlayer(), "AdminChat"))
 	local adminChannel = chatBox.getChannel("Admin")
-	if canUseAdminChat then
+	if chatBox.allowedAdmin() then
 		if not adminChannel then
 			adminChannel = chatBox.addAdminChannel()
 		end
 		if not chatBox.isChannelOpen(adminChannel) then
 			chatBox.addChannel(adminChannel)
 		end
+		chatBox.addAdminButton()
 	else
 		if adminChannel and chatBox.isChannelOpen(adminChannel) then
 			chatBox.removeChannel(adminChannel) -- closes
 		end
+		chatBox.removeAdminButton()
 	end
 end)
 
