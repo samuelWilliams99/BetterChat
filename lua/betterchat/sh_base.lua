@@ -11,6 +11,7 @@ if SERVER then
 	include("betterchat/server/sv_sidepanelsinit.lua")
 	include("betterchat/server/sv_groups.lua")
 	include("betterchat/server/sv_teamoverload.lua")
+	include("betterchat/server/sv_sayoverload.lua")
 
 	--addfiles
 	AddCSLuaFile("betterchat/sh_base.lua")
@@ -67,6 +68,7 @@ if SERVER then
 	util.AddNetworkString( "BC_deleteGroup" )
 	util.AddNetworkString( "BC_forwardMessage" )
 	util.AddNetworkString( "BC_TM" )
+	util.AddNetworkString( "BC_SayOverload" )
 
 	function chatBox.getEnabledPlayers()
 		local out = {}
@@ -281,11 +283,6 @@ function chatBox.buildBox()
 
 			if vgui.GetKeyboardFocus() and vgui.GetKeyboardFocus():GetName() == "BC_SettingsKeyEntry" then
 				chatBox.graphics.textEntry:RequestFocus()
-			-- elseif chatBox.settings.isOpen then --This bit doesnt really work since multiple sidePanels
-			-- 	chatBox.closeSettings()
-			-- 	timer.Create("BC_MoveMouseBack", 0.01, 1, function()
-			-- 		gui.SetMousePos(mx, my)
-			-- 	end)
 			else
 				chatBox.graphics.textEntry:SetText( "" )
 				chatBox.closeChatBox()
@@ -380,7 +377,7 @@ function chatBox.buildBox()
 		end 
 		return hook.Run("BC_KeyCodeTyped", code, ctrl, shift, self)
 	end
-	g.textEntry.maxCharacters = 126
+	g.textEntry.maxCharacters = chatBox.getServerSetting("maxLength")
 	g.textEntry.OnTextChanged = function( self )
 		if self and self:GetText() then
 			if getChatTextLength(self:GetText()) > self.maxCharacters then
@@ -403,6 +400,7 @@ function chatBox.buildBox()
 			else
 				hook.Run("ChatTextChanged", self:GetText() or "")
 			end
+			hook.Run("BC_ChatTextChanged", self:GetText() or "")
 		end
 	end
 
@@ -482,6 +480,7 @@ function chatBox.openChatBox( selectedTab )
 	selectedTab = chan.name
 
 	chatBox.graphics.frame:MakePopup()
+	chatBox.graphics.textEntry.maxCharacters = chatBox.getServerSetting("maxLength")
 
 	chatBox.graphics.chatFrame.doPaint = true
 	chatBox.graphics.textEntry:Show()

@@ -167,7 +167,7 @@ function chatBox.formatText(text, defaultColor)
 
 									//if s > 1 and inpStr[s-1] != " " and inpStr[s-1] != "\\" then continue end -- This could also work? it would accept a\:) -> a:) tho
 
-									if e < #inpStr and inpStr[e+1] != " " then continue end
+									if e < #inpStr and inpStr[e+1] ~= " " then continue end
 								end
 								
 								found = true
@@ -230,72 +230,6 @@ function chatBox.ConvertLinks(v)
 	return tab
 end
 
--- function chatBox.ConvertLinks(v)
--- 	if type(v) != "string" then return {v} end
--- 	local tab = {}
--- 	local str = ""
--- 	local tmp = string.ExplodeWithSep("%s", v)
--- 	for k1, d in pairs(tmp) do
--- 		local word, sep = d.text, d.sep
--- 		local qPos, _, _ = string.find(word, "?", 1, true)
-
--- 		local badQ = false
--- 		local preQChars = string.Explode("", ":/.-abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ0123456789")
--- 		local postQChars = string.Explode("", ",@?^=%&~+#")
-
--- 		if qPos then
--- 			if qPos == 1 then 
--- 				badQ = true
--- 			end
--- 		else
--- 			qPos = #word
--- 		end
-
--- 		local preQ = string.sub(word, 1, qPos)
--- 		if string.match(preQ, "^[0-9.:]+$") and not string.match(preQ, "^([0-9]+%.[0-9]+%.[0-9]+%.[0-9]+:?[0-9]*)$") then
--- 			badQ = true
--- 		else
--- 			local preQE = string.Explode(".", preQ)
--- 			for k, v in pairs(preQE) do if #v == 0 then badQ = true end end -- Check nothin like a...a
--- 			for k2 = 1, #word do
--- 				if k2 < qPos then
--- 					if not table.HasValue(preQChars, word[k2]) then
--- 						badQ = true
--- 					end
-
--- 				elseif k2 > qPos then
--- 					if not table.HasValue(preQChars, word[k2]) and not table.HasValue(postQChars, word[k2]) then
--- 						badQ = true
--- 					end
-
--- 				end
--- 			end
--- 		end
-
--- 		if not badQ then
--- 			local startIdx, _, _ = string.find(word, ".", 2, true)
--- 			if startIdx and startIdx < #word and word[1] != "." and word[#word] != "." then
--- 				if #str > 0 then
--- 					table.insert(tab, str)
--- 				end
--- 				table.insert(tab, {formatter=true, type="clickable", signal="Link-" .. word, text=word, color=chatBox.linkColour})
--- 				str = ""
--- 			else
--- 				str = str .. word
--- 			end
--- 		else
--- 			str = str .. word
--- 		end
--- 		if k1 != #tmp then
--- 			str = str .. sep
--- 		end
--- 	end
--- 	if #str > 0 then
--- 		table.insert(tab, str)
--- 	end
--- 	return tab
--- end
-
 function chatBox.defaultFormatMessage(ply, text, teamChat, dead, col1, col2, data)
 	local tab, madeChange = hook.Run("BC_GetDefaultTab", unpack(data))
 	if tab and madeChange then
@@ -331,13 +265,24 @@ function chatBox.defaultFormatMessage(ply, text, teamChat, dead, col1, col2, dat
 	end
 end
 
+net.Receive("BC_SayOverload", function()
+	local ply = net.ReadEntity()
+	local isTeam = net.ReadBool()
+	local isDead = net.ReadBool()
+	local msg = net.ReadString()
+	if not hook.Run("OnPlayerChat", ply, msg, isTeam, isDead) then return end
+	if not chatBox.enabled then
+		chat.AddText(unpack(chatBox.defaultFormatMessage(ply, msg, isTeam, isDead)))
+	end
+end)
+
 chatBox.OnPlayerSayHook = function(...) -- pre, col1 and col2 are supplied by DarkRP
 	for k, v in pairs(chatBox.hookOverloads.OnPlayerChat) do
 		local success, ret = xpcall(v, function(e)
 			print("Error in OnPlayerChat hook: " .. k)
 			print(e)
 		end, ...)
-		if success and ret then
+		if success and ret ~= nil then
 			return ret
 		end
 	end

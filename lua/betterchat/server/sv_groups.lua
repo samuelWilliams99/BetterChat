@@ -253,17 +253,23 @@ net.Receive("BC_updateGroup",function(len, ply)
 				local oldGroup = table.Copy(group)
 
 				chatBox.group.groups[k] = util.JSONToTable(newData)
-				local newMembers = chatBox.getGroupMembers(chatBox.group.groups[k])
+				group = chatBox.group.groups[k]
+
+				local newMembers = chatBox.getGroupMembers(group)
 
 				local members = joinTables(oldMembers, newMembers) --This means players removed and players added both are updated of the change
 
-				chatBox.handleInvites(chatBox.group.groups[k])
+				chatBox.handleInvites(group)
 
-				chatBox.sendGroupData(chatBox.group.groups[k], members)
+				chatBox.sendGroupData(group, members)
+
+				if #group.members == 0 then
+					table.remove(chatBox.group.groups, k)
+				else
+					chatBox.handleGroupRankChanges(oldGroup, group)
+				end
+
 				chatBox.saveGroups()
-
-				chatBox.handleGroupRankChanges(oldGroup, chatBox.group.groups[k])
-
 			end
 			break
 		end

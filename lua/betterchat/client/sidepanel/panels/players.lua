@@ -25,17 +25,16 @@ net.Receive("BC_UserRankChange", function()
 
 	local canUseAdminChat = LocalPlayer():IsAdmin() or (FAdmin and FAdmin.Access.PlayerHasPrivilege(LocalPlayer(), "AdminChat"))
 	local adminChannel = chatBox.getChannel("Admin")
-	if canUseAdminChat and not adminChannel then
-		chatBox.addAdminChannel()
-		chatBox.addChannel(chatBox.getChannel("Admin"))
-	end
-	if not canUseAdminChat and adminChannel then
-		chatBox.removeChannel(adminChannel) -- closes
-		for k, v in pairs(chatBox.channels) do
-			if v.name == "Admin" then
-				table.remove(chatBox.channels, k) -- removes
-				break
-			end
+	if canUseAdminChat then
+		if not adminChannel then
+			adminChannel = chatBox.addAdminChannel()
+		end
+		if not chatBox.isChannelOpen(adminChannel) then
+			chatBox.addChannel(adminChannel)
+		end
+	else
+		if adminChannel and chatBox.isChannelOpen(adminChannel) then
+			chatBox.removeChannel(adminChannel) -- closes
 		end
 	end
 end)

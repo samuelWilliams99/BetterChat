@@ -38,7 +38,11 @@ hook.Add("BC_PostInitPanels", "BC_PostInitChannels", function()
 		return aIdx < bIdx
 	end)
 	for k, channel in pairs(chatBox.channels) do
-		if channel.openOnStart then
+		local shouldOpen = channel.openOnStart
+		if type(shouldOpen) == "function" then
+			shouldOpen = shouldOpen()
+		end
+		if shouldOpen then
 			chatBox.addChannel(channel)
 		end
 	end
@@ -199,8 +203,6 @@ function chatBox.getActiveChannelIdx()
 end
 
 function chatBox.messageChannel( channels, ... )
-
-
 	if not chatBox.ready then return end
 	if channels == nil then
 		for k, v in pairs(chatBox.channels) do
@@ -240,6 +242,7 @@ function chatBox.messageChannel( channels, ... )
 		end
 
 		local channel = chatBox.getChannel( chanName )
+		if not channel then continue end
 		if channel.relayAll then
 			relayToAll = true
 			if channel.allFunc then
@@ -256,7 +259,7 @@ function chatBox.messageChannel( channels, ... )
 		end
 		chatBox.messageChannelDirect( channel, unpack(data) )
 	end
-
+	
 	if relayToAll then
 		local dCopy = table.Copy(data)
 		if editChan and useEditFunc then
@@ -409,6 +412,7 @@ function chatBox.addChannel(data)
 	chatBox.generateChannelSettings(sPanel, data)
 	table.insert(chatBox.openChannels, data.name)
 
+	data.needsData = false
 
 	local panel = vgui.Create( "DPanel", g.psheet )
 	panel.Paint = function(self, w, h)
@@ -609,7 +613,6 @@ function chatBox.addChannel(data)
 			chatBox.messageChannelDirect("All", chatBox.colors.printBlue, "Channel ", chatBox.colors.yellow, chanName, chatBox.colors.printBlue, " created.")
 		end
 	end
-	data.needsData = false
 end
 
 function chatBox.focusChannel(channel)
