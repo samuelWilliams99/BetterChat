@@ -1032,6 +1032,9 @@ function RICHERTEXT:AddGraphic(element, rawText)
 	if scrollBar.Scroll >= scrollBar.CanvasSize-1 then -- If current scroll at bottom, update for new message
 		self:scrollToBottom()
 	end
+
+	element:SetTooltip( rawText ) 
+
 	table.insert(self.graphics, element)
 
 	self:UpdateLineHeight()
@@ -1050,7 +1053,7 @@ end
 
 function RICHERTEXT:CreateGraphic(t, path, text, sizeX, sizeY, imOffsetX, imOffsetY, imSizeX, imSizeY)
 	if not self.doFormatting or not self.showImages then 
-		self:AppendText("[" .. text .. "]", true)
+		self:AppendText(text, true)
 		return
 	end
 	local g = vgui.Create("DRicherTextGraphic", self.scrollPanel:GetCanvas())
