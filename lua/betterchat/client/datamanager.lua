@@ -5,6 +5,15 @@
 		chatBox.channelSettings
 ]]--
 
+function table.filter(tab, f)
+	for k, v in pairs(tab) do
+		if not f(v) then
+			tab[k] = nil
+		end
+	end
+	return tab
+end
+
 function chatBox.saveData()
 	local data = {}
 	data.channelSettings = {}
@@ -24,17 +33,25 @@ function chatBox.saveData()
 	end
 
 	if chatBox.autoComplete then
-		data.cmdUsage = chatBox.autoComplete.cmds
-		data.emoteUsage = chatBox.autoComplete.emoteUsage
+		data.cmdUsage = table.filter(table.Copy(chatBox.autoComplete.cmds), function(x) return x > 0 end)
+		data.emoteUsage = table.filter(table.Copy(chatBox.autoComplete.emoteUsage), function(x) return x > 0 end)
 	end
 
 	file.Write( "bc_data_cl.txt", util.TableToJSON(data) )
 end
 
 function chatBox.loadData() 
-	if not file.Exists("bc_data_cl.txt", "DATA") then return end
+	if not file.Exists("bc_data_cl.txt", "DATA") then 
+		print("NO DATA")
+		return 
+	end
+
 	local data = util.JSONToTable(file.Read("bc_data_cl.txt"))
-	if not data then return end
+	if not data then 
+		print("MALFORMED DATA")
+		print(file.Read("bc_data_cl.txt"))
+		return
+	end
 
 	if data.extraPlayerSettings then
 		for k, v in pairs(data.extraPlayerSettings) do
@@ -120,8 +137,9 @@ end
 
 function saveFromTemplate(src, data, template)
 	for k, v in pairs(template) do
-		if not v.shouldSave then return end
+		if not v.shouldSave then continue end
 		local value = src[v.value]
+		if value == v.default then continue end 
 		if v.preSave then 
 			value = v.preSave(src) 
 		end

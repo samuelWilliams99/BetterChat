@@ -277,17 +277,26 @@ net.Receive("BC_SayOverload", function()
 end)
 
 chatBox.OnPlayerSayHook = function(...) -- pre, col1 and col2 are supplied by DarkRP
-	for k, v in pairs(chatBox.hookOverloads.OnPlayerChat) do
-		local success, ret = xpcall(v, function(e)
-			print("Error in OnPlayerChat hook: " .. k)
-			print(e)
-		end, ...)
-		if success and ret ~= nil then
-			return ret
+	for priority = -2, 2 do
+		for k, v in pairs(chatBox.hookOverloads.OnPlayerChat) do
+			if not v[priority] then continue end
+			local success, ret = xpcall(v[priority].fn, function(e)
+				print("Error in OnPlayerChat hook: " .. k)
+				print(e)
+			end, ...)
+			if success and ret ~= nil then
+				return ret
+			end
 		end
 	end
 
 	ply, text, teamChat, dead, pre, col1, col2 = ...
+
+	local maxLen = chatBox.getServerSetting("maxLength")
+	if #text > maxLen then
+		text = string.sub(text, 1, maxLen)
+	end
+
 	local plyValid = ply and ply:IsValid()
 	if plyValid and chatBox.playerSettings[ply:SteamID()] and chatBox.playerSettings[ply:SteamID()].ignore != 0 then return true end
 

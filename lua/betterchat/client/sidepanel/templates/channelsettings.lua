@@ -99,7 +99,7 @@ chatBox.channelSettingsTemplate = {
 		value = "textEntryColor",
 		type = "color",
 		extra = "Set the color of the text input background",
-		shouldSave = false,
+		shouldSave = true,
 		default = Color( 140, 140, 140)
 	},
 	{

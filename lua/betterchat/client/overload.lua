@@ -44,7 +44,7 @@ function chatBox.overloadFunctions()
 	end
 
 	chatBox.overloadedFuncs.hookAdd = hook.Add
-	chatBox.hookOverloads = { OnPlayerChat = table.Copy(hook.GetTable().OnPlayerChat or {}) }
+	chatBox.hookOverloads = { OnPlayerChat = table.Copy(hook.GetULibTable().OnPlayerChat or {}) }
 	for k, v in pairs(hook.GetTable().OnPlayerChat or {}) do
 		hook.Remove("OnPlayerChat", k)
 	end
@@ -53,11 +53,11 @@ function chatBox.overloadFunctions()
 			return chatBox.OnPlayerSayHook(...)
 		end
 	end)
-	hook.Add = function(event, id, func)
+	hook.Add = function(event, id, func, ...)
 		if event == "OnPlayerChat" then
 			chatBox.hookOverloads.OnPlayerChat[id] = func
 		else
-			chatBox.overloadedFuncs.hookAdd( event, id, func )
+			chatBox.overloadedFuncs.hookAdd( event, id, func, ... )
 		end
 	end
 
@@ -83,6 +83,14 @@ function chatBox.returnFunctions()
 
 	hook.Add = chatBox.overloadedFuncs.hookAdd
 	hook.Remove = chatBox.overloadedFuncs.hookRemove
+	hook.Remove("OnPlayerChat", "BC_ChatHook")
+	for id, data in pairs(chatBox.hookOverloads.OnPlayerChat) do
+		if type(fn) == "table" then -- Ulib hooks have priority, must maintain that
+			for priority, d in pairs(fn) do
+				hook.Add("OnPlayerChat", id, d.fn, priority)
+			end
+		end
+	end
 	hook.GetTable().OnPlayerChat = table.Copy(chatBox.hookOverloads.OnPlayerChat)
 
 	chatBox.overloadedFuncs.plyMeta.ChatPrint = chatBox.overloadedFuncs.plyChatPrint

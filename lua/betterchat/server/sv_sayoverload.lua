@@ -4,6 +4,11 @@ net.Receive("BC_SayOverload", function(len, ply)
 	local msg = net.ReadString()
 	local recips = isTeam and team.GetPlayers(ply:Team()) or player.GetAll()
 
+	local maxLen = chatBox.getServerSetting("maxLength")
+	if #msg > maxLen then
+		msg = string.sub(msg, 1, maxLen)
+	end
+
 	local ret = hook.Run("PlayerSay", ply, msg, isTeam)
 	if ret ~= nil then msg = ret end
 

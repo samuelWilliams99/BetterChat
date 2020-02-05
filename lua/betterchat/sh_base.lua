@@ -1,4 +1,3 @@
-//might be useful: https://unpkg.com/emoji-mart@0.2.7/sheets/sheet_emojione_64.png
 chatBox = chatBox or {}
 
 if SERVER then
@@ -162,8 +161,6 @@ concommand.Add( "bc_enable", function()
 	chatBox.enableChatBox()
 end, true, "Enables BetterChat")
 
-
-
 concommand.Add( "bc_reload", function()
 	if chatBox.enabled then
 		chatBox.disableChatBox()
@@ -325,7 +322,7 @@ function chatBox.buildBox()
 	g.chatFrame.doPaint = true
 	g.chatFrame.Think = function(self)
 		if not g.textEntry:HasFocus() and ( (not vgui.GetKeyboardFocus() ) or 
-		  (vgui.GetKeyboardFocus():GetName() != "BC_SettingsEntry" and vgui.GetKeyboardFocus():GetName() != "BC_SettingsKeyEntry" ) ) then
+		  (vgui.GetKeyboardFocus():GetName() ~= "BC_SettingsEntry" and vgui.GetKeyboardFocus():GetName() ~= "BC_SettingsKeyEntry" ) ) then
 			g.textEntry:RequestFocus()
 		end
 		if chatBox.dragging then
@@ -343,7 +340,6 @@ function chatBox.buildBox()
 					g.pane:Show()
 					g.pane:SetKeyboardInputEnabled(true)
 					g.pane:SetMouseInputEnabled(true)
-
 				else
 					g.pane:Hide()
 				end
@@ -454,7 +450,7 @@ end)
 
 hook.Add("PlayerButtonDown", "BC_ButtonDown", function(ply, keyCode)
 	if not chatBox.enabled then return end
-	if ply != LocalPlayer() then return end
+	if ply ~= LocalPlayer() then return end
 	for k, v in pairs(chatBox.channels) do
 		if v.openKey and v.openKey == keyCode then
 			chatBox.openChatBox(v.name)
@@ -478,7 +474,7 @@ function inDragCorner()
 	local tl = {x = posX + getFrom(1, g.chatFrame:GetSize()) - 30, y = posY}
 	local br = {x = posX + getFrom(1, g.chatFrame:GetSize()), y = posY + 30}
 	local x,y = gui.MousePos()
-	if  x > tl.x and x < br.x and y > tl.y and y < br.y then
+	if x > tl.x and x < br.x and y > tl.y and y < br.y then
 		return x - posX, y - posY
 	end
 end
