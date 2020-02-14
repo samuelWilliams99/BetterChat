@@ -14,7 +14,7 @@ chatBox.groupMemberOptions = {
 			local oldGroup = data.group
 			local newGroup = {name = oldGroup.name, id = oldGroup.id, members = {}, admins = {}, invites = oldGroup.invites}
 			for k, v in pairs(data) do
-				if type(v) != "number" then continue end
+				if type(v) ~= "number" then continue end
 				if v <= 1 then table.insert(newGroup.members, k) end
 				if v == 0 then table.insert(newGroup.admins, k) end
 			end

@@ -22,10 +22,7 @@ function sendPrivate(chan, from, to, text)
 end
 
 function chatBox.allowedPrivate(ply)
-	if ply:IsAdmin() then
-		return chatBox.getServerSetting("allowPMAdmin")
-	end
-	return chatBox.getServerSetting("allowPM")
+	return chatBox.getAllowed(ply, "ulx psay")
 end
 
 function chatBox.canPrivateMessage(from, to)

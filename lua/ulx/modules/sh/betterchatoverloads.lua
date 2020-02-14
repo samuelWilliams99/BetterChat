@@ -1,9 +1,5 @@
 function allowedPrivate(ply)
-	if not chatBox then return true end
-	if ply:IsAdmin() then
-		return chatBox.getServerSetting("allowPMAdmin")
-	end
-	return chatBox.getServerSetting("allowPM")
+	return chatBox.getAllowed(ply, "ulx psay")
 end
 
 function canPrivateMessage(from, to)

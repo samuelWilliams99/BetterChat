@@ -30,6 +30,27 @@ function chatBox.overloadFunctions()
 		return xSum, chatBox.graphics.size.y
 	end
 
+	chatBox.overloadedFuncs.oldOpen = chat.Open
+	chat.Open = function( mode )
+		local chan
+		if mode == 1 then
+			if DarkRP then
+				if chatBox.getServerSetting("replaceTeam") then
+					local t = chatBox.teamName(LocalPlayer())
+					chan = "TeamOverload-"..t
+				else
+					return 
+				end
+			else -- Dont open normal team chat, do nothing to allow for bind
+				chan = "Team"
+			end
+		end
+		chatBox.openChatBox( chan )
+	end
+
+	chatBox.overloadedFuncs.oldClose = chat.Close
+	chat.Close = chatBox.closeChatBox
+
 	chatBox.overloadedFuncs.plyMeta = FindMetaTable("Player")
 	chatBox.overloadedFuncs.plyChatPrint = chatBox.overloadedFuncs.plyMeta.ChatPrint
 	chatBox.overloadedFuncs.plyMeta.ChatPrint = function(self, str)
@@ -80,6 +101,8 @@ function chatBox.returnFunctions()
 	chat.AddText = chatBox.overloadedFuncs.oldAddText
 	chat.GetChatBoxSize = chatBox.overloadedFuncs.oldGetChatBoxSize
 	chat.GetChatBoxPos = chatBox.overloadedFuncs.oldGetChatBoxPos
+	chat.Open = chatBox.overloadedFuncs.oldOpen
+	chat.Close = chatBox.overloadedFuncs.oldClose
 
 	hook.Add = chatBox.overloadedFuncs.hookAdd
 	hook.Remove = chatBox.overloadedFuncs.hookRemove

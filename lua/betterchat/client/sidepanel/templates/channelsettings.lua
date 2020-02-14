@@ -74,16 +74,33 @@ chatBox.channelSettingsTemplate = {
 		value = "showImages",
 		type = "boolean",
 		default = true,
-		extra = "Set whether this channel should display color, links, images, etc.",
+		extra = "Set whether this channel should display images",
 		onChange = function(data)
 			local txt = chatBox.channelPanels[data.name].text
 			if not txt or not IsValid(txt) then return end
-			txt:SetImagesEnabled(data.showImages)
+			txt:SetGraphicsEnabled(data.showImages)
 			txt:Reload()
 		end,
 		shouldSave = true,
 		onInit = function(data, textBox)
-			textBox:SetImagesEnabled(data.showImages)
+			textBox:SetGraphicsEnabled(data.showImages)
+		end,
+	},
+	{
+		name = "Show Gifs",
+		value = "showGifs",
+		type = "boolean",
+		default = true,
+		extra = "Set whether this channel should render gifs (can be laggy)",
+		onChange = function(data)
+			local txt = chatBox.channelPanels[data.name].text
+			if not txt or not IsValid(txt) then return end
+			txt:SetGifsEnabled(data.showGifs)
+			txt:Reload()
+		end,
+		shouldSave = true,
+		onInit = function(data, textBox)
+			textBox:SetGifsEnabled(data.showGifs)
 		end,
 	},
 	{
@@ -106,8 +123,8 @@ chatBox.channelSettingsTemplate = {
 		name = "Font",
 		value = "font",
 		type = "options",
-		options = {"ChatFont", "Old ChatFont", "Mono-space"},
-		optionValues = {"chatFont_18", "ChatFont", "Monospace"},
+		options = {"ChatFont", "ChatFont Large", "Old ChatFont", "MonoSpace", "MonoSpace Large"},
+		optionValues = {"chatFont_18", "chatFont_25", "ChatFont", "Monospace", "Monospace_22"},
 		default = "chatFont_18",
 		extra = "Set the font of this channel",
 		onChange = function(data)

@@ -12,7 +12,7 @@ hook.Add("BC_KeyCodeTyped", "BC_InputHook", function(code, ctrl, shift, entry)
 			chatBox.historyInput = entry:GetText()
 		end
 		chatBox.historyIndex = math.Min(chatBox.historyIndex + 1, #chatBox.history)
-		if chatBox.historyIndex != 0 then
+		if chatBox.historyIndex ~= 0 then
 			entry:SetText(chatBox.history[(#chatBox.history + 1) - chatBox.historyIndex])
 			entry:SetCaretPos(#entry:GetText())
 		end
@@ -22,7 +22,7 @@ hook.Add("BC_KeyCodeTyped", "BC_InputHook", function(code, ctrl, shift, entry)
 			return true
 		end
 		chatBox.historyIndex = math.Max(chatBox.historyIndex - 1, 0)
-		if chatBox.historyIndex != 0 then
+		if chatBox.historyIndex ~= 0 then
 			entry:SetText(chatBox.history[(#chatBox.history + 1) - chatBox.historyIndex])
 			entry:SetCaretPos(#entry:GetText())
 		else
@@ -67,12 +67,19 @@ end)
 
 hook.Add("BC_MessageCanSend", "BC_RunConsoleCommand", function(channel, txt)
 	if chatBox.getSetting("allowConsole") then
-		if txt and (txt[1] .. txt[2]) == "¬" then -- ¬ is actually 2 characters, 194, 172
-			local cmd = txt:sub(3) -- accounting for ¬ being 2 chars
-			if not cmd then return true end
-			RunConsoleCommand(splitCommand(cmd))
+		if txt and txt[1] == "%" then
+			local cmd = txt:sub(2)
+			if not cmd or #cmd == 0 then return true end
+			LocalPlayer():ConCommand(cmd)
 			return true
 		end
+	end
+	if chatBox.giphyEnabled and string.sub(txt, 1, 7) == "!giphy " then
+		local str = string.sub(txt, 8)
+		net.Start("BC_SendGif")
+		net.WriteString(str)
+		net.WriteString(channel.name == "All" and "Players" or channel.name)
+		net.SendToServer()
 	end
 end)
 
@@ -83,33 +90,3 @@ hook.Add("BC_MessageSent", "BC_RelayULX", function(channel, txt)
 		net.SendToServer()
 	end
 end)
-
-function splitCommand(str)
-	local out = {}
-	local token = ""
-	local inQuotes = nil
-	for k = 1, #str do
-		local v = str[k]
-		if inQuotes then
-			if v == inQuotes then
-				inQuotes = nil
-			else
-				token = token .. v
-			end
-		else
-			if v == " " then
-				table.insert(out, token)
-				token = ""
-			elseif v == "\"" or v == "'" and #token == 0 then
-				inQuotes = v
-			else
-				token = token .. v
-			end
-		end
-	end
-	if #token != 0 then
-		table.insert(out, token)
-	end
-
-	return unpack(out)
-end

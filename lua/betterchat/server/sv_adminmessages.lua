@@ -4,7 +4,7 @@ net.Receive("BC_AM",function(len, ply)
 	local plys = {}
 
 	for k, p in pairs(player.GetAll()) do
-		if p:IsAdmin() or (DarkRP and FAdmin.Access.PlayerHasPrivilege(p, "AdminChat")) then
+		if chatBox.getAllowed(p, "ulx seeasay") then
 			if chatBox.chatBoxEnabled[p] then
 				net.Start("BC_AM")
 				net.WriteEntity(ply)

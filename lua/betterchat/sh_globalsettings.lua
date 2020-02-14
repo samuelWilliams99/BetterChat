@@ -53,10 +53,10 @@ chatBox.globalSettingsTemplate = {
 		default = true
 	},
 	{
-		name = "Console Commands with '¬'",
+		name = "Console Commands with '%'",
 		value = "allowConsole",
 		type = "boolean",
-		extra = "Should any message starting with '¬' be run as a console command instead",
+		extra = "Should any message starting with '%' be run as a console command instead",
 		default = false,
 	},
 	{
@@ -64,6 +64,13 @@ chatBox.globalSettingsTemplate = {
 		value = "convertEmotes",
 		type = "boolean",
 		extra = "Should emotes like \":)\" be converted to their respective emoticon. Note this is purely client side, others will still see the emoticon",
+		default = true,
+	},
+	{
+		name = "Show gifs",
+		value = "showGifs",
+		type = "boolean",
+		extra = "Should gifs from !giphy (if it is enabled) be rendered",
 		default = true,
 	},
 	{
@@ -124,34 +131,6 @@ chatBox.globalSettingsTemplate = {
 
 chatBox.serverSettings = {
 	{
-		name = "Allow Group chats",
-		value = "allowGroups",
-		type = "boolean",
-		extra = "Should players be able to create group chats",
-		default = true
-	},
-	{
-		name = "Allow Admin Group chats",
-		value = "allowGroupsAdmin",
-		type = "boolean",
-		extra = "Should admins be able to create group chats",
-		default = true
-	},
-	{
-		name = "Allow Private chats",
-		value = "allowPM",
-		type = "boolean",
-		extra = "Should players be able to open private chats",
-		default = true
-	},
-	{
-		name = "Allow Admin Private chats",
-		value = "allowPMAdmin",
-		type = "boolean",
-		extra = "Should admins be able to open private chats",
-		default = true
-	},
-	{
 		name = "Replace Team chat",
 		value = "replaceTeam",
 		type = "boolean",
@@ -170,37 +149,77 @@ chatBox.serverSettings = {
 				return self.default
 			end
 		end
-	}
+	},
+	{
+		name = "Giphy API Key",
+		value = "giphyKey",
+		type = "string",
+		extra = "Giphy API key needed for !giphy",
+		default = "",
+		onChange = function(self, old, new)
+			chatBox.getGiphyURL("thing", function(success, data)
+				if success then
+					print("[BetterChat] Giphy key test successful, giphy command enabled.")
+					chatBox.giphy.enabled = true
+					ULib.clientRPC(chatBox.getEnabledPlayers(), "chatBox.enableGiphy")
+				else
+					print("[BetterChat] No valid Giphy API key found in bc_server_giphykey, giphy command disabled. Generate an app key from https://developers.giphy.com/ to use this feature.")
+				end
+			end )
+		end
+	},
+	{
+		name = "Player gif hourly limit",
+		value = "giphyHourlyLimit",
+		type = "number",
+		extra = "Maximum giphy calls a single player is allowed in 1 hour",
+		default = 10
+	},
 }
 
+chatBox.ulxPerms = {
+	{
+		value = "groups",
+		defaultAccess = ULib.ACCESS_ALL,
+		extra = "Ability to use BetterChat groups",
+	},
+	{
+		value = "giphy",
+		defaultAccess = ULib.ACCESS_ALL,
+		extra = "Ability to use !giphy if bc_server_giphykey is valid",
+	},
+	{
+		value = "italics",
+		defaultAccess = ULib.ACCESS_ALL,
+		extra = "Ability to use *italics* in chat",
+	},
+	{
+		value = "bold",
+		defaultAccess = ULib.ACCESS_ALL,
+		extra = "Ability to use **bold** in chat",
+	},
+	{
+		value = "rainbow",
+		defaultAccess = ULib.ACCESS_ADMIN,
+		extra = "Ability to use &rainbow& in chat",
+	},
+}
+
+if SERVER then
+	for _, perm in pairs(chatBox.ulxPerms) do
+		ULib.ucl.registerAccess( "ulx bc_" .. perm.value, perm.defaultAccess, perm.extra, "BetterChat" )	
+	end
+end
+
+function chatBox.getAllowed(ply, perm)
+	if not perm then
+		perm = ply
+		ply = LocalPlayer()
+	end
+	return ULib.ucl.query( ply, perm )
+end
+
 if CLIENT then
-
-	concommand.Add("bc_disable", function()
-		if chatBox.enabled then
-			chatBox.closeChatBox()
-			chatBox.disableChatBox()
-		end
-		chat.AddText(chatBox.colors.yellow, "BetterChat ", chatBox.colors.ulx, "has been disabled. Go to Q->Options->BetterChat (or run bc_enable) to enable it.")
-	end)
-
-	concommand.Add("bc_restart", function()
-		if chatBox.enabled then
-			chatBox.closeChatBox()
-			chatBox.disableChatBox()
-		end
-		chatBox.enableChatBox()
-	end)
-
-	concommand.Add("bc_removesavedata", function()
-		chatBox.deleteSaveData()
-		if chatBox.enabled then
-			chatBox.closeChatBox()
-			chatBox.disableChatBox()
-			chatBox.enableChatBox()
-		end
-		chat.AddText(chatBox.colors.yellow, "BetterChat ", chatBox.colors.ulx, "data has been deleted.")
-	end)
-
 	hook.Add("BC_InitPanels", "BC_ConVarInit", function()
 		for k, setting in pairs(chatBox.globalSettingsTemplate) do
 			local val = "bc_" .. setting.value
@@ -218,6 +237,13 @@ if CLIENT then
 					end
 					if type(def) == "boolean" then def = def and 1 or 0 end
 					local var = CreateClientConVar(val, def)
+					if setting.min or setting.max then
+						cvars.AddChangeCallback( val, function(cv, old, new)
+							if new > (setting.max or 1000000000) or new < (setting.min or 0) then
+								cv:SetInt( old )
+							end
+						end)
+					end
 				end
 			end
 		end
@@ -278,6 +304,8 @@ function chatBox.getSetting(name, isServer)
 		return var:GetBool()
 	elseif setting.type == "number" then
 		return var:GetInt()
+	elseif setting.type == "string" then
+		return var:GetString()
 	end
 	return nil
 end
@@ -317,6 +345,8 @@ hook.Add("BC_SharedInit", "BC_InitConvars", function()
 						cvar:SetBool(ret)
 					elseif v.type == "number" then
 						cvar:SetInt(ret)
+					elseif v.type == "string" then
+						cvar:SetString(ret)
 					end
 				end
 			end)

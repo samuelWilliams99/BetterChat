@@ -8,7 +8,7 @@ chatBox.playerSettingsTemplate = {
 		default = 0,
 		extra = "No longer see messages from this user. (Ignore is for rest of this session, Perma ignore saves across sessions)",
 		extraCanRun = function(ply) 
-			return (ply != LocalPlayer() and not ply:IsSuperAdmin())
+			return (ply ~= LocalPlayer() and not ply:IsSuperAdmin())
 		end,
 		shouldSave = true,
 		preSave = function(data)
@@ -77,14 +77,14 @@ chatBox.playerSettingsTemplate = {
 		name = "Goto",
 		command = "ulx goto",
 		type = "command",
-		extraCanRun = function(ply) return ply != LocalPlayer() end,
+		extraCanRun = function(ply) return ply ~= LocalPlayer() end,
 		addToPlayerContext = true
 	},
 	{
 		name = "Bring",
 		command = "ulx bring",
 		type = "command",
-		extraCanRun = function(ply) return ply != LocalPlayer() end
+		extraCanRun = function(ply) return ply ~= LocalPlayer() end
 	},
 	{
 		name = "Kick",
@@ -122,7 +122,7 @@ chatBox.playerSettingsTemplate = {
 		name = "Slay",
 		command = "ulx slay",
 		type = "command",
-		extraCanRun = function(ply) return ply != LocalPlayer() end
+		extraCanRun = function(ply) return ply ~= LocalPlayer() end
 	},
 	{
 		name = "Freezeprops",

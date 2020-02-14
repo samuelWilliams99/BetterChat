@@ -1,4 +1,6 @@
 chatBox.linkColour = Color(180,200,255)
+chatBox.formatting = {}
+local f = chatBox.formatting
 
 function chatBox.formatMessage(ply, text, dead, defaultColor, dontRecolorColon, data)
 
@@ -48,10 +50,11 @@ function chatBox.formatText(text, defaultColor)
 
 	defaultColor = defaultColor or Color(255,255,255,255)
 
+	-- Make ulx commands grey
 	if text[1] == "!" and chatBox.getSetting("colorCmds") then
 		local s,e = string.find(text, " ", nil, true)
 		if not e then e = #text+1 end
-		if e != 2 then
+		if e ~= 2 then
 			table.insert(tab, chatBox.colors.command)
 			table.insert(tab, string.sub(text, 0, e-1))
 			table.insert(tab, defaultColor)
@@ -59,59 +62,11 @@ function chatBox.formatText(text, defaultColor)
 		end
 	end
 
-	local s,e,v,n = getPlyName(text)
-	while e do
-		if s > 1 then
-			if (text[s-1] != " " and text[s-1] != "'" and text[s-1] != "\"") then 
-				s,e,v,n = getPlyName(text, e+1)
-				continue 
-			end
-		end
-		if e < #text then
-			if text[e+1] != " " and text[e+1] != "'" and text[e+1] != "!" and text[e+1] != "?" then
-				if text[e+1] != "s" and text[s-1] != "\"" and text[e+1] != ":" then
-					s,e,v,n = getPlyName(text, e+1)
-					continue
-				else
-					if e < #text-1 then
-						if chatBox.isLetter(text[e+2]) then
-							s,e,v,n = getPlyName(text, e+1)
-							continue
-						end
-					end
-				end
-			end
-					
-		end
-		table.insert(tab, string.sub(text, 0, s-1))
-		if type(n) == "string" then
-			table.insert(tab, v)
-		end
-		if n == LocalPlayer() and ply == LocalPlayer() then
-			table.insert(tab, {formatter = true, type = "escape"}) --escape pop from ply name
-		end
-		table.insert(tab, n)
-		
-		table.insert(tab, defaultColor)
-		text = string.sub(text, e+1, -1)
-		s,e,v,n = getPlyName(text)
-	end
+	tab = f.formatPlayerNames(text, tab, defaultColor)
 
-	if #text > 0 then
-		table.insert(tab, text)
-	end
-
-	if chatBox.getSetting("clickableLinks") then --Find and separate out links
-		local newTab = {}
-		for k, v in pairs(tab) do
-			if type(v) == "string" then
-				local tab = chatBox.ConvertLinks(v)
-				table.Add(newTab, tab)
-			else
-				table.insert(newTab, v)
-			end
-		end
-		tab = newTab
+	-- format links
+	if chatBox.getSetting("clickableLinks") then
+		tab = f.formatLinks(tab)
 	end
 
 	local madeChange = true
@@ -136,7 +91,7 @@ function chatBox.formatText(text, defaultColor)
 						for l = 1, #chatBox.spriteLookup.list do
 							local str = chatBox.spriteLookup.list[l]
 
-							local isShort = str[1] != ":" or str[#str] != ":"
+							local isShort = str[1] ~= ":" or str[#str] ~= ":"
 
 							local s, e = string.find(inpStr, str, 1, true)
 
@@ -157,15 +112,15 @@ function chatBox.formatText(text, defaultColor)
 									if not chatBox.getSetting("convertEmotes") then continue end
 									if s > 1 then
 										if s > 2 then 
-											if inpStr[s-1] != " " then
+											if inpStr[s-1] ~= " " then
 												if not (inpStr[s-1] == "\\" and inpStr[s-2] == " ") then continue end
 											end
 										else
-											if inpStr[s-1] != " " and inpStr[s-1] != "\\" then continue end
+											if inpStr[s-1] ~= " " and inpStr[s-1] ~= "\\" then continue end
 										end
 									end
 
-									//if s > 1 and inpStr[s-1] != " " and inpStr[s-1] != "\\" then continue end -- This could also work? it would accept a\:) -> a:) tho
+									//if s > 1 and inpStr[s-1] ~= " " and inpStr[s-1] ~= "\\" then continue end -- This could also work? it would accept a\:) -> a:) tho
 
 									if e < #inpStr and inpStr[e+1] ~= " " then continue end
 								end
@@ -208,9 +163,68 @@ function chatBox.formatText(text, defaultColor)
 	return tab
 end
 
+function f.formatPlayerNames(text, tab, defaultColor)
+	tab = table.Copy(tab)
+	local s,e,v,n = getPlyName(text)
+	while e do
+		if s > 1 then
+			if (text[s-1] ~= " " and text[s-1] ~= "'" and text[s-1] ~= "\"") then 
+				s,e,v,n = getPlyName(text, e+1)
+				continue 
+			end
+		end
+		if e < #text then
+			if text[e+1] ~= " " and text[e+1] ~= "'" and text[e+1] ~= "!" and text[e+1] ~= "?" then
+				if text[e+1] ~= "s" and text[s-1] ~= "\"" and text[e+1] ~= ":" then
+					s,e,v,n = getPlyName(text, e+1)
+					continue
+				else
+					if e < #text-1 then
+						if chatBox.isLetter(text[e+2]) then
+							s,e,v,n = getPlyName(text, e+1)
+							continue
+						end
+					end
+				end
+			end
+					
+		end
+		table.insert(tab, string.sub(text, 0, s-1))
+		if type(n) == "string" then
+			table.insert(tab, v)
+		end
+		if n == LocalPlayer() and ply == LocalPlayer() then
+			table.insert(tab, {formatter = true, type = "escape"}) --escape pop from ply name
+		end
+		table.insert(tab, n)
+		
+		table.insert(tab, defaultColor)
+		text = string.sub(text, e+1, -1)
+		s,e,v,n = getPlyName(text)
+	end
+
+	if #text > 0 then
+		table.insert(tab, text)
+	end
+
+	return tab
+end
+
+function f.formatLinks(tab)
+	local newTab = {}
+	for k, v in pairs(tab) do
+		if type(v) == "string" then
+			local tab = chatBox.ConvertLinks(v)
+			table.Add(newTab, tab)
+		else
+			table.insert(newTab, v)
+		end
+	end
+	return newTab
+end
 
 function chatBox.ConvertLinks(v)
-	if type(v) != "string" then return {v} end
+	if type(v) ~= "string" then return {v} end
 	local tab = {}
 	local lStart, lEnd, url = 0, 0, ""
 	while true do
@@ -279,6 +293,11 @@ end)
 chatBox.OnPlayerSayHook = function(...) -- pre, col1 and col2 are supplied by DarkRP
 	for priority = -2, 2 do
 		for k, v in pairs(chatBox.hookOverloads.OnPlayerChat) do
+			if type(v) == "function" then
+				v = {
+					[0] = {fn = v}
+				}
+			end
 			if not v[priority] then continue end
 			local success, ret = xpcall(v[priority].fn, function(e)
 				print("Error in OnPlayerChat hook: " .. k)
@@ -298,7 +317,7 @@ chatBox.OnPlayerSayHook = function(...) -- pre, col1 and col2 are supplied by Da
 	end
 
 	local plyValid = ply and ply:IsValid()
-	if plyValid and chatBox.playerSettings[ply:SteamID()] and chatBox.playerSettings[ply:SteamID()].ignore != 0 then return true end
+	if plyValid and chatBox.playerSettings[ply:SteamID()] and chatBox.playerSettings[ply:SteamID()].ignore ~= 0 then return true end
 
 	local tab
 	if pre then
@@ -414,7 +433,7 @@ function chatBox.print( ... )
 			end
 			if not isPly then
 				local tab = chatBox.ConvertLinks(v)
-				if #tab != 1 or tab[1] != v then 
+				if #tab ~= 1 or tab[1] ~= v then 
 					table.remove(data, k)
 					for l = #tab, 1, -1 do
 						table.insert(data, k, tab[l])

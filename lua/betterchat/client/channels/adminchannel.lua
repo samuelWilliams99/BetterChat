@@ -14,7 +14,7 @@ chatBox.admin.defaultChannel = {
 		table.insert(tab, idx+1, "(ADMIN) " )
 	end,
 	openOnStart = function()
-		return LocalPlayer():IsAdmin() or (DarkRP and FAdmin.Access.PlayerHasPrivilege(LocalPlayer(), "AdminChat"))
+		return chatBox.getAllowed("ulx seeasay")
 	end,
 	runCommandSeparately = true,
 	hideChatText = true,
@@ -29,6 +29,12 @@ function chatBox.addAdminButton()
 	btn:SetSize(50,19)
 	btn:SetTextColor(Color(220,220,220,255))
 	btn:SetText("Admin")
+
+	local oldLayout = btn.PerformLayout
+	function btn:PerformLayout()
+		self:SetPos( g.size.x - 50 - 3 - 50 - 33, 5 )
+		oldLayout(self)
+	end
 
 	btn.Paint = function(self, w, h)
 		draw.RoundedBox( 0, 0, 0, w, h, Color( 150,  150, 150, 50 ) )
@@ -46,13 +52,29 @@ function chatBox.addAdminButton()
 		chatBox.focusChannel(chan)
 	end
 
-	hook.Add("BC_ShowChat", "BC_showAdminButton", function() chatBox.graphics.adminButton:Show() end)
-	hook.Add("BC_HideChat", "BC_hideAdminButton", function() chatBox.graphics.adminButton:Hide() end)
+	hook.Add("BC_ShowChat", "BC_showAdminButton", function() 
+		if not chatBox.graphics.adminButton then
+			hook.Remove("BC_ShowChat", "BC_showAdminButton")
+			hook.Remove("BC_HideChat", "BC_hideAdminButton")
+			return
+		end
+		chatBox.graphics.adminButton:Show() 
+	end)
+	hook.Add("BC_HideChat", "BC_hideAdminButton", function() 
+		if not chatBox.graphics.adminButton then
+			hook.Remove("BC_ShowChat", "BC_showAdminButton")
+			hook.Remove("BC_HideChat", "BC_hideAdminButton")
+			return
+		end
+		chatBox.graphics.adminButton:Hide() 
+	end)
 
 	g.psheet.tabScroller:DockMargin(3,0,88 + 53,0)
 
 	g.adminButton = btn
 end
+
+
 
 function chatBox.removeAdminButton()
 	local g = chatBox.graphics
@@ -67,8 +89,7 @@ function chatBox.removeAdminButton()
 end
 
 function chatBox.allowedAdmin()
-	local ply = LocalPlayer()
-	return ply:IsAdmin() or (DarkRP and FAdmin.Access.PlayerHasPrivilege(ply, "AdminChat"))
+	return chatBox.getAllowed("ulx seeasay")
 end
 
 net.Receive("BC_AM", function()
@@ -111,11 +132,29 @@ hook.Add("BC_PreInitPanels", "BC_InitAddAdminChannel", function()
 	chatBox.addAdminChannel()
 end)
 
-hook.Add("BC_PostInitPanels", "BC_adminAddButton", function() 
+hook.Add("BC_PostInitPanels", "BC_adminAddButton", function()
 	if chatBox.allowedAdmin() then
 		chatBox.addAdminButton()
 	end
 end)
+
+hook.Add("BC_UserAccessChange", "BC_AdminChannelCheck", function()
+	local adminChannel = chatBox.getChannel("Admin")
+	if chatBox.allowedAdmin() then
+		if not adminChannel then
+			adminChannel = chatBox.addAdminChannel()
+		end
+		if not chatBox.isChannelOpen(adminChannel) then
+			chatBox.addChannel(adminChannel)
+		end
+		chatBox.addAdminButton()
+	else
+		if adminChannel and chatBox.isChannelOpen(adminChannel) then
+			chatBox.removeChannel(adminChannel) -- closes
+		end
+		chatBox.removeAdminButton()
+	end
+end )
 
 -- Overloads
 hook.Add("PostGamemodeLoaded", "BC_RPAdminOverload", function()
@@ -139,7 +178,7 @@ hook.Add("PostGamemodeLoaded", "BC_RPAdminOverload", function()
 			end
 		end)
 		DarkRP.addChatReceiver("/adminhelp", "talk in Admin", function(ply, text)
-			return FAdmin.Access.PlayerHasPrivilege(LocalPlayer(), "SeeAdmins") and (ply:IsAdmin() or FAdmin.Access.PlayerHasPrivilege(ply, "AdminChat"))
+			return chatBox.getAllowed("ulx seeasay")
 		end)
 	end
 end)

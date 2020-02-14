@@ -2,13 +2,13 @@ include("betterchat/client/sidepanel/templates/membersettings.lua")
 
 hook.Add("BC_InitPanels", "BC_InitSidePanelMembers", function()
 	local g = chatBox.graphics
-	chatBox.createSidePanel("Group Members", {x = 250, y = g.size.y - 33}, {icon="icon16/group.png", border=1})
+	chatBox.createSidePanel("Group Members", 250, {icon="icon16/group.png", border=1})
 end)
 
 hook.Add("BC_ChatTextClick", "BC_GroupAccept", function(eventType, dataType, dataArg)
 	if dataType == "GroupAcceptInvite" and (eventType == "LeftClick" or eventType == "DoubleClick") then
 		local groupId = tonumber(dataArg)
-		if not groupId or type(groupId) != "number" then return end
+		if not groupId or type(groupId) ~= "number" then return end
 
 		net.Start("BC_groupAccept")
 		net.WriteUInt(groupId, 16)
@@ -71,7 +71,7 @@ function chatBox.generateGroupMemberMenu(panel, group)
 			if aRole <= 1 or aInvited == bInvited then -- members/admins
 				if not aPlyExists and not bPlyExists then
 					return (a < b) -- sort by sid
-				elseif aPlyExists != bPlyExists then
+				elseif aPlyExists ~= bPlyExists then
 					return aPlyExists	-- put real player above offline
 				else
 					return (aPly:GetName() < bPly:GetName()) -- sort by name
@@ -108,7 +108,7 @@ function chatBox.generateGroupMemberMenu(panel, group)
 	title:SizeToContents()
 	title.data = channel
 	title.Think = function(self)
-		if self.data.displayName != self:GetText() then
+		if self.data.displayName ~= self:GetText() then
 			self:SetText(self.data.displayName)	
 			title:SizeToContents()
 		end

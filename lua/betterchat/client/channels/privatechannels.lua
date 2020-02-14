@@ -5,7 +5,7 @@ chatBox.defaultPrivateChannel = {
 	addNewLines = true,
 	send = function(self, txt)
 		if IsValid(self.ply) then
-			if self.ply != LocalPlayer() then --so you can PM yourself and not get the message twice
+			if self.ply ~= LocalPlayer() then --so you can PM yourself and not get the message twice
 				chatBox.printOwnPrivate(self.name, txt)
 			end
 
@@ -43,10 +43,7 @@ chatBox.defaultPrivateChannel = {
 
 function chatBox.allowedPrivate(ply)
 	ply = ply or LocalPlayer()
-	if ply:IsAdmin() then
-		return chatBox.getServerSetting("allowPMAdmin")
-	end
-	return chatBox.getServerSetting("allowPM")
+	return chatBox.getAllowed(ply, "ulx psay")
 end
 
 function chatBox.canPrivateMessage(ply)
@@ -58,6 +55,16 @@ function chatBox.printOwnPrivate(name, txt)
 	local tab = table.Add({{isController = true, doSound = false}, LocalPlayer(), chatBox.colors.white, ": "}, chatBox.formatText(txt))
 	chatBox.messageChannel( {name, "MsgC"}, unpack(tab))
 end
+
+hook.Add("BC_UserAccessChange", "PrivateChannelCheck", function()
+	if not chatBox.allowedPrivate() then
+		for k, v in pairs(chatBox.channels) do
+			if string.sub(v.name, 1, 9) == "Player - " then
+				chatBox.removeChannel(v)
+			end 
+		end
+	end
+end )
 
 hook.Add("BC_PreInitPanels", "BC_PrivateAddHooks", function()
 	if not chatBox.allowedPrivate() then return end
@@ -86,7 +93,7 @@ hook.Add("BC_PreInitPanels", "BC_PrivateAddHooks", function()
 			if not chatBox.isChannelOpen(chan) then
 				chatBox.addPrivateChannel(chan)
 			end
-			local tab = table.Add({{isController = true, doSound = (ply == sender) and (ply != LocalPlayer())}, sender, chatBox.colors.white, ": "}, chatBox.formatText(text))
+			local tab = table.Add({{isController = true, doSound = (ply == sender) and (ply ~= LocalPlayer())}, sender, chatBox.colors.white, ": "}, chatBox.formatText(text))
 			chatBox.messageChannel( {chan.name, "MsgC"}, unpack(tab) )
 			chatBox.lastPrivate = chan
 		end

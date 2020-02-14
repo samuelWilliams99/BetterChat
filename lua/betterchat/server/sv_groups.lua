@@ -79,10 +79,7 @@ function joinTables(a, b)
 end
 
 function chatBox.allowedGroups(ply)
-	if ply:IsAdmin() then
-		return chatBox.getServerSetting("allowGroupsAdmin")
-	end
-	return chatBox.getServerSetting("allowGroups")
+	return chatBox.getAllowed(ply, "ulx bc_groups")
 end
 
 function chatBox.removeInvalidMembers(members)
@@ -254,6 +251,13 @@ net.Receive("BC_updateGroup",function(len, ply)
 
 				chatBox.group.groups[k] = util.JSONToTable(newData)
 				group = chatBox.group.groups[k]
+
+				for k, v in pairs(group.invites) do
+					local invTime = oldGroup.invites[k]
+					if invTime and invTime + chatBox.group.inviteExpires > CurTime() then
+						group.invites[k] = invTime
+					end
+				end
 
 				local newMembers = chatBox.getGroupMembers(group)
 

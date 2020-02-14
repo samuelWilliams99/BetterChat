@@ -28,7 +28,7 @@ timer.Create("BC_StateMonitor", 1/30, 0, function()
 	for k,state in pairs(trackedStates) do
 		for k1, ply in pairs(player.GetAll()) do
 			local newState = state(ply)
-			if newState != chatBox.states[k][ply] then
+			if newState ~= chatBox.states[k][ply] then
 				chatBox.states[k][ply] = newState
 				net.Start("BC_sendPlayerState")
 				net.WriteString(k)
@@ -70,7 +70,15 @@ function accessChange(id, ...)
 	end)
 end
 
+function accessChangeGlobal()
+	timer.Simple( 0.1, function() --Delay the message as ULibUserGroupChange is called before permission changes
+		net.Start("BC_UserRankChange")
+		net.Broadcast()
+	end)
+end
+
 hook.Add("ULibUserGroupChange", "BC_RankChange", accessChange)
 hook.Add("ULibUserAccessChange", "BC_RankChange", accessChange)
 hook.Add("ULibUserRemoved", "BC_RankChange", accessChange)
+hook.Add("ULibGroupAccessChanged", "BC_RankChange", accessChangeGlobal)
 hook.Add("CAMI.PlayerUsergroupChanged", "BC_RankChange", accessChange)

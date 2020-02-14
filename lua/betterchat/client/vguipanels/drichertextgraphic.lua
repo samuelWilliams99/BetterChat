@@ -5,6 +5,7 @@ function RTG:Init()
 	self.offset = {["x"] = 0, ["y"] = 0, ["w"] = 0, ["h"] = 0}
 	self.useOffset = false
 	self.doRender = true
+	self.prevDoRender = true
 	self.color = Color(255,255,255,255)
 end
 
@@ -29,6 +30,12 @@ end
 
 function RTG:UpdateColor()
 	self:SetAlpha(self.color.a)
+	if self.type == "gif" and self.graphic and IsValid(self.graphic) then
+		local a = self:GetAlpha()
+		self.graphic:RunJavascript([[
+			var element = document.getElementsByTagName("img")[0]
+			element.style.opacity = ]] .. (a/255) .. ";")
+	end
 end
 
 function RTG:SetSubImage(x, y, w, h)
@@ -78,12 +85,6 @@ function RTG:UpdateGraphic()
 				local sx, sy = im.m_Material:Width(), im.m_Material:Height()
 
 				local u0, u1, v0, v1 = im.offset.x/sx, im.offset.y/sy, (im.offset.x + im.offset.w)/sx, (im.offset.y + im.offset.h)/sy
-
-				-- Code from DrawTexturedRectUV wiki for removing invalid pixel correction
-				-- local du = 0.5 / 32 -- half pixel anticorrection
-				-- local dv = 0.5 / 32 -- half pixel anticorrection
-				-- u0, v0 = ( u0 - du ) / ( 1 - 2 * du ), ( v0 - dv ) / ( 1 - 2 * dv )
-				-- u1, v1 = ( u1 - du ) / ( 1 - 2 * du ), ( v1 - dv ) / ( 1 - 2 * dv )
 				
 				surface.DrawTexturedRectUV( 0, 0, w, h, u0, u1, v0, v1)
 			end
@@ -93,48 +94,33 @@ function RTG:UpdateGraphic()
 		self.graphic = g
 	else
 		local g = vgui.Create("DHTML", self)
-		g:Dock()
+		g:Dock( FILL )
 		g:SetHTML(
 			[[
 				<style> 
-					div {
-					    width: ]] .. self:GetWidth() .. [[px;
-					    height: ]] .. self:GetHeight() .. [[px;
-					    overflow: hidden;
-					}
-					body {
+					body, div, img {
 						margin: 0px;
+						overflow: hidden;
+					    width: ]] .. self:GetWide() .. [[px;
+					    height: ]] .. self:GetTall() .. [[px;
 					}
 				</style>
-			]] .. "<body><div><img src=\"" .. self.path .. "\"></div></body>")
-
-		g:RunJavascript(
-			"var w = " .. self:GetWidth() .. "; " ..
-			"var h = " .. self:GetHeight() .. "; " ..
-			"var offsetX = " .. self.offset.x .. "; " ..
-			"var offsetY = " .. self.offset.y .. "; " ..
-			"var offsetW = " .. self.offset.w .. "; " ..
-			"var offsetH = " .. self.offset.h .. "; " ..
-			[[
-			var im = document.getElementsByTagName("img")[0];
-			var originalW = im.naturalWidth;
-			var originalH = im.naturalHeight;
-			var scaleX = w/offsetW;
-			var scaleY = h/offsetH;
-			var left = -offsetX * scaleX;
-			var top = -offsetY * scaleY;
-
-			im.width = originalW * scaleX;
-			im.height = originalH * scaleY;
-
-			im.style.margin = top + "px 0px 0px "+left+"px";
-		]])
+			]] .. "<body><div><img src=\"" .. self.path .. "\"></div></body>" )
 		self.graphic = g
 	end
 end
 
 function RTG:SetDoRender(r)
 	if self.doRender == r then return end
+	self.doRender = r
+	timer.Simple(0.1, function()
+		self:UpdateDoRender()
+	end)
+end
+
+function RTG:UpdateDoRender()
+	if self.prevDoRender == self.doRender then return end
+	local r = self.doRender
 	if self.type == "image" then
 		if r then self.graphic:Show() else self.graphic:Hide() end
 	else
@@ -144,7 +130,7 @@ function RTG:SetDoRender(r)
 			self.graphic:Remove()
 		end
 	end
-	self.doRender = r
+	self.prevDoRender = self.doRender
 end
 
 vgui.Register( "DRicherTextGraphic", RTG, "Panel" )

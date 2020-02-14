@@ -1,12 +1,19 @@
 net.Receive("BC_sendULXCommands", function()
 	local cmds = util.JSONToTable(net.ReadString())
+	chatBox.autoComplete.extraCmds = {}
 	chatBox.autoComplete.cmds = chatBox.autoComplete.cmds or {}
 	local newCmds = {}
 	for k, v in pairs(cmds) do
 		newCmds[v] = chatBox.autoComplete.cmds[v] or 0
 	end
+	if chatBox.giphyEnabled then
+		newCmds["!giphy"] = chatBox.autoComplete.cmds["!giphy"] or 0
+	else
+		chatBox.autoComplete.extraCmds["!giphy"] = chatBox.autoComplete.cmds["!giphy"] or 0
+	end
 	chatBox.autoComplete.cmds = newCmds
 	chatBox.autoComplete.emoteUsage = chatBox.autoComplete.emoteUsage or {}
+	chatBox.autoComplete.gotCommands = true
 end)
 
 hook.Add("BC_InitPanels", "BC_InitAutoComplete", function()
@@ -38,14 +45,14 @@ hook.Add("BC_KeyCodeTyped", "BC_AutoCompleteHook", function(code, ctrl, shift, e
 		local strCompleted
 		local c = chatBox.autoComplete.cur
 		
-		if chatBox.autoComplete.cur.option != 0 then
+		if chatBox.autoComplete.cur.option ~= 0 then
 			strCompleted = c.options[c.option]
 		else
 			strCompleted = txtEx[#txtEx]
 		end
 
 		if txt[1] == "!" and #txtEx == 1 then //Is command
-			if chatBox.autoComplete.cmds[strCompleted] != nil then
+			if chatBox.autoComplete.cmds[strCompleted] ~= nil then
 				chatBox.autoComplete.cmds[strCompleted] = chatBox.autoComplete.cmds[strCompleted] + 1
 				chatBox.saveData()
 			end
@@ -121,7 +128,7 @@ function updateText()
 		options[1] = c.word .. string.sub(options[1], #c.word + 1, -1)
 
 		local t = c.prefix .. table.concat(options, "; ", sIdx, math.min(sIdx -1 + OPTIONS_SHOWN, #c.options)) .. "; "
-		if c.option != 0 then
+		if c.option ~= 0 then
 			t = t .. "... ; "
 		end
 

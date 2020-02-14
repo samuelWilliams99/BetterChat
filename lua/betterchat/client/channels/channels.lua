@@ -27,6 +27,12 @@ hook.Add("BC_InitPanels", "BC_InitChannels", function()
 		end)
 	end
 
+	local oldLayout = g.psheet.PerformLayout
+	function g.psheet:PerformLayout()
+		self:SetSize(g.size.x, g.size.y-37)
+		oldLayout(self)
+	end
+
 	g.psheet.tabScroller:DockMargin(3,0,88,0)
 
 end)
@@ -311,7 +317,7 @@ function chatBox.messageChannelDirect( channel, controller, ...)
 
 	local doSound = true
 	if type(controller) == "table" and (controller.isController or controller.controller) then --if they gave a controller
-		if controller.doSound != nil then 
+		if controller.doSound ~= nil then 
 			doSound = controller.doSound 
 		end
 	else
@@ -330,8 +336,6 @@ function chatBox.messageChannelDirect( channel, controller, ...)
 			chatBox.triggerPop()
 		end
 	end
-
-
 
 	local richText = chatBox.channelPanels[chanName].text
 	local prevCol = Color(255,255,255,255)
@@ -360,7 +364,21 @@ function chatBox.messageChannelDirect( channel, controller, ...)
 				elseif obj.type == "image" then
 					chatBox.addImage(richText, obj)
 				elseif obj.type == "text" then
+					if obj.decoration then
+						local newFont = channel.font
+						if obj.decoration.bold then
+							newFont = newFont .. "_bold"
+						end
+						if obj.decoration.italics then
+							newFont = newFont .. "_italics"
+						end
+						if obj.decoration.underline then
+							newFont = newFont .. "_underline"
+						end
+						richText:SetFont( newFont )
+					end
 					richText:AppendText( obj.text )
+					richText:SetFont( channel.font )
 				end
 			elseif IsColor(obj) then
 				richText:InsertColorChange( obj.r, obj.g, obj.b, 255 )
@@ -370,7 +388,7 @@ function chatBox.messageChannelDirect( channel, controller, ...)
 			local col = team.GetColor(obj:Team())
 			richText:InsertColorChange(col.r, col.g, col.b, 255)
 			richText:InsertClickableTextStart("Player-"..obj:SteamID())
-			richText:AppendText(obj:Nick())
+			richText:AppendText(string.Replace(obj:Nick(), "\n", "")) -- Someone at some point had new lines in their name, somehow. begone
 			richText:InsertClickableTextEnd()
 			richText:InsertColorChange(prevCol.r, prevCol.g, prevCol.b, 255)
 			if obj == LocalPlayer() and not ignoreNext then
@@ -419,7 +437,7 @@ function chatBox.removeChannel(channel) --rename to closeChannel
 end
 
 function openLink(url)
-	if string.Left(url, 7) != "http://" and string.Left(url, 8) != "https://" then
+	if string.Left(url, 7) ~= "http://" and string.Left(url, 8) ~= "https://" then
 		url = "http://" .. url
 	end
 	chatBox.closeChatBox()
@@ -438,6 +456,7 @@ function chatBox.addChannel(data)
 	data.needsData = false
 
 	local panel = vgui.Create( "DPanel", g.psheet )
+
 	panel.Paint = function(self, w, h)
 		self.settingsBtn:SetVisible(self.doPaint)
 		if not self.doPaint then return end
@@ -448,9 +467,19 @@ function chatBox.addChannel(data)
 
 	local richText = vgui.Create( "DRicherText", panel )
 	richText:SetPos(10, 10)
-	richText:SetSize(g.chatFrame:GetWide() - 20, g.chatFrame:GetTall() - 42 - 37)
+	richText:SetSize(g.size.x - 20, g.size.y - 42 - 37)
 	richText:SetFont(data.font or chatBox.graphics.font)
 	richText:SetMaxLines(chatBox.getSetting("chatHistory"))
+
+	richText.panel = panel
+
+	local rtOldLayout = richText.PerformLayout
+	function richText:PerformLayout()
+		self:SetSize(g.size.x - 20, g.size.y - 42 - 37)
+		self.panel.settingsBtn:InvalidateLayout()
+		rtOldLayout(self)
+	end
+
 	richText.EventHandler = function(eventType, data, m) 
 		local idx = string.find(data, "-")
 		local dataType = string.sub(data, 1, idx-1)
@@ -553,6 +582,13 @@ function chatBox.addChannel(data)
 	settingsBtn:SetColor(Color(50,50,50,150))
 	settingsBtn.ang = 0
 	settingsBtn.name = data.name
+
+	local sbOldLayout = settingsBtn.PerformLayout
+	function settingsBtn:PerformLayout()
+		self:SetPos(g.chatFrame:GetWide() - 59, 5)
+		sbOldLayout(self)
+	end
+
 	settingsBtn.DoClick = function(self)
 		local s = chatBox.sidePanels["Channel Settings"]
 		if s.isOpen then
@@ -582,7 +618,7 @@ function chatBox.addChannel(data)
 		local c = a and 150 or 200
 		
 		draw.RoundedBox( 0, 2, 0, w-4, h, Color( c,c,c,50 ) )
-		if self:GetText() != " " .. self.data.displayName then
+		if self:GetText() ~= " " .. self.data.displayName then
 			self:SetText(" " .. self.data.displayName)
 			self:GetPropertySheet().tabScroller:InvalidateLayout(true) -- to make the tabs resize correctly
 		end

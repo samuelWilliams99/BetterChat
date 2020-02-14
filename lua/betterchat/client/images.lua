@@ -37,6 +37,12 @@ hook.Add("BC_InitPanels", "BC_InitImages", function()
 	imageBtn.DoClick = function(self)
 		chatBox.toggleEmojiMenu()
 	end
+	local oldLayout = imageBtn.PerformLayout
+	function imageBtn:PerformLayout()
+		self:SetSize(20, 20)
+		self:SetPos(g.size.x - 25, g.size.y - 25)
+		oldLayout(self)
+	end
 	g.emojiButton = imageBtn
 
 
@@ -187,7 +193,7 @@ function chatBox.addEmotesToPanel(panel, data, usage)
 		local toolTip = ":" .. str .. ":"
 		if usage then
 			toolTip = toolTip .. " | Used " .. usage[str] .. " time"
-			if usage[str] != 1 then toolTip = toolTip .. "s" end
+			if usage[str] ~= 1 then toolTip = toolTip .. "s" end
 		end
 		g:SetTooltip(toolTip)
 
@@ -335,3 +341,44 @@ function chatBox.generateSpriteLookups()
 	chatBox.spriteLookup = {lookup = lookup, list = nameList}
 
 end
+
+function chatBox.enableGiphy()
+	chatBox.giphyEnabled = true
+	if chatBox.autoComplete and chatBox.autoComplete.gotCommands then
+		chatBox.autoComplete.cmds["!giphy"] = chatBox.autoComplete.extraCmds["!giphy"] or 0
+	end
+end
+
+local function sendGif(channel, url, text)
+	-- Doesnt make it clickable :(
+	-- Fix this another time
+	local rt = chatBox.channelPanels[channel.name].text
+	rt:InsertClickableTextStart("Link-" .. url)
+	rt:AddGif(url, text .. "\n", 100, 100)
+	rt:InsertClickableTextEnd()
+end
+
+net.Receive("BC_SendGif", function(len, ply)
+	if not chatBox.enabled then return end
+
+	if not chatBox.getSetting("showGifs") then return end
+
+	local url = net.ReadString()
+	local chanName = net.ReadString()
+	local text = net.ReadString()
+	local channel = chatBox.getChannel(chanName)
+	if not channel or not chatBox.isChannelOpen(channel) then return end
+
+	if not channel.replicateAll then
+		sendGif(channel, url, text)
+	end
+
+	if channel.relayAll then
+		sendGif(chatBox.getChannel("All"), url, text)
+		for k, v in pairs(chatBox.channels) do
+			if v.replicateAll and chatBox.isChannelOpen(v) then
+				sendGif(v, url, text)
+			end
+		end
+	end
+end )

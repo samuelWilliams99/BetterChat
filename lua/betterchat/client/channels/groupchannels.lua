@@ -49,10 +49,7 @@ chatBox.group.defaultChannel = {
 }
 
 function chatBox.allowedGroups()
-	if LocalPlayer():IsAdmin() then
-		return chatBox.getServerSetting("allowGroupsAdmin")
-	end
-	return chatBox.getServerSetting("allowGroups")
+	return chatBox.getAllowed("ulx bc_groups")
 end
 
 function chatBox.removeGroupHooks()
@@ -64,13 +61,48 @@ function chatBox.removeGroupHooks()
 end
 
 hook.Add("BC_PostInitPanels", "BC_groupAddButton", function() -- add group change check
-	if not chatBox.allowedGroups() then chatBox.removeGroupHooks() return end
+	if chatBox.allowedGroups() then 
+		chatBox.enableGroups()
+	else
+		chatBox.removeGroupHooks()
+	end
+end)
+
+hook.Add("BC_UserAccessChange", "BC_GroupChannelCheck", function()
+	if chatBox.allowedGroups() then 
+		chatBox.enableGroups()
+	else
+		chatBox.disableGroups()
+	end
+end )
+
+function chatBox.disableGroups()
+	chatBox.removeGroupHooks()
+	if chatBox.graphics.groupButton then
+		chatBox.graphics.groupButton:Remove()
+		chatBox.graphics.groupButton = nil
+	end
+	for k, v in pairs(chatBox.channels) do
+		if string.sub(v.name, 1, 8) == "Group - " then
+			chatBox.removeChannel(v)
+		end
+	end
+end
+
+function chatBox.enableGroups()
 	local g = chatBox.graphics
+	if g.groupButton then return end
 	local comboBox = vgui.Create("DComboBox", g.chatFrame)
 	comboBox:SetSortItems(false)
 	comboBox:SetPos( g.size.x - 50 - 33, 5 )
 	comboBox:SetSize(50,19)
 	comboBox:SetTextColor(Color(220,220,220,255))
+
+	local oldLayout = comboBox.PerformLayout
+	function comboBox:PerformLayout()
+		self:SetPos( g.size.x - 50 - 33, 5 )
+		oldLayout(self)
+	end
 
 	comboBox.Think = function(self)
 		if chatBox.group.changed then
@@ -280,10 +312,10 @@ hook.Add("BC_PostInitPanels", "BC_groupAddButton", function() -- add group chang
 		end
 
 		local tab = chatBox.formatMessage(ply, text, not ply:Alive())
-		table.insert(tab, 1, {isController = true, doSound = ply != LocalPlayer()})
+		table.insert(tab, 1, {isController = true, doSound = ply ~= LocalPlayer()})
 		chatBox.messageChannel( {chan.name, "MsgC"}, unpack(tab) )
 	end)
-end)
+end
 
 function chatBox.deleteGroup(group)
 	if not chatBox.allowedGroups() then return end

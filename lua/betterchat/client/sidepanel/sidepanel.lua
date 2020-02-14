@@ -3,12 +3,14 @@ include("betterchat/client/sidepanel/panels/channels.lua")
 include("betterchat/client/sidepanel/panels/players.lua")
 include("betterchat/client/sidepanel/panels/members.lua")
 
+local default_width = 110
+
 renderSettingFuncs = {
 	["string"] = function(sPanel, panel, data, y, w, h, setting)
 		local textEntry = vgui.Create("DTextEntry", panel)
 		textEntry:SetName("BC_SettingsEntry")
-		textEntry:SetPos(w - 100, y-1)
-		textEntry:SetSize(100, 18)
+		textEntry:SetPos(w - default_width, y-1)
+		textEntry:SetSize(default_width, 18)
 		textEntry:SetText(data[setting.value])
 		textEntry:SetTooltip(setting.extra)
 		textEntry:SetUpdateOnType(false)
@@ -53,13 +55,13 @@ renderSettingFuncs = {
 		end
 
 
-		return 100
+		return default_width
 	end,
 	["key"] = function(sPanel, panel, data, y, w, h, setting)
 		local textEntry = vgui.Create("DTextEntry", panel)
 		textEntry:SetName("BC_SettingsKeyEntry")
-		textEntry:SetPos(w - 100, y-1)
-		textEntry:SetSize(100, 18)
+		textEntry:SetPos(w - default_width, y-1)
+		textEntry:SetSize(default_width, 18)
 		textEntry:SetFont("Monospace")
 		textEntry:SetDisabled(setting.disabled or false)
 
@@ -78,7 +80,7 @@ renderSettingFuncs = {
 			end
 		end
 		textEntry.OnKeyCodeTyped = function(self, val)
-			if val != KEY_ESCAPE then
+			if val ~= KEY_ESCAPE then
 				if val == KEY_BACKSPACE then
 					self.data[self.val] = nil
 					self:SetPlaceholderText("NOT SET")
@@ -103,7 +105,7 @@ renderSettingFuncs = {
 			return true
 		end
 
-		return 100
+		return default_width
 	end,
 	["boolean"] = function(sPanel, panel, data, y, w, h, setting)
 		local checkBox = vgui.Create("DCheckBox", panel)
@@ -137,7 +139,7 @@ renderSettingFuncs = {
 		checkBox.val = setting.value
 		checkBox.unique = setting.unique
 		checkBox.OnChange = function(self, val)
-			local changed = self.data[self.val] != val
+			local changed = self.data[self.val] ~= val
 			if self.unique and val then
 				for k, v in pairs(chatBox.channels) do
 					v[self.val] = false
@@ -161,7 +163,7 @@ renderSettingFuncs = {
 	end,
 	["options"] = function(sPanel, panel, data, y, w, h, setting)
 		if not setting.optionValues then setting.optionValues = setting.options end
-		local width = setting.overrideWidth or 100
+		local width = setting.overrideWidth or default_width
 		local comboBox = vgui.Create("DComboBox", panel)
 		comboBox:SetSortItems(false)
 		comboBox:SetPos( w - width, y-2 )
@@ -220,7 +222,7 @@ renderSettingFuncs = {
 		end
 
 		comboBox.OnSelect = function(self, idx, name, val)
-			local changed = self.data[self.val] != val
+			local changed = self.data[self.val] ~= val
 			self.data[self.val] = val
 			
 			if changed then 
@@ -233,7 +235,7 @@ renderSettingFuncs = {
 	end,
 	["button"] = function(sPanel, panel, data, y, w, h, setting)
 		local button = vgui.Create("DButton", panel)
-		local width = setting.overrideWidth or 100
+		local width = setting.overrideWidth or default_width
 
 		local confirm = setting.requireConfirm
 
@@ -284,7 +286,7 @@ renderSettingFuncs = {
 	end,
 	["color"] = function(sPanel, panel, data, y, w, h, setting)
 		local curCol = data[setting.value]
-		local width = setting.overrideWidth or 100
+		local width = setting.overrideWidth or default_width
 		local allowedAlpha = setting.allowAlpha
 
 		local button = vgui.Create( "DColorButton", panel )
@@ -378,7 +380,7 @@ renderSettingFuncs = {
 			confirmBtn:SetSize(81, btnH - 2)
 			confirmBtn:SetPos(w - 80 - 3, h-btnH)
 			confirmBtn.DoClick = function(self)
-				if data[setting.value] != mixer:GetColor() then
+				if data[setting.value] ~= mixer:GetColor() then
 					data[setting.value] = table.Copy(mixer:GetColor())
 					if setting.onChange then setting.onChange(data) end
 					chatBox.saveData()
@@ -492,10 +494,13 @@ hook.Add("BC_KeyCodeTyped", "BC_SidePanelShortCutHook", function(code, ctrl, shi
 	end
 end)
 
-function chatBox.createSidePanel(name, size, data)
+function chatBox.createSidePanel(name, width, data)
+	local size = { x = width, y = chatBox.graphics.size.y - 33 }
 	chatBox.sidePanelsIDX = chatBox.sidePanelsIDX + 1
-	local w, h = chatBox.graphics.frame:GetSize()
-	chatBox.graphics.frame:SetSize(w + size.x + 2, h)
+	chatBox.sidePanelWidth = chatBox.sidePanelWidth or 0
+	local _, h = chatBox.graphics.frame:GetSize()
+	chatBox.sidePanelWidth = chatBox.sidePanelWidth + size.x + 2
+	chatBox.graphics.frame:SetSize(chatBox.graphics.size.x + chatBox.sidePanelWidth, h)
 
 	local icon = data.icon or "icons/cog.png"
 	local rot = data.rotate
@@ -529,6 +534,13 @@ function chatBox.createSidePanel(name, size, data)
 	g.pane.name = name
 	s.lastTime = CurTime()
 
+	local pOldLayout = g.pane.PerformLayout
+	function g.pane:PerformLayout()
+		s.size.y = chatBox.graphics.size.y - 33
+		self:SetSize( s.size.x, s.size.y )
+		pOldLayout(self)
+	end
+
 	g.pane:SetKeyboardInputEnabled(true)
 	g.pane:SetMouseInputEnabled(true)
 
@@ -545,14 +557,14 @@ function chatBox.createSidePanel(name, size, data)
 
 		local px, py = getFrom(1, xSum) + 2, 0
 		local cx, cy = self:GetPos()
-		if cx != px or cy != py then
+		if cx ~= px or cy ~= py then
 			self:SetPos(px, py)
 		end
 
 		local w = getFrom(1, g.frame:GetSize())
 		local px, py = w*s.animState - w, 0
 		local cx, cy = g.frame:GetPos()
-		if px != cx or py != cy then
+		if px ~= cx or py ~= cy then
 			g.frame:SetPos(px, py)
 		end
 
@@ -595,14 +607,19 @@ function chatBox.createSidePanel(name, size, data)
 	g.frame = vgui.Create( "DFrame", g.pane )
 	g.frame:SetName("BC_SettingsFrame")
 	g.frame:SetPos( 0,0 )
-	local w, h = g.pane:GetSize()
-	g.frame:SetSize(w, h)
+	g.frame:SetSize(g.pane:GetSize())
 	g.frame:SetTitle( "" )
 	g.frame:ShowCloseButton(false)
 	g.frame:SetDraggable(false)
 	g.frame:SetSizable(false)
 	g.frame.Paint = nil
 	g.frame.name = name
+
+	local fOldLayout = g.frame.PerformLayout
+	function g.frame:PerformLayout()
+		self:SetSize(self:GetParent():GetSize())
+		fOldLayout(self)
+	end
 
 	g.frame.closeBtn = vgui.Create( "DButton", g.frame )
 	local btn = g.frame.closeBtn
@@ -640,9 +657,19 @@ function chatBox.addToSidePanel(pName, name)
 	local s = chatBox.sidePanels[pName]
 	local g = s.graphics
 	local p = vgui.Create( "DNiceScrollPanel", g.frame )
+	p.graphics = g
 	local w, h = g.frame:GetSize()
+	p:SetSize(w - 8 - 8, h - 4 - 27 - 10)
 	p:SetPos(4 + 5, 27 + 5)
-	p:SetSize(w-8 - 8, h - 4 - 27 - 10)
+
+	local oldLayout = p.PerformLayout
+	function p:PerformLayout()
+		local w, h = self.graphics.frame:GetSize()
+		self:SetSize(w - 8 - 8, h - 4 - 27 - 10)
+		self:SetPos(4 + 5, 27 + 5)
+		oldLayout( self )
+	end
+	
 	table.insert(g.panels, {Name = name, Panel = p})
 	p:Hide()
 	return p

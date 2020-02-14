@@ -55,17 +55,14 @@ function RICHERTEXT:Init()
 	self.scrollPanel:GetCanvas():SetSelectionCanvas(true)
 
 	self:setClickEvents(self.scrollPanel)
-	//self:setClickEvents(self.scrollPanel:GetCanvas())
 
 	self.scrollPanel:SetScrollbarEnabled(true)
 	self.scrollPanel:Dock(FILL)
 	local scrollBar = self.scrollPanel:GetVBar()
-	local ownSelf = self
 
 	self.select = {}
 	self.select.lastClick = 0
 	self.select.clickCounter = 0
-	--self.select.selectCol = Color(51, 144, 255) --blue
 	self.select.selectCol = Color(255,156,0) --orange
 
 	self.lastScroll = -1
@@ -111,8 +108,6 @@ function RICHERTEXT:Init()
 		self.scrollToBottomBtn.m_Image:SetImageColor(Color(255,255,255, self.STBHide and 0 or self.STBButtonAnim*2.55))
 
 		if self.lastScroll ~= scrollBar.Scroll then
-			self.lastScroll = scrollBar.Scroll
-
 			local sPanel = self.scrollPanel
 			local sx,sy = sPanel:GetSize()
 
@@ -213,7 +208,7 @@ function RICHERTEXT:Init()
 
 	self:OnRemove()
 	hook.Add("RICHERTEXT:NewTextSelection", "NewTextSelection - " .. self.id, function(id)
-		if self.id != id then
+		if self.id ~= id then
 			self:UnselectText()
 		end
 	end)
@@ -232,7 +227,7 @@ function RICHERTEXT:Init()
 	self.innerFont = "Default"
 	self.addNewLine = false
 	self.doFormatting = true
-	self.showImages = true
+	self.showGraphics = true
 	self.maxLines = 200
 	self.yRemoved = 0
 
@@ -264,8 +259,12 @@ function RICHERTEXT:SetFormattingEnabled( val )
 	self.doFormatting = val
 end
 
-function RICHERTEXT:SetImagesEnabled( val )
-	self.showImages = val
+function RICHERTEXT:SetGraphicsEnabled( val )
+	self.showGraphics = val
+end
+
+function RICHERTEXT:SetGifsEnabled( val )
+	self.showGifs = val
 end
 
 function RICHERTEXT:SetMaxLines(val)
@@ -407,7 +406,7 @@ function RICHERTEXT:setClickEvents(panel)
 
 						for i = realCharIdx, 1, -1 do
 							local char = lineText[i]
-							if isSpace != (char == " " or char == "\t" or char == "\n") then
+							if isSpace ~= (char == " " or char == "\t" or char == "\n") then
 								sIdx = i+1
 								break
 							end
@@ -416,7 +415,7 @@ function RICHERTEXT:setClickEvents(panel)
 						local eIdx = #lineText
 						for i = realCharIdx, #lineText do
 							local char = lineText[i]
-							if isSpace != (char == " " or char == "\t" or char == "\n") then
+							if isSpace ~= (char == " " or char == "\t" or char == "\n") then
 								eIdx = i-1
 								break
 							end
@@ -765,7 +764,14 @@ function RICHERTEXT:AddLabel()
 	label:MoveToFront()
 
 	label.SetDoRender = function(self, v)
-		self:SetVisible(v)
+		if self.showText == v then return end
+		self.showText = v
+		if v then
+			self:SetText(self.text or self:GetText())
+		else
+			self.text = self:GetText()
+			self:SetText("")
+		end
 	end
 
 	self:setClickEvents(label) -- Set its events (right click menu and text select events)
@@ -793,15 +799,9 @@ function RICHERTEXT:scrollToBottom(hideBtn)
 	local id = "richTextScrollBottom - "..self.id
 	if timer.Exists(id) then timer.Destroy(id) end
 	timer.Create(id, 0.05, 1, function()
-		if not self.lines or #self.lines < 11 then return end
-		local line = self.lines[#self.lines]
-		local element = line[1]
-		if not element then 
-			line = self.lines[#self.lines - 1]
-			element = line[1]
-		end
-		if not element then return end
-		self.scrollPanel:ScrollToChild(element)
+		if not self.scrollPanel then return end
+		local bar = self.scrollPanel:GetVBar()
+		bar:AnimateTo(self.scrollPanel:GetCanvas():GetTall(), 0.2)
 	end)
 	if hideBtn then
 		self.STBHide = true
@@ -874,7 +874,7 @@ function RICHERTEXT:AppendText( txt, noLog ) --Deals with the tumour that is tab
 	for k = 1, #tabChunks do
 		local chunk = tabChunks[k]
 		if k == #tabChunks then
-			if #chunk != 0 then
+			if #chunk ~= 0 then
 				self:AppendTextNoTab(chunk)
 			end
 			return
@@ -931,7 +931,7 @@ function RICHERTEXT:AppendTextNoTab( txt ) --This func cannot handle tabs
 
 			self:AddLine()
 
-			if k != #txt then -- If not at the end of the input
+			if k ~= #txt then -- If not at the end of the input
 				line = self.lines[#self.lines] -- Update line var to newly created line
 				self:AddLabel() -- Give it a starting label
 			end
@@ -992,12 +992,15 @@ function RICHERTEXT:AddGraphic(element, rawText)
 	element.rawText = rawText
 
 	if h > self.fontHeight then -- Image has own line
-		self:AddLine()
-		line = self.lines[#self.lines]
+		if #line > 0 then
+			self:AddLine()
+			line = self.lines[#self.lines]
+		end
 
 		table.insert(line, element) -- pop new element on line stack
 
 		element:SetPos(5 + imagePadding + self.offset.x, self.offset.y - self.yRemoved)
+		self.linesYs[#self.linesYs].bottom = self.linesYs[#self.linesYs].bottom + ( h - self.fontHeight)
 		local newLines = math.ceil(h / self.fontHeight)
 		for k=1, newLines do
 			self:AddLine()
@@ -1033,11 +1036,13 @@ function RICHERTEXT:AddGraphic(element, rawText)
 		self:scrollToBottom()
 	end
 
-	element:SetTooltip( rawText ) 
+	element:SetTooltip( rawText[#rawText] == "\n" and string.sub(rawText, 1, #rawText - 1) or rawText ) 
 
 	table.insert(self.graphics, element)
 
-	self:UpdateLineHeight()
+	if #self.lines[#self.lines] > 0 then
+		self:UpdateLineHeight()
+	end
 	return element
 end
 
@@ -1048,11 +1053,15 @@ end
 
 function RICHERTEXT:AddGif(...)
 	table.insert(self.log, {type = "gif", data = {...}})
+	if not self.showGifs then
+		self:AppendText(self.log[#self.log].data[2], true)
+		return
+	end
 	return self:CreateGraphic("gif", ...)
 end
 
 function RICHERTEXT:CreateGraphic(t, path, text, sizeX, sizeY, imOffsetX, imOffsetY, imSizeX, imSizeY)
-	if not self.doFormatting or not self.showImages then 
+	if not self.doFormatting or not self.showGraphics then 
 		self:AppendText(text, true)
 		return
 	end

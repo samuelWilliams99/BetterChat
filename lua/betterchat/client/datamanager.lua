@@ -5,7 +5,7 @@
 		chatBox.channelSettings
 ]]--
 
-function table.filter(tab, f)
+function filter(tab, f)
 	for k, v in pairs(tab) do
 		if not f(v) then
 			tab[k] = nil
@@ -20,6 +20,11 @@ function chatBox.saveData()
 	data.playerSettings = {}
 	data.extraPlayerSettings = chatBox.extraPlayerSettings
 	data.enabled = chatBox.enabled
+	data.size = chatBox.graphics.size
+	if chatBox.graphics.frame and IsValid(chatBox.graphics.frame) then
+		local x, y = chatBox.graphics.frame:GetPos()
+		data.pos = { x = x, y = y }
+	end
 
 	for k, v in pairs(chatBox.channels) do
 		data.channelSettings[v.name] = {}
@@ -33,16 +38,28 @@ function chatBox.saveData()
 	end
 
 	if chatBox.autoComplete then
-		data.cmdUsage = table.filter(table.Copy(chatBox.autoComplete.cmds), function(x) return x > 0 end)
-		data.emoteUsage = table.filter(table.Copy(chatBox.autoComplete.emoteUsage), function(x) return x > 0 end)
+		data.cmdUsage = filter(table.Copy(chatBox.autoComplete.cmds), function(x) return x > 0 end)
+		for k, v in pairs(chatBox.autoComplete.extraCmds) do
+			if not data.cmdUsage[k] then
+				data.cmdUsage[k] = v
+			end
+		end
+		data.emoteUsage = filter(table.Copy(chatBox.autoComplete.emoteUsage), function(x) return x > 0 end)
 	end
 
 	file.Write( "bc_data_cl.txt", util.TableToJSON(data) )
 end
 
 function chatBox.loadData() 
+	print("attempt load")
 	if not file.Exists("bc_data_cl.txt", "DATA") then 
 		print("NO DATA")
+		timer.Simple(5, function()
+			print("======================================")
+			print("BETTERCHAT DATA WAS RESET")
+			print("======================================")
+			surface.PlaySound("air-raid.wav")
+		end)
 		return 
 	end
 
@@ -50,7 +67,36 @@ function chatBox.loadData()
 	if not data then 
 		print("MALFORMED DATA")
 		print(file.Read("bc_data_cl.txt"))
+		timer.Simple(5, function()
+			print("======================================")
+			print("BETTERCHAT DATA WAS RESET")
+			print("======================================")
+			surface.PlaySound("air-raid.wav")
+		end)
 		return
+	end
+	local t = table.Copy(data)
+	for k, v in pairs(t) do
+		if type(v) == "table" then
+			t[k] = table.Count(v)
+		end
+	end
+	PrintTable(t)
+	if t.emoteUsage == 0 then
+		timer.Simple(5, function()
+			print("======================================")
+			print("BETTERCHAT DATA WAS RESET")
+			print("======================================")
+			surface.PlaySound("air-raid.wav")
+		end)
+	end
+
+	if data.pos then
+		chatBox.graphics.frame:SetPos(data.pos.x, data.pos.y)
+	end
+
+	if data.size then
+		chatBox.resizeBox(data.size.x, data.size.y, true)
 	end
 
 	if data.extraPlayerSettings then
@@ -61,7 +107,7 @@ function chatBox.loadData()
 
 	for k, v in pairs(chatBox.channels) do --load over already open channels quickly
 		v.dataChanged = {}
-		if data.channelSettings[v.name] then
+		if data.channelSettings and data.channelSettings[v.name] then
 			loadFromData(data.channelSettings[v.name], v)
 			for k1, setting in pairs(chatBox.channelSettingsTemplate) do
 				if setting.onChange then setting.onChange(v) end
@@ -117,7 +163,6 @@ function chatBox.loadEnabled()
 	if not data then 
 		chatBox.enabled = true
 	else
-
 		chatBox.enabled = data.enabled == nil or data.enabled
 	end
 end

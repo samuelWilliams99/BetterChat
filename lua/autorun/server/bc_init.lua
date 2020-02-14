@@ -18,4 +18,18 @@ for k, v in pairs(files) do
 	resource.AddSingleFile("materials/spritesheets/" .. v)
 end
 
+function addFiles(dir)
+	local files, dirs = file.Find(dir .. "/*", "LUA")
+	if not files then return end
+	for k, v in pairs(files) do
+		if string.match(v, "^.+%.lua$") then
+			AddCSLuaFile(dir .. "/" .. v)
+		end
+	end
+	for k, v in pairs(dirs) do
+		addFiles(dir .. "/" .. v)
+	end
+end
+addFiles("betterchat")
+
 include("betterchat/sh_base.lua")

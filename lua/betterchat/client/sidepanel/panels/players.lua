@@ -15,29 +15,14 @@ end)
 
 hook.Add("BC_InitPanels", "BC_InitSidePanelPlayers", function()
 	local g = chatBox.graphics
-	chatBox.createSidePanel("Player", {x = 250, y = g.size.y - 33}, {icon="icon16/group.png", border=1})
+	chatBox.createSidePanel("Player", 300, {icon="icon16/group.png", border=1})
 	ownRank = team.GetName(LocalPlayer())
 end)
 
 net.Receive("BC_UserRankChange", function()
 	chatBox.closeChatBox()
 	chatBox.removeAllPlayerPanels()
-
-	local adminChannel = chatBox.getChannel("Admin")
-	if chatBox.allowedAdmin() then
-		if not adminChannel then
-			adminChannel = chatBox.addAdminChannel()
-		end
-		if not chatBox.isChannelOpen(adminChannel) then
-			chatBox.addChannel(adminChannel)
-		end
-		chatBox.addAdminButton()
-	else
-		if adminChannel and chatBox.isChannelOpen(adminChannel) then
-			chatBox.removeChannel(adminChannel) -- closes
-		end
-		chatBox.removeAdminButton()
-	end
+	hook.Run("BC_UserAccessChange")
 end)
 
 function chatBox.generatePlayerPanelEntry(ply)
@@ -157,13 +142,13 @@ function chatBox.generatePlayerPanelEntry(ply)
 		local ply = self.ply
 		if not ply or not ply:IsValid() then return end
 		local rank = team.GetName(ply:Team())
-		if rank != self:GetText() then
+		if rank ~= self:GetText() then
 			self:SetText(rank)
 			self:SetColor(team.GetColor(ply:Team()))
 		end
 		if ULib then
 			local uRank = ply:GetUserGroup()
-			if self.uRank != uRank then
+			if self.uRank ~= uRank then
 				rankLabel:SetTooltip("ULX Rank: " .. ply:GetUserGroup())
 			end
 		end
@@ -221,7 +206,7 @@ function chatBox.removePlayerPanel(id)
 			idx = k
 		end
 	end
-	if idx != -1 then
+	if idx ~= -1 then
 		local panel = table.remove(panels, idx)
 		panel.Panel:Remove()
 	end
@@ -236,11 +221,11 @@ function chatBox.removeAllPlayerPanels()
 end
 
 function diff(a, b)
-	if #a != #b then
+	if #a ~= #b then
 		return true
 	end
 	for k, v in pairs(a, b) do
-		if a[k] != b[k] then
+		if a[k] ~= b[k] then
 			return true
 		end
 	end

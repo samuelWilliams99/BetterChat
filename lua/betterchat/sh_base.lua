@@ -1,5 +1,26 @@
 chatBox = chatBox or {}
 
+--[[
+	make !giphy a ulx command
+	text formatting with *italics* **bold** ~~strike~~ 
+	timestamps
+	logs channel
+
+	chat cooldown - paps sniffin my packets >:(
+
+	double right click on thing in corner requires mouse movement ????
+		this whole fukin thing is just buggy af
+		fix plox :)
+		preferable change hand to sizeall when hovering
+	test darkrp
+
+	fuckin data keeps resetting
+		WHY -- might be fixed? Someone else has a table.filter and its shit/broken lol
+
+	scroll bar on side panels not updating -- this is a problem, idk how fix
+
+]]
+
 if SERVER then
 	--includes
 	include("betterchat/server/sv_overloads.lua")
@@ -11,63 +32,19 @@ if SERVER then
 	include("betterchat/server/sv_groups.lua")
 	include("betterchat/server/sv_teamoverload.lua")
 	include("betterchat/server/sv_sayoverload.lua")
+	include("betterchat/server/sv_giphy.lua")
 
-	--addfiles
-	AddCSLuaFile("betterchat/sh_base.lua")
-	AddCSLuaFile("betterchat/sh_util.lua")
-	AddCSLuaFile("betterchat/client/chat.lua")
-	AddCSLuaFile("betterchat/client/overload.lua")
-	AddCSLuaFile("betterchat/sh_globalsettings.lua")
-	AddCSLuaFile("betterchat/client/datamanager.lua")
-	AddCSLuaFile("betterchat/client/images.lua")
-	AddCSLuaFile("betterchat/client/compatibility.lua")
+	local networkStrings = {
+		"BC_chatOpenState", "BC_sendPlayerState", "BC_plyReady", "BC_disable", -- Chat states
+		"BC_PM", "BC_AM", "BC_GM", "BC_TM", -- Messages (Private, Admin, Group, Team)
+		"BC_sendULXCommands", "BC_UserRankChange", -- Ulx
+		"BC_sendGroups", "BC_updateGroup", "BC_newGroup", "BC_groupAccept", "BC_leaveGroup", "BC_deleteGroup", -- Groups
+		"BC_forwardMessage", "BC_SayOverload", "BC_SendGif", "BC_PlayerDisconnected", -- Misc
+	}
 
-	AddCSLuaFile("betterchat/client/channels/channels.lua")
-	AddCSLuaFile("betterchat/client/channels/mainchannels.lua")
-	AddCSLuaFile("betterchat/client/channels/adminchannel.lua")
-	AddCSLuaFile("betterchat/client/channels/privatechannels.lua")
-	AddCSLuaFile("betterchat/client/channels/groupchannels.lua")
-	AddCSLuaFile("betterchat/client/channels/teamoverload.lua")
-
-	AddCSLuaFile("betterchat/client/input/input.lua")
-	AddCSLuaFile("betterchat/client/input/autocomplete.lua")
-
-	AddCSLuaFile("betterchat/client/sidepanel/sidepanel.lua")
-	AddCSLuaFile("betterchat/client/sidepanel/panels/channels.lua")
-	AddCSLuaFile("betterchat/client/sidepanel/panels/players.lua")
-	AddCSLuaFile("betterchat/client/sidepanel/panels/members.lua")
-	AddCSLuaFile("betterchat/client/sidepanel/panels/players_add_option.lua")
-	AddCSLuaFile("betterchat/client/sidepanel/templates/channelsettings.lua")
-	AddCSLuaFile("betterchat/client/sidepanel/templates/playersettings.lua")
-	AddCSLuaFile("betterchat/client/sidepanel/templates/membersettings.lua")
-	
-
-	--panels
-	AddCSLuaFile("betterchat/client/vguipanels/davatarimagerounded.lua")
-	AddCSLuaFile("betterchat/client/vguipanels/dnicescrollpanel.lua")
-	AddCSLuaFile("betterchat/client/vguipanels/drichertext.lua")
-	AddCSLuaFile("betterchat/client/vguipanels/drichertextgraphic.lua")
-
-	util.AddNetworkString( "BC_openChat" )
-	util.AddNetworkString( "BC_closeChat" )
-	util.AddNetworkString( "BC_sendPlayerState" )
-	util.AddNetworkString( "BC_plyReady" )
-	util.AddNetworkString( "BC_disable" )
-	util.AddNetworkString( "BC_PM" )
-	util.AddNetworkString( "BC_AM" )
-	util.AddNetworkString( "BC_sendULXCommands" )
-	util.AddNetworkString( "BC_UserRankChange" )
-	util.AddNetworkString( "BC_PlayerDisconnected" )
-	util.AddNetworkString( "BC_sendGroups" )
-	util.AddNetworkString( "BC_GM" )
-	util.AddNetworkString( "BC_updateGroup" )
-	util.AddNetworkString( "BC_newGroup" )
-	util.AddNetworkString( "BC_groupAccept" )
-	util.AddNetworkString( "BC_leaveGroup" )
-	util.AddNetworkString( "BC_deleteGroup" )
-	util.AddNetworkString( "BC_forwardMessage" )
-	util.AddNetworkString( "BC_TM" )
-	util.AddNetworkString( "BC_SayOverload" )
+	for k, v in pairs(networkStrings) do
+		util.AddNetworkString(v)
+	end
 
 	function chatBox.getEnabledPlayers()
 		local out = {}
@@ -81,11 +58,8 @@ if SERVER then
 
 	chatBox.chatBoxEnabled = {}
 
-	net.Receive( "BC_openChat", function(len, ply)
-		ULib.clientRPC(nil, "chatBox.setPlayersOpen", ply, true)
-	end)
-	net.Receive( "BC_closeChat", function(len, ply)
-		ULib.clientRPC(nil, "chatBox.setPlayersOpen", ply, false)
+	net.Receive( "BC_chatOpenState", function(len, ply)
+		ULib.clientRPC(nil, "chatBox.setPlayersOpen", ply, net.ReadBool())
 	end)
 
 	net.Receive( "BC_forwardMessage", function(len, ply)
@@ -94,13 +68,14 @@ if SERVER then
 
 	hook.Add("PlayerInitialSpawn", "BC_PlySpawn", function(ply)
 		local plys = chatBox.getEnabledPlayers()
-		local plysCopy = table.Copy(plys)
-		table.RemoveByValue(plys,ply)
 
 		ULib.clientRPC(plys, "chatBox.generatePlayerPanelEntry", ply)
 		ULib.clientRPC(plys, "hook.Run", "BC_PlayerConnect", ply)
-		
 
+		if chatBox.giphy.enabled then
+			ULib.clientRPC(ply, "chatBox.enableGiphy")
+		end
+		
 		-- Haven't got my name anywhere in this chat, so heres my lil credit :)
 		-- Just a cheeky lil welcome message for me
 		if ply:SteamID() == "STEAM_0:1:46658202" then
@@ -173,6 +148,32 @@ end, true, "Rebuilds the new chat box" )
 
 concommand.Add( "bc_savedata", chatBox.saveData, true, "Saves all chat data to file")
 
+concommand.Add("bc_disable", function()
+	if chatBox.enabled then
+		chatBox.closeChatBox()
+		chatBox.disableChatBox()
+	end
+	chat.AddText(chatBox.colors.yellow, "BetterChat ", chatBox.colors.ulx, "has been disabled. Go to Q->Options->BetterChat (or run bc_enable) to enable it.")
+end)
+
+concommand.Add("bc_restart", function()
+	if chatBox.enabled then
+		chatBox.closeChatBox()
+		chatBox.disableChatBox()
+	end
+	chatBox.enableChatBox()
+end)
+
+concommand.Add("bc_removesavedata", function()
+	chatBox.deleteSaveData()
+	if chatBox.enabled then
+		chatBox.closeChatBox()
+		chatBox.disableChatBox( true )
+		chatBox.enableChatBox()
+	end
+	chat.AddText(chatBox.colors.yellow, "BetterChat ", chatBox.colors.ulx, "data has been deleted.")
+end)
+
 
 if chatBox and chatBox.graphics and chatBox.graphics.frame then 
 	chatBox.graphics.frame:Remove()	
@@ -211,9 +212,11 @@ function chatBox.enableChatBox()
 	chatBox.saveEnabled()
 end
 
-function chatBox.disableChatBox()
+function chatBox.disableChatBox( noSave )
 	chatBox.enabled = false
-	chatBox.saveData()
+	if not noSave then
+		chatBox.saveData()
+	end
 	if chatBox.overloaded then
 		chatBox.returnFunctions()
 	end
@@ -225,6 +228,46 @@ function chatBox.disableChatBox()
 	net.SendToServer()
 end
 
+function chatBox.resizeBox(w, h, final)
+	local g = chatBox.graphics
+
+	g.size = {x = w, y = h}
+	g.originalFramePos = { x = 38, y = ScrH() - g.size.y - 150 }
+
+	g.frame:SetSize( g.size.x + (chatBox.sidePanelWidth or 0), g.size.y + 40 ) --Added 40 for AutoComplete
+
+	-- Seems some things don't update until mouseover, trigger them here instead
+	if g.adminButton then 
+		g.adminButton:InvalidateLayout()
+	end
+	if g.groupButton then 
+		g.groupButton:InvalidateLayout()
+	end
+
+	g.chatFrame:InvalidateLayout()
+	g.psheet:InvalidateLayout()
+	g.emojiButton:InvalidateLayout()
+	g.textEntry:InvalidateLayout()
+
+	for k, v in pairs(chatBox.channelPanels) do
+		if not IsValid(v.panel) then continue end
+		v.panel:InvalidateLayout( true )
+		v.text:InvalidateLayout( true )
+		if final then
+			v.text:Reload()
+		end
+	end
+
+	for k, v in pairs(chatBox.sidePanels) do
+		local g = v.graphics
+		g.pane:InvalidateLayout( true )
+		g.frame:InvalidateLayout( true )
+		for _, data in pairs(g.panels) do
+			data.Panel:InvalidateLayout( true )
+		end
+	end
+	
+end
 
 function chatBox.buildBox()
 	chatBox.initializing = true
@@ -241,8 +284,10 @@ function chatBox.buildBox()
 	chatBox.graphics = {}
 	local g = chatBox.graphics
 	g.font = "chatFont_18"
-	g.size = {x = 550, y = 301}
-	g.originalFramePos = { x = 38, y = ScrH() - 450 }
+	g.minSize = {x = 400, y = 250}
+	g.originalSize = {x = 550, y = 301}
+	g.size = table.Copy(g.originalSize)
+	g.originalFramePos = { x = 38, y = ScrH() - g.size.y - 150 }
 
 	g.visCheck = timer.Create("chatBox_visCheck", 1/60, 0, function()
 		if not g.frame or not g.frame:IsValid() then
@@ -294,11 +339,15 @@ function chatBox.buildBox()
 	g.chatFrame:SetPos( 0, 0 )
 	g.chatFrame:SetSize( g.size.x, g.size.y )
 	g.chatFrame:SetTitle( "" )
-	g.chatFrame:SetName("BC_ChatFrame")
+	g.chatFrame:SetName("BC_InnerChatFrame")
 	g.chatFrame:ShowCloseButton(false)
 	g.chatFrame:SetDraggable(false)
 	g.chatFrame:SetSizable(false)
 	g.chatFrame:MoveToBack()
+
+	function g.chatFrame:PerformLayout()
+		self:SetSize( g.size.x, g.size.y )
+	end
 
 	g.chatFrame.Paint = function( self, w, h )
 		if not self.doPaint then return end
@@ -331,6 +380,41 @@ function chatBox.buildBox()
 			if not input.IsMouseDown(MOUSE_LEFT) then 
 				chatBox.dragging = false
 			end
+			self.cursor = "hand"
+		elseif chatBox.resizing then
+			local x, y = gui.MousePos()
+			local px, py = g.frame:GetPos()
+			local d = chatBox.resizingData
+			local w, h = g.size.x, g.size.y
+			local doMove = false
+			if d.type == 0 then
+				w = d.originalRight - x
+				w = math.Max(w, g.minSize.x)
+				px = d.originalRight - w
+				doMove = true
+			elseif d.type == 1 then
+				h = d.originalBottom - y
+				h = math.Max(h, g.minSize.y)
+				py = d.originalBottom - h
+				doMove = true
+			elseif d.type == 2 then
+				w = x - px
+				w = math.Max(w, g.minSize.x)
+			else
+				h = y - py
+				h = math.Max(h, g.minSize.y)
+			end
+			local final = not input.IsMouseDown(MOUSE_LEFT)
+			if doMove then
+				g.frame:SetPos(px, py)
+			end
+			chatBox.resizeBox(w, h, final)
+			if final then
+				chatBox.resizing = false
+			end
+			self.cursor = "sizeall"
+		else
+
 		end
 
 		if chatBox.sidePanels then
@@ -356,6 +440,12 @@ function chatBox.buildBox()
 	g.textEntry:SetCursorColor(Color(255,255,255))
 	g.textEntry:SetHighlightColor(Color(255,156,0))
 	g.textEntry:SetHistoryEnabled(true)
+
+	function g.textEntry:PerformLayout()
+		self:SetPos( 10, g.size.y - 10 - 16 )
+		self:SetSize( g.size.x-52, 20 )
+	end
+
 	g.textEntry.Paint = function( panel, w, h )
 		surface.SetFont( panel:GetFont() )
 		surface.SetTextColor( 100, 100, 100 )
@@ -436,14 +526,34 @@ end
 hook.Add("VGUIMousePressed", "BC_MousePressed", function(self, keyCode)
 	if not chatBox.enabled then return end
 	if chatBox.isOpen then
-		local x,y = inDragCorner()
+		local g = chatBox.graphics
+		local x, y = inDragCorner(g.frame)
 		if x then
 			if keyCode == MOUSE_LEFT then
 				chatBox.dragging = true
-				chatBox.draggingOffset = {x=x, y=y}
+				chatBox.draggingOffset = {x = x, y = y}
 			elseif keyCode == MOUSE_RIGHT then
-				chatBox.graphics.frame:SetPos( chatBox.graphics.originalFramePos.x, chatBox.graphics.originalFramePos.y )
+				local t = SysTime()
+				local diff = t - (chatBox.lastRClick or 0)
+				if diff < 0.5 then
+					chatBox.resizeBox(g.originalSize.x, g.originalSize.y, true)
+					g.frame:SetPos( g.originalFramePos.x, g.originalFramePos.y )
+				else
+					g.frame:SetPos( g.originalFramePos.x, g.originalFramePos.y )
+				end
+				chatBox.lastRClick = t
 			end
+			return
+		end
+
+		local edge = inResizeEdge(g.frame)
+		if edge then
+			chatBox.resizing = true
+			chatBox.resizingData = {
+				originalRight = getFrom(1, g.frame:GetPos()) + g.size.x,
+				originalBottom = getFrom(2, g.frame:GetPos()) + g.size.y,
+				type = edge
+			}
 		end
 	end
 end)
@@ -468,19 +578,43 @@ function chatBox.removeGraphics()
 	end
 end
 
-function inDragCorner()
+function inDragCorner(elem)
 	local g = chatBox.graphics
-	local posX, posY = g.frame:GetPos()
-	local tl = {x = posX + getFrom(1, g.chatFrame:GetSize()) - 30, y = posY}
-	local br = {x = posX + getFrom(1, g.chatFrame:GetSize()), y = posY + 30}
-	local x,y = gui.MousePos()
-	if x > tl.x and x < br.x and y > tl.y and y < br.y then
-		return x - posX, y - posY
+	local x, y = elem:LocalCursorPos()
+	local w, h = g.size.x, g.size.y
+
+	if x < 0 or y < 0 or x > w or y > h then
+		return
+	end
+
+	if x > w - 30 and y < 30 then
+		return x, y
+	end
+end
+
+function inResizeEdge(elem)
+	local g = chatBox.graphics
+	local x, y = elem:LocalCursorPos()
+	local w, h = g.size.x, g.size.y
+
+	if x < 0 or y < 0 or x > w or y > h then
+		return
+	end
+	local edgeSize = 6
+	if x < edgeSize then
+		return 0
+	elseif y < edgeSize then
+		return 1
+	elseif x > (w - edgeSize) then
+		return 2
+	elseif y > (h - edgeSize) then
+		return 3
 	end
 end
 
 function chatBox.openChatBox( selectedTab )
 	if chatBox.isOpen then return end
+	chatBox.overloadedFuncs.oldClose()
 	selectedTab = selectedTab or "All"
 
 	local chan = chatBox.getAndOpenChannel(selectedTab)
@@ -503,7 +637,8 @@ function chatBox.openChatBox( selectedTab )
 
 	hook.Run( "StartChat" )
 	chatBox.isOpen = true
-	net.Start("BC_openChat")
+	net.Start("BC_chatOpenState")
+	net.WriteBool( true )
 	net.SendToServer()
 end
 
@@ -513,7 +648,7 @@ end
 
 function chatBox.closeChatBox()
 	if not chatBox.enabled then return end
-
+	chatBox.overloadedFuncs.oldClose()
 	CloseDermaMenus()
 
 	chatBox.isOpen = false
@@ -533,7 +668,8 @@ function chatBox.closeChatBox()
 	end
 
 	hook.Run( "FinishChat" )
-	net.Start("BC_closeChat")
+	net.Start("BC_chatOpenState")
+	net.WriteBool( false )
 	net.SendToServer()
 
 	-- Clear the text entry

@@ -2,7 +2,7 @@ include("betterchat/client/sidepanel/templates/channelsettings.lua")
 
 hook.Add("BC_InitPanels", "BC_InitSidePanelChannels", function()
 	local g = chatBox.graphics
-	chatBox.createSidePanel("Channel Settings", {x = 300, y = g.size.y - 33}, {icon="icons/cog.png", rotate=true, col=Color(50,50,50,210)})
+	chatBox.createSidePanel("Channel Settings", 300, {icon="icons/cog.png", rotate=true, col=Color(50,50,50,210)})
 end)
 
 function chatBox.generateChannelSettings(sPanel, data)
@@ -26,7 +26,7 @@ function chatBox.generateChannelSettings(sPanel, data)
 	title:SizeToContents()
 	title.data = data
 	title.Think = function(self)
-		if self.data.name != self.data.displayName and not self.data.hideRealName then
+		if self.data.name ~= self.data.displayName and not self.data.hideRealName then
 			self:SetText(self.data.displayName .. " (" .. self.data.name .. ")")
 		else
 			self:SetText(self.data.displayName)

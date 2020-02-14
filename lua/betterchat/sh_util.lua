@@ -15,7 +15,7 @@ chatBox.colors = {
 	group = Color(0,255,255),
 }
 
--- Explode a string using a pattern and return a table of {text = explodedText, sep = seperator after it}
+-- Explode a string using a pattern and return a table of { text = explodedText, sep = seperator after it }
 function string.ExplodeWithSep(pattern, str)
     local startPos = nil
     
@@ -176,31 +176,69 @@ end
 -- End urlFinding
 
 if CLIENT then
-	surface.CreateFont( "chatFont_18", {
+
+	local function makeFonts(name, data)
+		data.antialias = false
+		data.shadow = true
+		data.extended = true
+		data.additive = true
+
+		for boldI = 0, 1 do
+			local bold = boldI == 1
+			for italicsI = 0, 1 do
+				local italics = italicsI == 1
+				for underlineI = 0, 1 do
+					local underline = underlineI == 1
+					local newName = name
+					local newData = table.Copy(data)
+					if bold then
+						newName = newName .. "_bold"
+						newData.weight = newData.weight * 1.2
+					end
+					if italics then
+						newName = newName .. "_italics"
+						newData.italics = true
+					end
+					if underline then
+						newName = newName .. "_underline"
+						newData.underline = true
+					end
+
+					surface.CreateFont(newName, newData)
+				end
+			end
+		end
+	end
+
+	-- This needs renaming, should be chatFont_17
+	makeFonts( "chatFont_18", {
 		font = "Verdana",
 		size = 17,
 		weight = 700,
-		antialias = false,
-		shadow = true,
-		extended = true,
 	} )
 
-	surface.CreateFont( "Monospace", {
+	makeFonts( "chatFont_25", {
+		font = "Verdana",
+		size = 25,
+		weight = 600,
+	} )
+
+	makeFonts( "Monospace", {
 		font = "Lucida Console",
 		size = 15,
 		weight = 500,
-		antialias = false,
-		shadow = false,
-		extended = true,
 	} )
 
-	surface.CreateFont( "MonospaceSmall", {
+	makeFonts( "Monospace_22", {
+		font = "Lucida Console",
+		size = 22,
+		weight = 500,
+	} )
+
+	makeFonts( "MonospaceSmall", {
 		font = "Lucida Console",
 		size = 10,
 		weight = 300,
-		antialias = false,
-		shadow = false,
-		extended = true,
 	} )
 
 	local blur = Material( "pp/blurscreen" )
