@@ -2,6 +2,7 @@
 include("betterchat/client/channels/mainchannels.lua")
 include("betterchat/client/channels/privatechannels.lua")
 include("betterchat/client/channels/adminchannel.lua")
+include("betterchat/client/channels/logschannel.lua")
 include("betterchat/client/channels/groupchannels.lua")
 include("betterchat/client/channels/teamoverload.lua")
 
@@ -32,6 +33,22 @@ hook.Add("BC_InitPanels", "BC_InitChannels", function()
 		self:SetSize(g.size.x, g.size.y-37)
 		oldLayout(self)
 	end
+
+	local btn = vgui.Create("DButton", g.chatFrame)
+	btn:SetPos( g.size.x - 50 - 33, 5 )
+	btn:SetSize(50,19)
+	btn:SetTextColor(Color(220,220,220,255))
+	btn:SetText("Open")
+	btn.Paint = function(self, w, h)
+		draw.RoundedBox( 0, 0, 0, w, h, Color( 150,  150, 150, 50 ) )
+	end
+	function btn:DoClick()
+		local menu = DermaMenu()
+		hook.Run("BC_MakeChannelButtons", menu)
+		menu:Open()
+	end
+
+	g.channelButton = btn
 
 	g.psheet.tabScroller:DockMargin(3,0,88,0)
 
@@ -166,8 +183,14 @@ hook.Add("BC_KeyCodeTyped", "BC_SendMessageHook", function(code, ctrl, shift)
 	end
 end)
 
-hook.Add("BC_ShowChat", "BC_showChannelScroller", function() chatBox.graphics.psheet.tabScroller:Show() end)
-hook.Add("BC_HideChat", "BC_hideChannelScroller", function() chatBox.graphics.psheet.tabScroller:Hide() end)
+hook.Add("BC_ShowChat", "BC_showChannelElements", function() 
+	chatBox.graphics.psheet.tabScroller:Show()
+	chatBox.graphics.channelButton:Show()
+end)
+hook.Add("BC_HideChat", "BC_hideChannelElements", function() 
+	chatBox.graphics.psheet.tabScroller:Hide()
+	chatBox.graphics.channelButton:Hide()
+end)
 
 function chatBox.getChannel( chanName )
 	for k, v in pairs(chatBox.channels) do
@@ -297,6 +320,12 @@ function chatBox.messageChannel( channelNames, ... )
 
 end
 
+local function parseName(name)
+	name = string.Replace(name, "\n", "")
+	name = string.Replace(name, "\t", "")
+	return name
+end
+
 function chatBox.messageChannelDirect( channel, controller, ...)
 	if not chatBox.ready then return end
 	if type(channel) == "string" then
@@ -337,9 +366,17 @@ function chatBox.messageChannelDirect( channel, controller, ...)
 		end
 	end
 
+	if channel.showTimestamps then
+		table.insert(data, 1, chatBox.colors.printYellow)
+		local timeData = string.FormattedTime(os.time())
+		timeData.h = timeData.h % 24
+		table.insert(data, 2, string.format("%02i:%02i", timeData.h, timeData.m) .. " - ")
+		table.insert(data, 3, Color(255,255,255))
+	end
+
 	local richText = chatBox.channelPanels[chanName].text
 	local prevCol = Color(255,255,255,255)
-	richText:InsertColorChange(prevCol.r, prevCol.g, prevCol.b, 255)
+	richText:InsertColorChange(prevCol)
 	richText:SetMaxLines(chatBox.getSetting("chatHistory"))
 	local ignoreNext = false
 	for _, obj in pairs(data) do
@@ -353,44 +390,43 @@ function chatBox.messageChannelDirect( channel, controller, ...)
 						obj.color = obj.colour -- Kinda gross but whatever
 					end
 					if obj.color then
-						richText:InsertColorChange(obj.color.r, obj.color.g, obj.color.b, obj.color.a)
+						richText:InsertColorChange(obj.color)
 					end
 					richText:InsertClickableTextStart(obj.signal)
 					richText:AppendText(obj.text)
 					richText:InsertClickableTextEnd()
 					if obj.color then
-						richText:InsertColorChange(prevCol.r, prevCol.g, prevCol.b, 255)
+						richText:InsertColorChange(prevCol)
 					end
 				elseif obj.type == "image" then
 					chatBox.addImage(richText, obj)
 				elseif obj.type == "text" then
-					if obj.decoration then
-						local newFont = channel.font
-						if obj.decoration.bold then
-							newFont = newFont .. "_bold"
-						end
-						if obj.decoration.italics then
-							newFont = newFont .. "_italics"
-						end
-						if obj.decoration.underline then
-							newFont = newFont .. "_underline"
-						end
-						richText:SetFont( newFont )
+					if obj.font then
+						richText:SetFont( obj.font )
 					end
 					richText:AppendText( obj.text )
 					richText:SetFont( channel.font )
+				elseif obj.type == "decoration" then
+					if channel.font ~= "ChatFont" then
+						richText:SetDecorations( obj.bold, obj.italic, obj.underline, obj.strike )
+					end
 				end
+			elseif obj.isConsole then
+				richText:InsertColorChange(chatBox.colors.printBlue)
+				richText:AppendText( "Server" )
+				richText:InsertColorChange(prevCol)
 			elseif IsColor(obj) then
-				richText:InsertColorChange( obj.r, obj.g, obj.b, 255 )
+				obj.a = 255
+				richText:InsertColorChange( obj )
 				prevCol = obj
 			end
 		elseif type(obj) == "Player" then --ply
 			local col = team.GetColor(obj:Team())
 			richText:InsertColorChange(col.r, col.g, col.b, 255)
 			richText:InsertClickableTextStart("Player-"..obj:SteamID())
-			richText:AppendText(string.Replace(obj:Nick(), "\n", "")) -- Someone at some point had new lines in their name, somehow. begone
+			richText:AppendText(parseName(obj:Nick()))
 			richText:InsertClickableTextEnd()
-			richText:InsertColorChange(prevCol.r, prevCol.g, prevCol.b, 255)
+			richText:InsertColorChange(prevCol)
 			if obj == LocalPlayer() and not ignoreNext then
 				if doSound then
 					if channel.tickMode == 1 then
@@ -400,7 +436,6 @@ function chatBox.messageChannelDirect( channel, controller, ...)
 						chatBox.triggerPop()
 					end
 				end
-
 			end
 		else --normal
 			local val = tostring(obj)

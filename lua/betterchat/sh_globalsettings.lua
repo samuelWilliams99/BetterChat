@@ -25,6 +25,13 @@ chatBox.globalSettingsTemplate = {
 		default = true,
 	},
 	{
+		name = "Remember channel on close",
+		value = "rememberChannel",
+		type = "boolean",
+		extra = "Should the chatbox remember your most recent channel when opening",
+		default = false,
+	},
+	{
 		name = "Display suggestions",
 		value = "acDisplay",
 		type = "boolean",
@@ -179,14 +186,24 @@ chatBox.serverSettings = {
 
 chatBox.ulxPerms = {
 	{
-		value = "groups",
-		defaultAccess = ULib.ACCESS_ALL,
-		extra = "Ability to use BetterChat groups",
+		value = "chatlogs",
+		defaultAccess = ULib.ACCESS_SUPERADMIN,
+		extra = "Enables the 'Logs' channel which receives all messages from groups, PM, team, etc.",
 	},
 	{
 		value = "giphy",
-		defaultAccess = ULib.ACCESS_ALL,
+		defaultAccess = ULib.ACCESS_OPERATOR,
 		extra = "Ability to use !giphy if bc_server_giphykey is valid",
+	},
+	{
+		value = "color",
+		defaultAccess = ULib.ACCESS_OPERATOR,
+		extra = "Ability to use [#ff0000]Red in chat",
+	},
+	{
+		value = "groups",
+		defaultAccess = ULib.ACCESS_ALL,
+		extra = "Ability to use BetterChat groups",
 	},
 	{
 		value = "italics",
@@ -199,10 +216,15 @@ chatBox.ulxPerms = {
 		extra = "Ability to use **bold** in chat",
 	},
 	{
-		value = "rainbow",
-		defaultAccess = ULib.ACCESS_ADMIN,
-		extra = "Ability to use &rainbow& in chat",
+		value = "underline",
+		defaultAccess = ULib.ACCESS_ALL,
+		extra = "Ability to use __underline__ in chat",
 	},
+	{
+		value = "strike",
+		defaultAccess = ULib.ACCESS_ALL,
+		extra = "Ability to use ~~strike~~ in chat",
+	}
 }
 
 if SERVER then
@@ -211,12 +233,16 @@ if SERVER then
 	end
 end
 
-function chatBox.getAllowed(ply, perm)
+function chatBox.getAllowed( ply, perm )
 	if not perm then
 		perm = ply
 		ply = LocalPlayer()
 	end
-	return ULib.ucl.query( ply, perm )
+	if not ply or not ply:IsValid() then return true end
+	if string.sub( perm, 1, 4 ) == "ulx " then
+		perm = string.sub( perm, 5 )
+	end
+	return ULib.ucl.query( ply, "ulx " .. perm )
 end
 
 if CLIENT then

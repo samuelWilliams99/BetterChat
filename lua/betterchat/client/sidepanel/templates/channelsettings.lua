@@ -43,7 +43,7 @@ chatBox.channelSettingsTemplate = {
 		shouldSave = true,
 	},
 	{
-		name = "Play \"Pop\" sound",
+		name = "Play \"pop\" sound",
 		value = "popMode",
 		type = "options",
 		options = {"Always", "On mention", "Never"},
@@ -70,7 +70,7 @@ chatBox.channelSettingsTemplate = {
 		end,
 	},
 	{
-		name = "Show Images",
+		name = "Show images",
 		value = "showImages",
 		type = "boolean",
 		default = true,
@@ -87,7 +87,7 @@ chatBox.channelSettingsTemplate = {
 		end,
 	},
 	{
-		name = "Show Gifs",
+		name = "Show gifs",
 		value = "showGifs",
 		type = "boolean",
 		default = true,
@@ -102,6 +102,14 @@ chatBox.channelSettingsTemplate = {
 		onInit = function(data, textBox)
 			textBox:SetGifsEnabled(data.showGifs)
 		end,
+	},
+	{
+		name = "Show timestamps",
+		value = "showTimestamps",
+		type = "boolean",
+		default = false,
+		extra = "Show timestamps before every message",
+		shouldSave = true,
 	},
 	{
 		name = "Display prints",
@@ -123,13 +131,20 @@ chatBox.channelSettingsTemplate = {
 		name = "Font",
 		value = "font",
 		type = "options",
-		options = {"ChatFont", "ChatFont Large", "Old ChatFont", "MonoSpace", "MonoSpace Large"},
-		optionValues = {"chatFont_18", "chatFont_25", "ChatFont", "Monospace", "Monospace_22"},
-		default = "chatFont_18",
+		options = {"Default", "Default Large", "Original", "MonoSpace", "MonoSpace Large"},
+		optionValues = {"BC_Default", "BC_DefaultLarge", "ChatFont", "Monospace", "MonospaceLarge"},
+		default = "BC_Default",
 		extra = "Set the font of this channel",
 		onChange = function(data)
 			local txt = chatBox.channelPanels[data.name].text
 			if not txt or not IsValid(txt) then return end
+			if data.font == "ChatFont" then
+				chatBox.messageChannelDirect(data, Color( 255, 103, 0 ), "Warning: This font is not compatible with font editors like **bold**")
+			end
+			txt:SetAllowDecorations( data.font ~= "ChatFont" )
+			surface.SetFont( data.font )
+			local _, h = surface.GetTextSize( "A" )
+			txt.fontHeight = h - 2
 			txt:SetFont(data.font)
 			txt:Reload()
 		end,

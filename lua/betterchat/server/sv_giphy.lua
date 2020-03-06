@@ -56,7 +56,7 @@ end
 net.Receive("BC_SendGif", function(len, ply)
 	if not chatBox.giphy.enabled then return end
 
-	if not chatBox.getAllowed(ply, "ulx bc_giphy") then
+	if not chatBox.getAllowed(ply, "bc_giphy") then
 		ULib.clientRPC(ply, "chatBox.messageChannel", channel, chatBox.colors.red, "You don't have permission to use !giphy")
 		return
 	end

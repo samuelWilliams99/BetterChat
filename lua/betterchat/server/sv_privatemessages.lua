@@ -3,26 +3,28 @@ net.Receive("BC_PM", function(len, ply)
 	local targ = net.ReadEntity()
 	local text = net.ReadString()
 
-	sendPrivate(ply, ply, targ, text)
+	chatBox.sendPrivate(ply, ply, targ, text)
 end)
 
-function sendPrivate(chan, from, to, text)
+function chatBox.sendPrivate(chan, from, to, text, noLog)
+	if not to or not to:IsValid() then return end
+	if not noLog then
+		chatBox.sendLog(chatBox.channelTypes.PRIVATE, "Private", from, " → ", to, ": ", text)
+	end
 	if chatBox.chatBoxEnabled[to] then
-		print("" .. from:GetName() .. " → " .. to:GetName() .. ": " .. text)
-		
 		net.Start("BC_PM")
 		net.WriteEntity(chan)
 		net.WriteEntity(from)
 		net.WriteString(text)
 		net.Send(to)
-
 	else
-		ulx.fancyLog( {to}, "#P to #P: " .. text, from, to )
+		local recip = chan == from and to or chan
+		chatBox.sendNormalClient(to, from, " to ", recip, Color(255,255,255), ": ", text)
 	end
 end
 
 function chatBox.allowedPrivate(ply)
-	return chatBox.getAllowed(ply, "ulx psay")
+	return chatBox.getAllowed(ply, "psay")
 end
 
 function chatBox.canPrivateMessage(from, to)
@@ -54,14 +56,14 @@ hook.Add("PostGamemodeLoaded", "BC_RPOverload", function()
 				    if not chatBox.canPrivateMessage(ply, target) then return "" end
 				    if target == ply then 
 				    	if chatBox.chatBoxEnabled[ply] then
-				    		sendPrivate(ply, ply, ply, msg)
+				    		chatBox.sendPrivate(ply, ply, ply, msg)
 				    	end
 				    	return "" 
 				    end
 
 				    if target then
-				        sendPrivate(ply, ply, target, msg)
-				        sendPrivate(target, ply, ply, msg)
+				        chatBox.sendPrivate(ply, ply, target, msg)
+				        chatBox.sendPrivate(target, ply, ply, msg)
 				    else
 				        DarkRP.notify(ply, 1, 4, DarkRP.getPhrase("could_not_find", tostring(name)))
 				    end

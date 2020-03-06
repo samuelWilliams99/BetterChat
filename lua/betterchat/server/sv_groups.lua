@@ -79,7 +79,7 @@ function joinTables(a, b)
 end
 
 function chatBox.allowedGroups(ply)
-	return chatBox.getAllowed(ply, "ulx bc_groups")
+	return chatBox.getAllowed(ply, "bc_groups")
 end
 
 function chatBox.removeInvalidMembers(members)
@@ -225,7 +225,7 @@ net.Receive("BC_GM", function(len, ply)
 			if table.HasValue(group.members, ply:SteamID()) then
 				local members = chatBox.getGroupMembers(group)
 
-				print("(Group " .. group.id .. " - " .. group.name .. ") " .. ply:GetName() .. ": " .. msg)
+				chatBox.sendLog(chatBox.channelTypes.GROUP, "Group " .. group.id .. " - " .. group.name, ply, ": ", msg)
 
 				net.Start("BC_GM")
 				net.WriteUInt(groupID, 16)

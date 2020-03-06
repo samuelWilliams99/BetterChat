@@ -316,6 +316,7 @@ end
 function chatBox.generateSpriteLookups()
 	local lookup = {}
 	local nameList = {}
+	local emotes = {}
 
 	chatBox.autoComplete = chatBox.autoComplete or {}
 	chatBox.autoComplete.emoteUsage = chatBox.autoComplete.emoteUsage or {}
@@ -328,8 +329,11 @@ function chatBox.generateSpriteLookups()
 
 			for l, str in pairs(strs) do
 				table.insert(nameList, str)
+				if str[1] ~= ":" or str[#str] ~= ":" then
+					table.insert(emotes, str)
+				end
 				u[str] = u[str] or 0
-				lookup[str] = {sheet=sheet, idx=i}
+				lookup[str] = {sheet = sheet, idx = i}
 			end
 		end
 	end
@@ -338,7 +342,7 @@ function chatBox.generateSpriteLookups()
 		return #a > #b
 	end)
 
-	chatBox.spriteLookup = {lookup = lookup, list = nameList}
+	chatBox.spriteLookup = {lookup = lookup, list = nameList, emotes = emotes}
 
 end
 

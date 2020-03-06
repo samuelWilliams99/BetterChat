@@ -1,14 +1,18 @@
 net.Receive("BC_AM",function(len, ply)
-	local txt = net.ReadString()
+	local text = net.ReadString()
+	chatBox.sendAdmin(ply, text)
+end)
+
+function chatBox.sendAdmin(ply, text)
+	chatBox.sendLogConsole(chatBox.channelTypes.ADMIN, "Admin", ply, ": ", text)
 
 	local plys = {}
-
 	for k, p in pairs(player.GetAll()) do
-		if chatBox.getAllowed(p, "ulx seeasay") then
+		if chatBox.getAllowed(p, "seeasay") then
 			if chatBox.chatBoxEnabled[p] then
 				net.Start("BC_AM")
 				net.WriteEntity(ply)
-				net.WriteString(txt)
+				net.WriteString(text)
 				net.Send(p)
 			else
 				table.insert(plys, p)
@@ -16,9 +20,13 @@ net.Receive("BC_AM",function(len, ply)
 		end
 	end
 
-	if #plys > 0 then
-		ulx.fancyLog( plys, "#P to admins: #s", ply, txt )
-	else
-		print("(ADMIN) " .. ply:GetName() .. ": " .. txt)
+	if not chatBox.getAllowed(ply, "seeasay") then
+		table.insert(plys, ply)
 	end
-end)
+
+	if #plys > 0 then
+		for k, v in pairs(plys) do
+			chatBox.sendNormalClient(v, ply, " to admins: ", Color(0, 255, 0), text)
+		end
+	end
+end

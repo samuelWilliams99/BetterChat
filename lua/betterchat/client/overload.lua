@@ -74,22 +74,24 @@ function chatBox.overloadFunctions()
 			return chatBox.OnPlayerSayHook(...)
 		end
 	end)
-	hook.Add = function(event, id, func, ...)
+
+	-- DLib loves complaining about this, no other way to do it though
+	rawset( hook, "Add", function(event, id, func, ...)
 		if event == "OnPlayerChat" then
 			chatBox.hookOverloads.OnPlayerChat[id] = func
 		else
 			chatBox.overloadedFuncs.hookAdd( event, id, func, ... )
 		end
-	end
+	end )
 
 	chatBox.overloadedFuncs.hookRemove = hook.Remove
-	hook.Remove = function(event, id)
+	rawset( hook, "Remove", function(event, id)
 		if event == "OnPlayerChat" then
 			chatBox.hookOverloads.OnPlayerChat[id] = nil
 		else
 			chatBox.overloadedFuncs.hookRemove( event, id )
 		end
-	end
+	end )
 
 	hook.Run("BC_Overload")
 

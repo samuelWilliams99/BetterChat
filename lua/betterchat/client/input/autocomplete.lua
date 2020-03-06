@@ -1,3 +1,5 @@
+local setSuggestions, updateText, incOption, setOption, setText, getSimilarStrings, getSimilarCommands, getSimilarNames, getSimilarEmotes
+
 net.Receive("BC_sendULXCommands", function()
 	local cmds = util.JSONToTable(net.ReadString())
 	chatBox.autoComplete.extraCmds = {}
@@ -14,6 +16,10 @@ net.Receive("BC_sendULXCommands", function()
 	chatBox.autoComplete.cmds = newCmds
 	chatBox.autoComplete.emoteUsage = chatBox.autoComplete.emoteUsage or {}
 	chatBox.autoComplete.gotCommands = true
+end)
+
+hook.Add("BC_HideChat", "BC_RemoveSuggestions", function()
+	setSuggestions()
 end)
 
 hook.Add("BC_InitPanels", "BC_InitAutoComplete", function()
@@ -122,10 +128,13 @@ function updateText()
 	if not chatBox.getSetting("acDisplay") then return end
 	if #chatBox.autoComplete.cur.options > 0 then
 		local c = chatBox.autoComplete.cur
-		OPTIONS_SHOWN = math.min(4, #c.options)
+		local OPTIONS_SHOWN = math.min(4, #c.options)
+
 		local sIdx = c.option and math.max(c.option, 1) or 1
 		local options = table.Copy(c.options)
-		options[1] = c.word .. string.sub(options[1], #c.word + 1, -1)
+		if c.option == 0 then
+			options[1] = c.word .. string.sub(options[1], #c.word + 1, -1)
+		end
 
 		local t = c.prefix .. table.concat(options, "; ", sIdx, math.min(sIdx -1 + OPTIONS_SHOWN, #c.options)) .. "; "
 		if c.option ~= 0 then

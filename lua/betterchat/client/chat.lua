@@ -2,6 +2,52 @@ chatBox.linkColour = Color(180,200,255)
 chatBox.formatting = {}
 local f = chatBox.formatting
 
+f.colorNames = {
+	["maroon"] = Color(128,0,0),
+	["brown"] = Color(181,101,29),
+	["crimson"] = Color(220,20,60),
+	["red"] = Color(255,0,0),
+	["tomato"] = Color(255,89,61),
+	["coral"] = Color(255,127,80),
+	["salmon"] = Color(250,128,114),
+	["orange"] = Color(255,165,0),
+	["gold"] = Color(255,215,0),
+	["yellow"] = Color(255,255,0),
+	["green"] = Color(0,255,0),
+	["teal"] = Color(0,128,128),
+	["aqua"] = Color(0,255,255),
+	["cyan"] = Color(0,255,255),
+	["turquoise"] = Color(64,224,208),
+	["navy"] = Color(0,0,128),
+	["blue"] = Color(0,0,255),
+	["indigo"] = Color(75,0,130),
+	["purple"] = Color(128,0,128),
+	["mustard"] = Color(254,220,86),
+	["trombone"] = Color(210,181,91),
+	["violet"] = Color(238,130,238),
+	["magenta"] = Color(255,0,255),
+	["pink"] = Color(255,192,203),
+	["carrot"] = Color(255,105,180),
+	["beige"] = Color(245,245,220),
+	["wheat"] = Color(245,222,179),
+	["peanut"] = Color(121,92,50),
+	["chocolate"] = Color(210,105,30),
+	["black"] = Color(0,0,0),
+	["white"] = Color(255,255,255),
+	["gray"] = Color(128,128,128),
+	["grey"] = Color(128,128,128),
+	["silver"] = Color(192,192,192),
+	["sky blue"] = Color(0,255,255),
+	["light blue"] = Color(0,140,255),
+	["hot pink"] = Color(255,105,180),
+	["lime"] = Color(191,255,127),
+	["mauve"] = Color(103,49,71),
+	["stmaragdine"] = Color(80,200,117),
+	["banana"] = Color(255,0,128),
+	["print yellow"] = Color(255,222,102),
+	["print blue"] = Color(137,222,255),
+}
+
 function chatBox.formatMessage(ply, text, dead, defaultColor, dontRecolorColon, data)
 
 	local text = table.concat(string.Explode("\t[\t]+", text, true), "\t")
@@ -12,24 +58,22 @@ function chatBox.formatMessage(ply, text, dead, defaultColor, dontRecolorColon, 
 
 	local preTab, lastCol = hook.Run("BC_GetPreTab", unpack(data))
 	if preTab then
-		table.Add(preTab, chatBox.formatText(text, lastCol))
+		table.Add(preTab, chatBox.formatText(text, lastCol, ply))
 		tab = preTab
 		if data[3] then -- Teamchat
 			table.insert(preTab, 1, {controller=true, type="noPrefix"})
 		end
-
 	else
-
 		if dead then
-			table.insert(tab, Color(255,0,0) )
-			table.insert(tab, "*DEAD* " )
+			table.insert( tab, Color(255,0,0) )
+			table.insert( tab, "*DEAD* " )
 		end
 
 		table.insert(tab, {formatter = true, type = "prefix"})
 
 		if not ply:IsValid() then
 			table.insert(tab, chatBox.colors.printBlue)
-			table.insert(tab, "Console")
+			table.insert(tab, "Server")
 		else
 			table.insert(tab, {formatter = true, type = "escape"}) --escape pop from ply name
 			table.insert(tab, ply)
@@ -38,20 +82,21 @@ function chatBox.formatMessage(ply, text, dead, defaultColor, dontRecolorColon, 
 		table.insert(tab, ": ")
 		table.insert(tab, defaultColor)
 
-		local messageTab = chatBox.formatText(text)
+		local messageTab = chatBox.formatText(text, nil, ply)
 		table.Add(tab, messageTab)
 	end
 
 	return tab
 end
 
-function chatBox.formatText(text, defaultColor)
+function chatBox.formatText(text, defaultColor, ply)
+	if not ply then error("on no") end
 	local tab = {}
 
 	defaultColor = defaultColor or Color(255,255,255,255)
 
 	-- Make ulx commands grey
-	if text[1] == "!" and chatBox.getSetting("colorCmds") then
+	if text[1] == "!" and text[2] ~= "!" and chatBox.getSetting("colorCmds") then
 		local s,e = string.find(text, " ", nil, true)
 		if not e then e = #text+1 end
 		if e ~= 2 then
@@ -62,129 +107,321 @@ function chatBox.formatText(text, defaultColor)
 		end
 	end
 
-	tab = f.formatPlayerNames(text, tab, defaultColor)
+	tab = f.formatSpecialWords(text, tab)
+
+	tab = f.formatCustomColor(tab, defaultColor, ply)
 
 	-- format links
 	if chatBox.getSetting("clickableLinks") then
 		tab = f.formatLinks(tab)
 	end
 
-	local madeChange = true
-	local loopCounter = 1
+	tab = f.formatEmotes( tab )
 
-	if chatBox.spriteLookup then
-		while madeChange do
-			madeChange = false
-			loopCounter = loopCounter + 1
-			if loopCounter > 30 then
-				MsgC(Color(255,0,0), "[BetterChat] A message with too many images has been prevented from rendering fully to prevent lag")
-				break
-			end
-			local newTab = {}
-			for k, v in pairs(tab) do
-				if type(v) == "string" then
-					local inpStr = v
-
-					local found = true
-					while found do
-						found = false
-						for l = 1, #chatBox.spriteLookup.list do
-							local str = chatBox.spriteLookup.list[l]
-
-							local isShort = str[1] ~= ":" or str[#str] ~= ":"
-
-							local s, e = string.find(inpStr, str, 1, true)
-
-							if s then 
-								-- This section is kind of gross, might wanna try fix it
-								-- accept
-								-- 	:)
-								-- 	test :)
-								--  test :) lol
-								--  \:)
-								--  test \:)
-								--  test \:) lol
-								-- deny
-								--  a\:)
-								--  \:lol
-								-- etc
-								if isShort then
-									if not chatBox.getSetting("convertEmotes") then continue end
-									if s > 1 then
-										if s > 2 then 
-											if inpStr[s-1] ~= " " then
-												if not (inpStr[s-1] == "\\" and inpStr[s-2] == " ") then continue end
-											end
-										else
-											if inpStr[s-1] ~= " " and inpStr[s-1] ~= "\\" then continue end
-										end
-									end
-
-									//if s > 1 and inpStr[s-1] ~= " " and inpStr[s-1] ~= "\\" then continue end -- This could also work? it would accept a\:) -> a:) tho
-
-									if e < #inpStr and inpStr[e+1] ~= " " then continue end
-								end
-								
-								found = true
-
-								-- push string start to s
-								-- push image table
-								-- set string to e to end
-								
-								if s > 1 and inpStr[s-1] == "\\" then 
-									table.insert(newTab, string.sub(inpStr, 1, s-2))
-									table.insert(newTab, {formatter=true, type="text", text=string.sub(inpStr, s, e)})
-								else
-									table.insert(newTab, string.sub(inpStr, 1, s-1))
-									local data = chatBox.spriteLookup.lookup[str]
-									table.insert(newTab, {formatter=true, type="image", sheet=data.sheet, idx=data.idx, text=str})
-								end
-								inpStr = string.sub(inpStr, e+1, #inpStr)
-								
-								madeChange = true
-								break
-							end
-						end
-
-					end
-
-					if #inpStr > 0 then
-						table.insert(newTab, inpStr)
-					end
-				else
-					table.insert(newTab, v)
-				end
-			end
-			tab = newTab
-
-		end
-	end
+	tab = f.formatModifiers( tab, ply )
 
 	return tab
 end
 
-function f.formatPlayerNames(text, tab, defaultColor)
+function f.formatCustomColor(tab, currentColor, ply)
+	local out = {}
+	local canUse = chatBox.getAllowed(ply, "bc_color")
+	for k, v in ipairs(tab) do
+		if type(v) == "table" and v.defaultColor then
+			table.insert(out, currentColor)
+		elseif type(v) == "string" and canUse then
+			local ret
+			ret, currentColor = f.formatCustomColorSingle(v)
+			table.Add(out, ret)
+		else
+			table.insert(out, v)
+		end
+	end
+	return out
+end
+
+local function firstMatch(text, ...)
+	local out = {}
+	local firstPos = 100000
+	local firstIdx = -1
+	for k, v in pairs{...} do
+		local data = {string.find(text, v)}
+		if not data[1] then continue end
+		if data[1] < firstPos then
+			firstPos = data[1]
+			out = data
+			firstIdx = k
+		end
+	end
+	return firstIdx, table.remove(out, 1), table.remove(out, 1), out
+end
+
+function f.formatCustomColorSingle(text)
+	local out = {}
+	while true do
+		local i, s, e, data = firstMatch(text, "%[#(%x%x)(%x%x)(%x%x)%]", "%[#%]", "%[@([^%]]+)%]")
+		if i == -1 then
+			break
+		end
+		local col
+		if i == 1 then
+			local r = tonumber(data[1], 16)
+			local g = tonumber(data[2], 16)
+			local b = tonumber(data[3], 16)
+			col = Color(r, g, b)
+		elseif i == 2 then
+			col = Color(255, 255, 255)
+		else
+			local colName = string.lower(data[1])
+			col = f.colorNames[colName]
+			if not col then
+				table.insert(out, string.sub(text, 1, e))
+				text = string.sub(text, e+1)
+				continue
+			end
+		end
+		currentColor = col
+		local preText = string.sub(text, 1, s-1)
+		text = string.sub(text, e+1)
+		if #preText > 0 then
+			table.insert(out, preText)
+		end
+		table.insert(out, col)
+	end
+	if #text > 0 then
+		table.insert(out, text)
+	end
+	return out, currentColor
+end
+
+function f.formatEmotes( tab )
+	local madeChange = true
+	local loopCounter = 1
+	-- i hate this whole section, surely can be written better
+	-- cleaned up a bit, still needs rewriting, cba
+	if not chatBox.spriteLookup then
+		return tab
+	end
+	
+	while madeChange do
+		madeChange = false
+		loopCounter = loopCounter + 1
+		if loopCounter > 30 then
+			MsgC(Color(255,0,0), "[BetterChat] A message with too many images has been prevented from rendering fully to prevent lag")
+			break
+		end
+		local newTab = {}
+		for k, v in pairs(tab) do
+			if type(v) ~= "string" then
+				table.insert(newTab, v)
+				continue
+			end
+
+			local inpStr = v
+
+			local found = true
+			while found do
+				found = false
+				for l = 1, #chatBox.spriteLookup.list do
+					local str = chatBox.spriteLookup.list[l]
+
+					local s, e = string.find(inpStr, str, 1, true)
+					if not s then continue end
+
+					local isShort = str[1] ~= ":" or str[#str] ~= ":"
+
+					if isShort then
+						if not chatBox.getSetting("convertEmotes") then continue end
+						if s > 1 then
+							if s > 2 then 
+								if inpStr[s-1] ~= " " then
+									if not (inpStr[s-1] == "\\" and inpStr[s-2] == " ") then continue end
+								end
+							else
+								if inpStr[s-1] ~= " " and inpStr[s-1] ~= "\\" then continue end
+							end
+						end
+						if e < #inpStr and inpStr[e+1] ~= " " then continue end
+					end
+					
+					found = true
+
+					-- push string start to s
+					-- push image table
+					-- set string to e to end
+					
+					if s > 1 and inpStr[s-1] == "\\" then 
+						table.insert(newTab, string.sub(inpStr, 1, s-2))
+						table.insert(newTab, {formatter=true, type="text", text=string.sub(inpStr, s, e)})
+					else
+						table.insert(newTab, string.sub(inpStr, 1, s-1))
+						local data = chatBox.spriteLookup.lookup[str]
+						table.insert(newTab, {formatter=true, type="image", sheet=data.sheet, idx=data.idx, text=str})
+					end
+					inpStr = string.sub(inpStr, e+1, #inpStr)
+					
+					madeChange = true
+					break
+				end
+
+			end
+
+			if #inpStr > 0 then
+				table.insert(newTab, inpStr)
+			end
+		end
+		tab = newTab
+	end
+	return tab
+end
+
+local function backTrackModifier( tab, state, key )
+	if not state[key] then return end
+	for k = #tab, 1, -1 do
+		local v = tab[k]
+		-- Is it a matching modifier
+		if not ( istable( v ) and v.formatter and v.type == "decoration" and v.modifierType == key ) then
+			continue
+		end
+		tab[k] = {
+			formatter = true,
+			type = "text",
+			text = v.text
+		}
+		break
+	end
+end
+
+local function getPlyModifiers( ply )
+	local out = {}
+	out.italic = chatBox.getAllowed( ply, "bc_italics" )
+	out.bold = chatBox.getAllowed( ply, "bc_bold" )
+	out.strike = chatBox.getAllowed( ply, "bc_strike" )
+	out.underline = chatBox.getAllowed( ply, "bc_underline" )
+	return out
+end
+
+
+function f.formatModifiers(tab, ply)
+	local newTab = {}
+	local state = {
+		bold = false,
+		underline = false,
+		strike = false,
+		italic = false
+	}
+	for k, v in pairs(tab) do
+		if type(v) == "string" then
+			local tab = f.formatModifiersSingle( v, state, getPlyModifiers( ply ) )
+			table.Add( newTab, tab )
+		else
+			table.insert( newTab, v )
+		end
+	end
+
+	for k, v in pairs( state ) do
+		backTrackModifier( newTab, state, k )
+	end
+
+	table.insert( newTab, {
+		formatter = true,
+		type = "decoration"
+	} )
+	return newTab
+end
+
+
+--[[
+*italics*
+**bold**
+__underline__
+~~strike~~
+]]
+
+local modifierKeyMap = {
+	["~~"] = "strike",
+	["**"] = "bold",
+	["__"] = "underline",
+	["*"] = "italic"
+}
+
+function f.formatModifiersSingle( txt, state, allowed )
+	if #table.GetKeys( allowed ) == 0 then return { txt } end
+	local out = {}
+	local s, e, escape, c1, c2
+	local lastTxt = ""
+	while true do
+		s, e, escape, c1, c2 = string.find( " " .. txt, "([\\]?)([%*_~])(.?)" )
+		if not s or lastTxt == txt then break end -- Prevent inf loop if something goes wrong
+		lastTxt = txt
+
+		if c2 == "" then -- If no second character (end of line), act as if there is
+			e = e + 1
+		end
+
+		-- To account for added space at start
+		s = s - 1
+		e = e - 1
+		-- Combine characters into a modifier, adjust e accordingly
+		local c = c1
+		if c1 == c2 then
+		    c = c .. c2
+		    e = e + 1
+		end
+
+		local key = modifierKeyMap[c]
+		-- Do nothing (but separate out text so it doesn't get parsed twice/infinitely)
+		if escape ~= "" or not key or not allowed[key] then
+			table.insert( out, string.sub( txt, 1, s - 1 ) .. c )
+			txt = string.sub( txt, e )
+			continue
+		end
+
+		-- Get before and after text
+		local preText = string.sub( txt, 1, s - 1 )
+		txt = string.sub( txt, e )
+		-- Make the decoration modifier
+		state[key] = not state[key]
+		local elem = {
+			formatter = true,
+			type = "decoration",
+			modifierType = key,
+			text = c
+		}
+		table.Merge( elem, state )
+		-- Add everything to out
+		if #preText > 0 then
+			table.insert( out, preText )
+		end
+		table.insert( out, elem )
+	end
+	if #txt > 0 then
+		table.insert( out, txt )
+	end
+	return out
+end
+
+-- for player names, colours and colourModifiers ([#ff0000])
+function f.formatSpecialWords(text, tab)
 	tab = table.Copy(tab)
-	local s,e,v,n = getPlyName(text)
+	local s,e,v,n = getSpecialWord(text)
 	while e do
 		if s > 1 then
-			if (text[s-1] ~= " " and text[s-1] ~= "'" and text[s-1] ~= "\"") then 
-				s,e,v,n = getPlyName(text, e+1)
+			local prevChar = text[s-1]
+			if not table.HasValue( {" ", "'", "\"", "*", "_", "~"}, prevChar ) then
+				s,e,v,n = getSpecialWord(text, e+1)
 				continue 
 			end
 		end
 		if e < #text then
-			if text[e+1] ~= " " and text[e+1] ~= "'" and text[e+1] ~= "!" and text[e+1] ~= "?" then
+			local nextChar = text[e+1]
+			if not table.HasValue( {" ", "'", "!", "?", "*", "_", "~"}, nextChar ) then
 				if text[e+1] ~= "s" and text[s-1] ~= "\"" and text[e+1] ~= ":" then
-					s,e,v,n = getPlyName(text, e+1)
+					s,e,v,n = getSpecialWord(text, e+1)
 					continue
-				else
-					if e < #text-1 then
-						if chatBox.isLetter(text[e+2]) then
-							s,e,v,n = getPlyName(text, e+1)
-							continue
-						end
-					end
+				elseif e < #text-1 and chatBox.isLetter(text[e+2]) then
+					s,e,v,n = getSpecialWord(text, e+1)
+					continue
 				end
 			end
 					
@@ -198,9 +435,9 @@ function f.formatPlayerNames(text, tab, defaultColor)
 		end
 		table.insert(tab, n)
 		
-		table.insert(tab, defaultColor)
+		table.insert(tab, {defaultColor = true})
 		text = string.sub(text, e+1, -1)
-		s,e,v,n = getPlyName(text)
+		s,e,v,n = getSpecialWord(text)
 	end
 
 	if #text > 0 then
@@ -336,50 +573,7 @@ chatBox.OnPlayerSayHook = function(...) -- pre, col1 and col2 are supplied by Da
 	return true
 end
 
-local colourNames = {
-	["maroon"] = Color(128,0,0),
-	["brown"] = Color(181,101,29),
-	["crimson"] = Color(220,20,60),
-	["red"] = Color(255,0,0),
-	["tomato"] = Color(255,89,61),
-	["coral"] = Color(255,127,80),
-	["salmon"] = Color(250,128,114),
-	["orange"] = Color(255,165,0),
-	["gold"] = Color(255,215,0),
-	["yellow"] = Color(255,255,0),
-	["green"] = Color(0,255,0),
-	["teal"] = Color(0,128,128),
-	["aqua"] = Color(0,255,255),
-	["cyan"] = Color(0,255,255),
-	["turquoise"] = Color(64,224,208),
-	["navy"] = Color(0,0,128),
-	["blue"] = Color(0,0,255),
-	["indigo"] = Color(75,0,130),
-	["purple"] = Color(128,0,128),
-	["mustard"] = Color(254,220,86),
-	["trombone"] = Color(210,181,91),
-	["violet"] = Color(238,130,238),
-	["magenta"] = Color(255,0,255),
-	["pink"] = Color(255,192,203),
-	["carrot"] = Color(255,105,180),
-	["beige"] = Color(245,245,220),
-	["wheat"] = Color(245,222,179),
-	["peanut"] = Color(121,92,50),
-	["chocolate"] = Color(210,105,30),
-	["black"] = Color(0,0,0),
-	["gray"] = Color(128,128,128),
-	["grey"] = Color(128,128,128),
-	["silver"] = Color(192,192,192),
-	["sky blue"] = Color(0,255,255),
-	["light blue"] = Color(0,140,255),
-	["hot pink"] = Color(255,105,180),
-	["lime"] = Color(191,255,127),
-	["mauve"] = Color(103,49,71),
-	["stmaragdine"] = Color(80,200,117),
-	["banana"] = Color(255,0,128)
-}
-
-function getPlyName(text, start)
+function getSpecialWord(text, start)
 	local minS = #text+1, #text+1
 	local col, name = nil, nil
 	for k,v in pairs(player.GetAll()) do
@@ -395,7 +589,7 @@ function getPlyName(text, start)
 		end
 	end
 	if chatBox.getSetting("formatColors") then
-		for k,v in pairs(colourNames) do
+		for k,v in pairs(f.colorNames) do
 			s,e = string.find(string.lower(text), string.lower(k), start, true)
 			if s and s <= minS then
 				if s == minS then

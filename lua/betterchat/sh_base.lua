@@ -1,42 +1,59 @@
 chatBox = chatBox or {}
+chatBox.ConsolePlayer = {isConsole=true} -- some unique table to pass around
+chatBox.channelTypes = {
+    GLOBAL = 1,
+    TEAM = 2,
+    PRIVATE = 3,
+    ADMIN = 4,
+    GROUP = 5
+}
 
 --[[
-	make !giphy a ulx command
-	text formatting with *italics* **bold** ~~strike~~ 
-	timestamps
-	logs channel
+code cleanup
 
-	chat cooldown - paps sniffin my packets >:(
+ctrt+w for close tab
 
-	double right click on thing in corner requires mouse movement ????
-		this whole fukin thing is just buggy af
-		fix plox :)
+make players closable
+
+joining after bots
+	[ERROR] addons/betterchat/lua/betterchat/client/sidepanel/panels/players.lua:30: attempt to call method 'SteamID' (a nil value)
+  1. fn - addons/betterchat/lua/betterchat/client/sidepanel/panels/players.lua:30
+   2. func - addons/ulib-master/lua/ulib/client/cl_util.lua:22
+    3. unknown - lua/includes/extensions/net.lua:32
+
+
+
+	logs channel - implement with a ulx permission, ulx bc_seechatlogs
+
+	chat cooldown - sounds like a fair bit of work, especially when other addons already do it
+		maybe call onchat with generic ply/message to trigger it?
+
+	resize/move
+		double right click on thing in corner requires mouse movement ????
 		preferable change hand to sizeall when hovering
-	test darkrp
+		some button to enable moving/resizing, as a mode
+			panel over top of the whole chat, removes issue with cursor as panel will be only focused thing
+			gray the panel a bit and pop an icon in the middle?
 
-	fuckin data keeps resetting
-		WHY -- might be fixed? Someone else has a table.filter and its shit/broken lol
+		scroll bar on side panels not updating -- this is a problem, idk how fix
+			could just not show chat when resizing/moving
+			enter kinda like an edit hud mode, where no gui are actually rendered, just shitty boxes
 
-	scroll bar on side panels not updating -- this is a problem, idk how fix
+	test darkrp - l o l
+
 
 ]]
 
 if SERVER then
 	--includes
-	include("betterchat/server/sv_overloads.lua")
-	include("betterchat/server/sv_playerstates.lua")
-	include("betterchat/server/sv_privatemessages.lua")
-	include("betterchat/server/sv_adminmessages.lua")
-	include("betterchat/server/sv_sendcommands.lua")
-	include("betterchat/server/sv_sidepanelsinit.lua")
-	include("betterchat/server/sv_groups.lua")
-	include("betterchat/server/sv_teamoverload.lua")
-	include("betterchat/server/sv_sayoverload.lua")
-	include("betterchat/server/sv_giphy.lua")
+
+
+
+	include("betterchat/server/sv_manager.lua")
 
 	local networkStrings = {
 		"BC_chatOpenState", "BC_sendPlayerState", "BC_plyReady", "BC_disable", -- Chat states
-		"BC_PM", "BC_AM", "BC_GM", "BC_TM", -- Messages (Private, Admin, Group, Team)
+		"BC_PM", "BC_AM", "BC_GM", "BC_TM", "BC_LM", -- Messages (Private, Admin, Group, Team)
 		"BC_sendULXCommands", "BC_UserRankChange", -- Ulx
 		"BC_sendGroups", "BC_updateGroup", "BC_newGroup", "BC_groupAccept", "BC_leaveGroup", "BC_deleteGroup", -- Groups
 		"BC_forwardMessage", "BC_SayOverload", "BC_SendGif", "BC_PlayerDisconnected", -- Misc
@@ -283,7 +300,7 @@ function chatBox.buildBox()
 	chatBox.channels = {}
 	chatBox.graphics = {}
 	local g = chatBox.graphics
-	g.font = "chatFont_18"
+	g.font = "BC_Default"
 	g.minSize = {x = 400, y = 250}
 	g.originalSize = {x = 550, y = 301}
 	g.size = table.Copy(g.originalSize)
@@ -448,8 +465,8 @@ function chatBox.buildBox()
 
 	g.textEntry.Paint = function( panel, w, h )
 		surface.SetFont( panel:GetFont() )
-		surface.SetTextColor( 100, 100, 100 )
-		surface.SetTextPos( 3, 1 )
+		surface.SetTextColor( 130, 130, 130 )
+		surface.SetTextPos( 3, -1 )
 		surface.DrawText( g.textEntry.bgText )
 
 		panel:DrawTextEntryText( panel:GetTextColor(), panel:GetHighlightColor(), panel:GetCursorColor() )
@@ -504,6 +521,15 @@ function chatBox.buildBox()
 			end
 		end
 	end
+
+	hook.Add( "BC_ChannelChanged", "BC_DisableTextEntry", function()
+		local text = chatBox.graphics.textEntry
+		local chan = chatBox.getActiveChannel()
+		if not chan then return end
+		text:SetDisabled( chan.noSend )
+		text:SetTooltip( chan.noSend and "This channel does not allow messages to be sent" or nil )
+	end )
+
 	hook.Run( "BC_PreInitPanels" )
 	hook.Run( "BC_InitPanels" )
 
@@ -617,6 +643,12 @@ function chatBox.openChatBox( selectedTab )
 	chatBox.overloadedFuncs.oldClose()
 	selectedTab = selectedTab or "All"
 
+	if selectedTab == "All" and chatBox.getSetting("rememberChannel") then
+		if chatBox.lastChannel then
+			selectedTab = chatBox.lastChannel
+		end
+	end
+
 	local chan = chatBox.getAndOpenChannel(selectedTab)
 	if not chan then return end
 	selectedTab = chan.name
@@ -648,6 +680,9 @@ end
 
 function chatBox.closeChatBox()
 	if not chatBox.enabled then return end
+
+	chatBox.lastChannel = chatBox.getActiveChannel().name
+
 	chatBox.overloadedFuncs.oldClose()
 	CloseDermaMenus()
 

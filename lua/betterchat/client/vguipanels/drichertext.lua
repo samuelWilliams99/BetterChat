@@ -230,6 +230,7 @@ function RICHERTEXT:Init()
 	self.showGraphics = true
 	self.maxLines = 200
 	self.yRemoved = 0
+	self.allowDecorations = true
 
 	self.textColor = Color(255,255,255,255)
 	self.clickable = nil
@@ -295,7 +296,8 @@ function RICHERTEXT:Reload() -- Clear the text, reset a bunch of shit, then run 
 		["clickStart"] = RICHERTEXT.InsertClickableTextStart,
 		["clickEnd"] = RICHERTEXT.InsertClickableTextEnd,
 		["image"] = RICHERTEXT.AddImage,
-		["gif"] = RICHERTEXT.AddGif
+		["gif"] = RICHERTEXT.AddGif,
+		["decorations"] = RICHERTEXT.SetDecorations
 	}
 
 	self.logCopy = table.Copy(self.log)
@@ -304,8 +306,6 @@ function RICHERTEXT:Reload() -- Clear the text, reset a bunch of shit, then run 
 	for k=1, #self.logCopy do
 		funcs[self.logCopy[k].type](self, unpack(self.logCopy[k].data or {}))
 	end
-
-
 end
 
 function RICHERTEXT:OnRemove()
@@ -631,6 +631,23 @@ end
 function RICHERTEXT:SetFont( font )
 	if not font then return end
 	self.innerFont = font
+	self:AddLabel()
+end
+function RICHERTEXT:SetDecorations( bold, italics, underline, strike )
+	table.insert(self.log, {type = "decorations", data = {bold, italics, underline, strike}})
+	self.textBold = bold
+	self.textItalics = italics
+	self.textUnderline = underline
+	self.textStrike = strike
+	self:AddLabel()
+end
+
+function RICHERTEXT:GetAllowDecorations()
+	return self.allowDecorations
+end
+
+function RICHERTEXT:SetAllowDecorations( v )
+	self.allowDecorations = v
 end
 
 function RICHERTEXT:SetVerticalScrollbarEnabled( draw )
@@ -748,12 +765,51 @@ function RICHERTEXT:MakeClickable(element)
 	end
 end
 
+function RICHERTEXT:GetLabelFont()
+	local newFont = self.innerFont
+	if not self:GetAllowDecorations() then return newFont end
+	if not self.doFormatting then return newFont end
+	if self.textBold then
+		newFont = newFont .. "_bold"
+	end
+	if self.textItalics then
+		newFont = newFont .. "_italics"
+	end
+	return newFont
+end
+
+local function addLabelPaint( label )
+	function label:PaintOver( _w, h )
+		local w = self:GetTextSize()
+		local tCol = self:GetTextColor()
+		local thickness = self.textBold and 2 or 1
+		if self.textUnderline then
+			surface.SetDrawColor( Color( 0, 0, 0, tCol.a ) )
+			surface.DrawRect( 1, h-thickness, w, thickness )
+			surface.SetDrawColor( tCol )
+			surface.DrawRect( 0, h-thickness-1, w, thickness )
+		end
+		if self.textStrike then
+			surface.SetDrawColor( Color( 0, 0, 0, tCol.a ) )
+			surface.DrawRect( 1, h / 2 + 1, w, thickness )
+			surface.SetDrawColor( tCol )
+			surface.DrawRect( 0, h / 2, w, thickness )
+		end
+	end
+end
+
 function RICHERTEXT:AddLabel()
 	local line = self.lines[#self.lines] -- Get last line
 	local idx = self:PrepNewElement()
 	
 	local label = vgui.Create( "DLabel", self.scrollPanel:GetCanvas() ) -- Make a fokin label
-	label:SetFont(self.innerFont)
+	label:SetFont(self:GetLabelFont())
+	if self.doFormatting then
+		label.textUnderline = self.textUnderline
+		label.textStrike = self.textStrike
+		label.textBold = self.textBold
+		addLabelPaint( label )
+	end
 	label:SetTextColor(self.textColor)
 	label:SetText("")
 	label.rawText = ""
@@ -956,7 +1012,12 @@ end
 function RICHERTEXT:InsertColorChange(r, g, b, a)
 	table.insert(self.log, {type = "col", data = {r,g,b,a}})
 	if not self.doFormatting then return end
-	self.textColor = Color(r,g,b,a)
+	if IsColor( r ) then
+		self.textColor = r
+	else
+		self.textColor = Color(r,g,b,a)
+	end
+	
 	self:AddLabel()
 end
 function RICHERTEXT:InsertClickableTextStart( sigVal )

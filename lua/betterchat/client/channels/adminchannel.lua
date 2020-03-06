@@ -14,82 +14,37 @@ chatBox.admin.defaultChannel = {
 		table.insert(tab, idx+1, "(ADMIN) " )
 	end,
 	openOnStart = function()
-		return chatBox.getAllowed("ulx seeasay")
+		return chatBox.allowedAdmin()
 	end,
 	runCommandSeparately = true,
 	hideChatText = true,
 	textEntryColor = Color(200,100,100),
 }
+chatBox.admin.buttonEnabled = false
 
 function chatBox.addAdminButton()
-	local g = chatBox.graphics
-	if g.adminButton then return end
-	local btn = vgui.Create("DButton", g.chatFrame)
-	btn:SetPos( g.size.x - 50 - 3 - 50 - 33, 5 )
-	btn:SetSize(50,19)
-	btn:SetTextColor(Color(220,220,220,255))
-	btn:SetText("Admin")
+	chatBox.admin.buttonEnabled = true
+end
 
-	local oldLayout = btn.PerformLayout
-	function btn:PerformLayout()
-		self:SetPos( g.size.x - 50 - 3 - 50 - 33, 5 )
-		oldLayout(self)
-	end
+function chatBox.removeAdminButton()
+	chatBox.admin.buttonEnabled = false
+end
 
-	btn.Paint = function(self, w, h)
-		draw.RoundedBox( 0, 0, 0, w, h, Color( 150,  150, 150, 50 ) )
-	end
-
-	btn.DoClick = function(self, w, h)
+hook.Add("BC_MakeChannelButtons", "BC_MakeAdminButton", function(menu)
+	if not chatBox.admin.buttonEnabled then return end
+	menu:AddOption( "Admin", function()
 		local chan = chatBox.getChannel("Admin")
-
 		if not chan then return end
 
 		if not chatBox.isChannelOpen(chan) and chatBox.allowedAdmin() then
 			chatBox.addChannel(chan)
 		end
-
 		chatBox.focusChannel(chan)
-	end
-
-	hook.Add("BC_ShowChat", "BC_showAdminButton", function() 
-		if not chatBox.graphics.adminButton then
-			hook.Remove("BC_ShowChat", "BC_showAdminButton")
-			hook.Remove("BC_HideChat", "BC_hideAdminButton")
-			return
-		end
-		chatBox.graphics.adminButton:Show() 
-	end)
-	hook.Add("BC_HideChat", "BC_hideAdminButton", function() 
-		if not chatBox.graphics.adminButton then
-			hook.Remove("BC_ShowChat", "BC_showAdminButton")
-			hook.Remove("BC_HideChat", "BC_hideAdminButton")
-			return
-		end
-		chatBox.graphics.adminButton:Hide() 
-	end)
-
-	g.psheet.tabScroller:DockMargin(3,0,88 + 53,0)
-
-	g.adminButton = btn
-end
-
-
-
-function chatBox.removeAdminButton()
-	local g = chatBox.graphics
-	if not g.adminButton then return end
-	g.adminButton:Remove()
-	g.adminButton = nil
-
-	g.psheet.tabScroller:DockMargin(3,0,88,0)
-
-	hook.Remove("BC_ShowChat", "BC_showAdminButton")
-	hook.Remove("BC_HideChat", "BC_hideAdminButton")
-end
+	end )
+end )
 
 function chatBox.allowedAdmin()
-	return chatBox.getAllowed("ulx seeasay")
+	return chatBox.getAllowed("seeasay")
 end
 
 net.Receive("BC_AM", function()
@@ -105,7 +60,13 @@ net.Receive("BC_AM", function()
 		chatBox.addChannel(chan)
 	end
 
-	local tab = chatBox.formatMessage(ply, text, not ply:Alive(), ply:IsAdmin() and chatBox.colors.white or chatBox.colors.admin)
+	local isAlive, isAdmin = true, true
+	if ply:IsValid() then
+		isAlive = ply:Alive()
+		isAdmin = ply:IsAdmin()
+	end
+
+	local tab = chatBox.formatMessage(ply, text, not isAlive, isAdmin and chatBox.colors.white or chatBox.colors.admin)
 	chatBox.messageChannel( {chan.name, "MsgC"}, unpack(tab) )
 end)
 
@@ -132,7 +93,7 @@ hook.Add("BC_PreInitPanels", "BC_InitAddAdminChannel", function()
 	chatBox.addAdminChannel()
 end)
 
-hook.Add("BC_PostInitPanels", "BC_adminAddButton", function()
+hook.Add("BC_PostInitPanels", "BC_AdminAddButton", function()
 	if chatBox.allowedAdmin() then
 		chatBox.addAdminButton()
 	end
@@ -178,7 +139,7 @@ hook.Add("PostGamemodeLoaded", "BC_RPAdminOverload", function()
 			end
 		end)
 		DarkRP.addChatReceiver("/adminhelp", "talk in Admin", function(ply, text)
-			return chatBox.getAllowed("ulx seeasay")
+			return chatBox.allowedAdmin()
 		end)
 	end
 end)

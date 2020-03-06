@@ -51,45 +51,10 @@ function chatBox.saveData()
 end
 
 function chatBox.loadData() 
-	print("attempt load")
-	if not file.Exists("bc_data_cl.txt", "DATA") then 
-		print("NO DATA")
-		timer.Simple(5, function()
-			print("======================================")
-			print("BETTERCHAT DATA WAS RESET")
-			print("======================================")
-			surface.PlaySound("air-raid.wav")
-		end)
-		return 
-	end
+	if not file.Exists("bc_data_cl.txt", "DATA") then return end
 
 	local data = util.JSONToTable(file.Read("bc_data_cl.txt"))
-	if not data then 
-		print("MALFORMED DATA")
-		print(file.Read("bc_data_cl.txt"))
-		timer.Simple(5, function()
-			print("======================================")
-			print("BETTERCHAT DATA WAS RESET")
-			print("======================================")
-			surface.PlaySound("air-raid.wav")
-		end)
-		return
-	end
-	local t = table.Copy(data)
-	for k, v in pairs(t) do
-		if type(v) == "table" then
-			t[k] = table.Count(v)
-		end
-	end
-	PrintTable(t)
-	if t.emoteUsage == 0 then
-		timer.Simple(5, function()
-			print("======================================")
-			print("BETTERCHAT DATA WAS RESET")
-			print("======================================")
-			surface.PlaySound("air-raid.wav")
-		end)
-	end
+	if not data then return end
 
 	if data.pos then
 		chatBox.graphics.frame:SetPos(data.pos.x, data.pos.y)
@@ -105,10 +70,10 @@ function chatBox.loadData()
 		end
 	end
 
-	for k, v in pairs(chatBox.channels) do --load over already open channels quickly
+	for k, v in pairs(chatBox.channels) do --load over already open channels
 		v.dataChanged = {}
 		if data.channelSettings and data.channelSettings[v.name] then
-			loadFromData(data.channelSettings[v.name], v)
+			loadFromTemplate(data.channelSettings[v.name], v, chatBox.channelSettingsTemplate)
 			for k1, setting in pairs(chatBox.channelSettingsTemplate) do
 				if setting.onChange then setting.onChange(v) end
 			end
@@ -117,12 +82,12 @@ function chatBox.loadData()
 	end
 
 	if data.channelSettings then
-		for k, v in pairs(data.channelSettings) do --load remaining channels slowly
+		for k, v in pairs(data.channelSettings) do --load remaining channels
 			channel = {}
 			channel.name = k
 			channel.needsData = true
 			channel.dataChanged = {}
-			loadFromData(v, channel)
+			loadFromTemplate(v, channel, chatBox.channelSettingsTemplate)
 			table.insert(chatBox.channels, channel)
 		end
 	end
@@ -134,7 +99,7 @@ function chatBox.loadData()
 				chatBox.playerSettings[k].needsData = true
 			end
 			chatBox.playerSettings[k].dataChanged = {}
-			loadFromData(v, chatBox.playerSettings[k])
+			loadFromTemplate(v, chatBox.playerSettings[k], chatBox.playerSettingsTemplate)
 		end
 	end
 
@@ -192,9 +157,14 @@ function saveFromTemplate(src, data, template)
 	end
 end
 
-function loadFromData(data, dest)
-	for k, v in pairs(data) do
-		dest[k] = v
-		dest.dataChanged[k] = true
+function loadFromTemplate(data, dest, template)
+	for k, v in pairs(template) do
+		if not data[v.value] then continue end
+		-- If data is options but value isn't a valid option
+		if v.type == "options" and not table.HasValue(v.optionValues, data[v.value]) then
+			data[v.value] = v.default
+		end
+		dest[v.value] = data[v.value]
+		dest.dataChanged[v.value] = true
 	end
 end

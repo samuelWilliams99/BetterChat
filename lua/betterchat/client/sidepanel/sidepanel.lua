@@ -62,7 +62,7 @@ renderSettingFuncs = {
 		textEntry:SetName("BC_SettingsKeyEntry")
 		textEntry:SetPos(w - default_width, y-1)
 		textEntry:SetSize(default_width, 18)
-		textEntry:SetFont("Monospace")
+		textEntry:SetFont("BC_Monospace")
 		textEntry:SetDisabled(setting.disabled or false)
 
 		textEntry:SetText("")
@@ -296,7 +296,7 @@ renderSettingFuncs = {
 		local bw, bh = width, 18
 		button:SetSize(bw, bh)
 		button:SetPos(w - bw, y-2)
-		button:SetFont("MonospaceSmall")
+		button:SetFont("BC_MonospaceSmall")
 		button:SetTooltip(setting.extra)
 		button:SetColor( data[setting.value], true )
 
