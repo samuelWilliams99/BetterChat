@@ -8,12 +8,12 @@ include( "betterchat/client/channels/teamoverload.lua" )
 
 chatBox.channelOrder = { "All", "Players", "Team", "Admin" }
 
-hook.Add( "BC_InitPanels", "BC_InitChannels", function()
+hook.Add( "BC_initPanels", "BC_initChannels", function()
     chatBox.openChannels = {}
     local g = chatBox.graphics
 
     g.psheet = vgui.Create( "DPropertySheet", g.chatFrame )
-    g.psheet:SetName( "BC_TabSheet" )
+    g.psheet:SetName( "BC_tabSheet" )
     g.psheet:SetPos( 0, 5 )
     g.psheet:SetSize( g.size.x, g.size.y - 37 )
     g.psheet:SetPadding( 0 )
@@ -24,7 +24,7 @@ hook.Add( "BC_InitPanels", "BC_InitChannels", function()
         chatBox.closeSidePanel( "Channel Settings" )
         chatBox.closeSidePanel( "Group Members" )
         timer.Simple( 0.02, function()
-            hook.Run( "BC_ChannelChanged" ) -- delay to allow channel data to change
+            hook.Run( "BC_channelChanged" ) -- delay to allow channel data to change
         end )
     end
 
@@ -44,7 +44,7 @@ hook.Add( "BC_InitPanels", "BC_InitChannels", function()
     end
     function btn:DoClick()
         local menu = DermaMenu()
-        hook.Run( "BC_MakeChannelButtons", menu )
+        hook.Run( "BC_makeChannelButtons", menu )
         menu:Open()
     end
 
@@ -54,7 +54,27 @@ hook.Add( "BC_InitPanels", "BC_InitChannels", function()
 
 end )
 
-hook.Add( "BC_PostInitPanels", "BC_PostInitChannels", function()
+local function updateRPListener()
+    if not DarkRP then return end
+
+    local c = chatBox.getActiveChannel()
+
+    DarkRP.addChatReceiver( chatBox.wackyString, "talk in " .. c.displayName, function( ply )
+        local chan = chatBox.getActiveChannel()
+
+        if chan.group then
+            return table.HasValue( chan.group.members, ply:SteamID() )
+        elseif chan.plySID then
+            return chan.plySID == ply:SteamID()
+        elseif chan.name == "Admin" then
+            return ply:IsAdmin() or ( FAdmin and FAdmin.Access.PlayerHasPrivilege( ply, "AdminChat" ) )
+        else
+            return false
+        end
+    end )
+end
+
+hook.Add( "BC_postInitPanels", "BC_postInitChannels", function()
     table.sort( chatBox.channels, function( a, b )
         aIdx = table.KeyFromValue( chatBox.channelOrder, a.name ) or 100
         bIdx = table.KeyFromValue( chatBox.channelOrder, b.name ) or 100
@@ -82,27 +102,7 @@ hook.Add( "BC_PostInitPanels", "BC_PostInitChannels", function()
     
 end )
 
-function updateRPListener()
-    if not DarkRP then return end
-
-    local c = chatBox.getActiveChannel()
-
-    DarkRP.addChatReceiver( chatBox.wackyString, "talk in " .. c.displayName, function( ply )
-        local chan = chatBox.getActiveChannel()
-
-        if chan.group then
-            return table.HasValue( chan.group.members, ply:SteamID() )
-        elseif chan.plySID then
-            return chan.plySID == ply:SteamID()
-        elseif chan.name == "Admin" then
-            return ply:IsAdmin() or ( FAdmin and FAdmin.Access.PlayerHasPrivilege( ply, "AdminChat" ) )
-        else
-            return false
-        end
-    end )
-end
-
-hook.Add( "BC_ChannelChanged", "BC_ChangeRPListener", function()
+hook.Add( "BC_channelChanged", "BC_changeRPListener", function()
     updateRPListener()
     local c = chatBox.getActiveChannel()
     if c.hideChatText then
@@ -112,13 +112,13 @@ hook.Add( "BC_ChannelChanged", "BC_ChangeRPListener", function()
     end
 end )
 
-hook.Add( "BC_KeyCodeTyped", "BC_SendMessageHook", function( code, ctrl, shift )
+hook.Add( "BC_keyCodeTyped", "BC_sendMessageHook", function( code, ctrl, shift )
     if code == KEY_ENTER then
         local channel = chatBox.getActiveChannel()
         local txt = chatBox.graphics.textEntry:GetText()
         chatBox.graphics.textEntry:SetText( "" )
 
-        local abort, dontClose = hook.Run( "BC_MessageCanSend", channel, txt )
+        local abort, dontClose = hook.Run( "BC_messageCanSend", channel, txt )
 
         if abort then
             if not dontClose then
@@ -140,7 +140,7 @@ hook.Add( "BC_KeyCodeTyped", "BC_SendMessageHook", function( code, ctrl, shift )
         chatBox.historyIndex = 0
         chatBox.historyInput = ""
         
-        hook.Run( "BC_MessageSent", channel, txt )
+        hook.Run( "BC_messageSent", channel, txt )
         chatBox.closeChatBox()
         return true
     elseif not chatBox.graphics.emojiMenu:IsVisible() then
@@ -183,11 +183,11 @@ hook.Add( "BC_KeyCodeTyped", "BC_SendMessageHook", function( code, ctrl, shift )
     end
 end )
 
-hook.Add( "BC_ShowChat", "BC_showChannelElements", function() 
+hook.Add( "BC_showChat", "BC_showChannelElements", function() 
     chatBox.graphics.psheet.tabScroller:Show()
     chatBox.graphics.channelButton:Show()
 end )
-hook.Add( "BC_HideChat", "BC_hideChannelElements", function() 
+hook.Add( "BC_hideChat", "BC_hideChannelElements", function() 
     chatBox.graphics.psheet.tabScroller:Hide()
     chatBox.graphics.channelButton:Hide()
 end )
@@ -315,7 +315,7 @@ function chatBox.messageChannel( channelNames, ... )
         if editChan and useEditFunc then
             editChan.allFunc( editChan, data, editIdx or 1, true )
         end
-        chatBox.goodMsgC( unpack( data ) )
+        chatBox.msgC( unpack( data ) )
     end
 
 end
@@ -471,7 +471,7 @@ function chatBox.removeChannel( channel ) --rename to closeChannel
     chatBox.focusChannel( "All" )
 end
 
-function openLink( url )
+local function openLink( url )
     if string.Left( url, 7 ) ~= "http://" and string.Left( url, 8 ) ~= "https://" then
         url = "http://" .. url
     end
@@ -578,10 +578,10 @@ function chatBox.addChannel( data )
         elseif eventType == "RightClickPreMenu" then
             if dataType == "Player" then
                 local ply = player.GetBySteamID( dataArg )
-                hook.Run( "BC_PlayerRightClick", ply, m )
+                hook.Run( "BC_playerRightClick", ply, m )
             end
         end
-        hook.Run( "BC_ChatTextClick", eventType, dataType, dataArg )
+        hook.Run( "BC_chatTextClick", eventType, dataType, dataArg )
     end
 
     richText.NewElement = function( element, lineNum )

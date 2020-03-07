@@ -1,5 +1,5 @@
 chatBox = chatBox or {}
-chatBox.ConsolePlayer = { isConsole = true } -- some unique table to pass around
+chatBox.consolePlayer = { isConsole = true } -- some unique table to pass around
 chatBox.channelTypes = { 
     GLOBAL = 1, 
     TEAM = 2, 
@@ -9,7 +9,24 @@ chatBox.channelTypes = {
 }
 
 --[[
+naming convention
+all vars/functions camel
+always full names
+hookIds: BC_camelCase
+eventNames: BC_camelCase
+
+
 code cleanup
+do hook/function checkup in sidepanel
+make admin + logs code look nicer
+change how settings are loaded, so you dont need to check everywhere if they need data
+    dataChanged should be rare
+egrep:
+    BC_[A-Z]
+    warnings on whitespace fixer, speaking of:
+theres fukin spaces after "{ \n"
+retest url, complex pattern stuff may have gotten fukt by script
+rename every function by its location, e.g. chatBox.isColor -> chatBox.util.isColor
 
 ctrt+w for close tab
 
@@ -46,17 +63,14 @@ joining after bots
 
 if SERVER then
     --includes
-
-
-
     include( "betterchat/server/sv_manager.lua" )
 
     local networkStrings = { 
-        "BC_chatOpenState", "BC_sendPlayerState", "BC_plyReady", "BC_disable", -- Chat states
+        "BC_chatOpenState", "BC_sendPlayerState", "BC_playerReady", "BC_disable", -- Chat states
         "BC_PM", "BC_AM", "BC_GM", "BC_TM", "BC_LM", -- Messages (Private, Admin, Group, Team)
-        "BC_sendULXCommands", "BC_UserRankChange", -- Ulx
+        "BC_sendULXCommands", "BC_userRankChange", -- Ulx
         "BC_sendGroups", "BC_updateGroup", "BC_newGroup", "BC_groupAccept", "BC_leaveGroup", "BC_deleteGroup", -- Groups
-        "BC_forwardMessage", "BC_SayOverload", "BC_SendGif", "BC_PlayerDisconnected", -- Misc
+        "BC_forwardMessage", "BC_sayOverload", "BC_sendGif", "BC_playerDisconnected", -- Misc
     }
 
     for k, v in pairs( networkStrings ) do
@@ -83,11 +97,11 @@ if SERVER then
         hook.Run( "PlayerSay", ply, net.ReadString(), true )
     end )
 
-    hook.Add( "PlayerInitialSpawn", "BC_PlySpawn", function( ply )
+    hook.Add( "PlayerInitialSpawn", "BC_playerSpawn", function( ply )
         local plys = chatBox.getEnabledPlayers()
 
         ULib.clientRPC( plys, "chatBox.generatePlayerPanelEntry", ply )
-        ULib.clientRPC( plys, "hook.Run", "BC_PlayerConnect", ply )
+        ULib.clientRPC( plys, "hook.Run", "BC_playerConnect", ply )
 
         if chatBox.giphy.enabled then
             ULib.clientRPC( ply, "chatBox.enableGiphy" )
@@ -103,13 +117,13 @@ if SERVER then
 
     end )
 
-    hook.Add( "PlayerDisconnected", "BC_PlyLeave", function( ply )
+    hook.Add( "PlayerDisconnected", "BC_plyLeave", function( ply )
         chatBox.chatBoxEnabled[ply] = false
         local plys = chatBox.getEnabledPlayers()
         table.RemoveByValue( plys, ply )
 
         ULib.clientRPC( plys, "chatBox.removePlayerPanel", ply:SteamID() )
-        ULib.clientRPC( plys, "hook.Run", "BC_PlayerDisconnect", ply:SteamID() )
+        ULib.clientRPC( plys, "hook.Run", "BC_playerDisconnect", ply:SteamID() )
     end )
 
     net.Receive( "BC_plyReady", function( len, ply ) --can now send data to ply
@@ -127,7 +141,7 @@ end
 
 include( "betterchat/sh_util.lua" )
 include( "betterchat/sh_globalsettings.lua" )
-hook.Run( "BC_SharedInit" )
+hook.Run( "BC_sharedInit" )
 if SERVER then 
     return
 end
@@ -204,11 +218,11 @@ chatBox.channels = {}
 chatBox.lastPrivate = nil
 chatBox.openChannels = {}
 
-hook.Add( "InitPostEntity", "BC_Loaded", function()
+hook.Add( "InitPostEntity", "BC_loaded", function()
     chatBox.loadEnabled()
     if chatBox.enabled then
         chatBox.buildBox()
-        net.Start( "BC_plyReady" )
+        net.Start( "BC_playerReady" )
         net.SendToServer()
         chatBox.loadData()
     else
@@ -221,7 +235,7 @@ chatBox.validatePlayerSettings()
 function chatBox.enableChatBox()
     chatBox.enabled = true
     chatBox.buildBox()
-    net.Start( "BC_plyReady" )
+    net.Start( "BC_playerReady" )
     net.SendToServer()
 
     chatBox.loadData()
@@ -300,15 +314,15 @@ function chatBox.buildBox()
     chatBox.channels = {}
     chatBox.graphics = {}
     local g = chatBox.graphics
-    g.font = "BC_Default"
+    g.font = "BC_default"
     g.minSize = { x = 400, y = 250 }
     g.originalSize = { x = 550, y = 301 }
     g.size = table.Copy( g.originalSize )
     g.originalFramePos = { x = 38, y = ScrH() - g.size.y - 150 }
 
-    g.visCheck = timer.Create( "chatBox_visCheck", 1 / 60, 0, function()
+    g.visCheck = timer.Create( "BC_visCheck", 1 / 60, 0, function()
         if not g.frame or not g.frame:IsValid() then
-            timer.Destroy( "chatBox_visCheck" )
+            timer.Destroy( "BC_visCheck" )
             return
         end
         if gui.IsGameUIVisible() then
@@ -324,7 +338,7 @@ function chatBox.buildBox()
     g.frame:SetPos( g.originalFramePos.x, g.originalFramePos.y )
     g.frame:SetSize( g.size.x, g.size.y + 40 ) --Added 40 for AutoComplete
     g.frame:SetTitle( "" )
-    g.frame:SetName( "BC_ChatFrame" )
+    g.frame:SetName( "BC_chatFrame" )
     g.frame:ShowCloseButton( false )
     g.frame:SetDraggable( false )
     g.frame:SetSizable( false )
@@ -341,7 +355,7 @@ function chatBox.buildBox()
             -- Work around to hide the chatbox when the client presses escape
             gui.HideGameUI()
 
-            if vgui.GetKeyboardFocus() and vgui.GetKeyboardFocus():GetName() == "BC_SettingsKeyEntry" then
+            if vgui.GetKeyboardFocus() and vgui.GetKeyboardFocus():GetName() == "BC_settingsKeyEntry" then
                 chatBox.graphics.textEntry:RequestFocus()
             else
                 chatBox.graphics.textEntry:SetText( "" )
@@ -356,7 +370,7 @@ function chatBox.buildBox()
     g.chatFrame:SetPos( 0, 0 )
     g.chatFrame:SetSize( g.size.x, g.size.y )
     g.chatFrame:SetTitle( "" )
-    g.chatFrame:SetName( "BC_InnerChatFrame" )
+    g.chatFrame:SetName( "BC_innerChatFrame" )
     g.chatFrame:ShowCloseButton( false )
     g.chatFrame:SetDraggable( false )
     g.chatFrame:SetSizable( false )
@@ -388,7 +402,7 @@ function chatBox.buildBox()
     g.chatFrame.doPaint = true
     g.chatFrame.Think = function( self )
         if not g.textEntry:HasFocus() and ( ( not vgui.GetKeyboardFocus() ) or 
-        ( vgui.GetKeyboardFocus():GetName() ~= "BC_SettingsEntry" and vgui.GetKeyboardFocus():GetName() ~= "BC_SettingsKeyEntry" ) ) then
+        ( vgui.GetKeyboardFocus():GetName() ~= "BC_settingsEntry" and vgui.GetKeyboardFocus():GetName() ~= "BC_settingsKeyEntry" ) ) then
             g.textEntry:RequestFocus()
         end
         if chatBox.dragging then
@@ -449,7 +463,7 @@ function chatBox.buildBox()
     end
 
     g.textEntry = vgui.Create( "DTextEntry", g.chatFrame )
-    g.textEntry:SetName( "BC_ChatEntry" )
+    g.textEntry:SetName( "BC_chatEntry" )
     g.textEntry:SetPos( 10, g.size.y - 10 - 16 )
     g.textEntry:SetSize( g.size.x - 52, 20 )
     g.textEntry:SetFont( g.font )
@@ -485,7 +499,7 @@ function chatBox.buildBox()
         if code == KEY_ESCAPE then
             return true
         end 
-        return hook.Run( "BC_KeyCodeTyped", code, ctrl, shift, self )
+        return hook.Run( "BC_keyCodeTyped", code, ctrl, shift, self )
     end
     g.textEntry.OnTextChanged = function( self )
         self.maxCharacters = chatBox.getServerSetting( "maxLength" )
@@ -510,7 +524,7 @@ function chatBox.buildBox()
             else
                 hook.Run( "ChatTextChanged", self:GetText() or "" )
             end
-            hook.Run( "BC_ChatTextChanged", self:GetText() or "" )
+            hook.Run( "BC_chatTextChanged", self:GetText() or "" )
         end
     end
 
@@ -522,7 +536,7 @@ function chatBox.buildBox()
         end
     end
 
-    hook.Add( "BC_ChannelChanged", "BC_DisableTextEntry", function()
+    hook.Add( "BC_channelChanged", "BC_disableTextEntry", function()
         local text = chatBox.graphics.textEntry
         local chan = chatBox.getActiveChannel()
         if not chan then return end
@@ -530,14 +544,14 @@ function chatBox.buildBox()
         text:SetTooltip( chan.noSend and "This channel does not allow messages to be sent" or nil )
     end )
 
-    hook.Run( "BC_PreInitPanels" )
-    hook.Run( "BC_InitPanels" )
+    hook.Run( "BC_preInitPanels" )
+    hook.Run( "BC_initPanels" )
 
     chatBox.dragging = false
     chatBox.draggingOffset = { x = 0, y = 0 }
     chatBox.ready = true
 
-    hook.Run( "BC_PostInitPanels" )
+    hook.Run( "BC_postInitPanels" )
 
     -- Wait for other prints
     timer.Simple( 0, function()
@@ -549,7 +563,7 @@ function chatBox.buildBox()
     chatBox.closeChatBox()
 end
 
-hook.Add( "VGUIMousePressed", "BC_MousePressed", function( self, keyCode )
+hook.Add( "VGUIMousePressed", "BC_mousePressed", function( self, keyCode )
     if not chatBox.enabled then return end
     if chatBox.isOpen then
         local g = chatBox.graphics
@@ -584,7 +598,7 @@ hook.Add( "VGUIMousePressed", "BC_MousePressed", function( self, keyCode )
     end
 end )
 
-hook.Add( "PlayerButtonDown", "BC_ButtonDown", function( ply, keyCode )
+hook.Add( "PlayerButtonDown", "BC_buttonDown", function( ply, keyCode )
     if not chatBox.enabled then return end
     if ply ~= LocalPlayer() then return end
     for k, v in pairs( chatBox.channels ) do
@@ -661,7 +675,7 @@ function chatBox.openChatBox( selectedTab )
     chatBox.graphics.frame:SetMouseInputEnabled( true )
     chatBox.graphics.frame:SetKeyboardInputEnabled( true )
     chatBox.showPSheet()
-    hook.Run( "BC_ShowChat" )
+    hook.Run( "BC_showChat" )
 
     chatBox.graphics.textEntry:RequestFocus()
 
@@ -696,7 +710,7 @@ function chatBox.closeChatBox()
     chatBox.graphics.frame:SetKeyboardInputEnabled( false )
     gui.EnableScreenClicker( false )
     chatBox.hidePSheet()
-    hook.Run( "BC_HideChat" )
+    hook.Run( "BC_hideChat" )
 
     for k, v in pairs( chatBox.sidePanels ) do
         chatBox.closeSidePanel( v.name, true )
@@ -711,21 +725,20 @@ function chatBox.closeChatBox()
     hook.Run( "ChatTextChanged", "" )
 end
 
-hook.Add( "Think", "chatBox_Think", function()
+hook.Add( "Think", "BC_hidePauseMenu", function()
     if not chatBox.enabled then return end
     if chatBox.isOpen and gui.IsGameUIVisible() then
         gui.HideGameUI()
     end
 end )
 
-hook.Add( "PlayerBindPress", "chatBox_overrideChatbind", function( ply, bind, pressed )
+hook.Add( "PlayerBindPress", "BC_overrideChatBind", function( ply, bind, pressed )
     if not chatBox.enabled then return end
     if not pressed then return end
 
     local chan = "All"
 
-    if bind == "messagemode" then
-    elseif bind == "messagemode2" then
+    if bind == "messagemode2" then
         if chatBox.lastPrivate and chatBox.getSetting( "teamOpenPM" ) then
             chan = chatBox.lastPrivate.name
             chatBox.lastPrivate = nil
@@ -741,7 +754,7 @@ hook.Add( "PlayerBindPress", "chatBox_overrideChatbind", function( ply, bind, pr
                 chan = "Team"
             end
         end
-    else
+    elseif bind ~= "messagemode" then
         return
     end
 
@@ -754,7 +767,7 @@ hook.Add( "PlayerBindPress", "chatBox_overrideChatbind", function( ply, bind, pr
     end
 end )
 
-hook.Add( "HUDShouldDraw", "chatBox_noMoreDefault", function( name )
+hook.Add( "HUDShouldDraw", "BC_hideDefaultChat", function( name )
     if not chatBox.enabled then return end
     if name == "CHudChat" then
         return false

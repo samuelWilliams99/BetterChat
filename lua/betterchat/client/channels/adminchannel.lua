@@ -30,7 +30,7 @@ function chatBox.removeAdminButton()
     chatBox.admin.buttonEnabled = false
 end
 
-hook.Add( "BC_MakeChannelButtons", "BC_MakeAdminButton", function( menu )
+hook.Add( "BC_makeChannelButtons", "BC_makeAdminButton", function( menu )
     if not chatBox.admin.buttonEnabled then return end
     menu:AddOption( "Admin", function()
         local chan = chatBox.getChannel( "Admin" )
@@ -89,17 +89,17 @@ function chatBox.addAdminChannel()
     return channel
 end
 
-hook.Add( "BC_PreInitPanels", "BC_InitAddAdminChannel", function()
+hook.Add( "BC_preInitPanels", "BC_initAddAdminChannel", function()
     chatBox.addAdminChannel()
 end )
 
-hook.Add( "BC_PostInitPanels", "BC_AdminAddButton", function()
+hook.Add( "BC_postInitPanels", "BC_adminAddButton", function()
     if chatBox.allowedAdmin() then
         chatBox.addAdminButton()
     end
 end )
 
-hook.Add( "BC_UserAccessChange", "BC_AdminChannelCheck", function()
+hook.Add( "BC_userAccessChange", "BC_adminChannelCheck", function()
     local adminChannel = chatBox.getChannel( "Admin" )
     if chatBox.allowedAdmin() then
         if not adminChannel then

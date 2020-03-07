@@ -20,7 +20,7 @@ chatBox.defaultPrivateChannel = {
     end, 
     allFunc = function( self, tab, idx, isConsole )
         local sender = table.remove( tab, idx + 1 )
-        sender = sender.isConsole and chatBox.ConsolePlayer or sender
+        sender = sender.isConsole and chatBox.consolePlayer or sender
         local arrow = isConsole and " to " or " → "
         if sender == self.ply then --Receive
             table.insert( tab, idx, self.ply )
@@ -81,7 +81,7 @@ function chatBox.printOwnPrivate( name, txt )
     chatBox.messageChannel( { name, "MsgC" }, unpack( tab ) )
 end
 
-hook.Add( "BC_UserAccessChange", "PrivateChannelCheck", function()
+hook.Add( "BC_userAccessChange", "BC_privateChannelCheck", function()
     if not chatBox.allowedPrivate() then
         for k, v in pairs( chatBox.channels ) do
             if string.sub( v.name, 1, 9 ) == "Player - " then
@@ -91,9 +91,9 @@ hook.Add( "BC_UserAccessChange", "PrivateChannelCheck", function()
     end
 end )
 
-hook.Add( "BC_PreInitPanels", "BC_PrivateAddHooks", function()
+hook.Add( "BC_preInitPanels", "BC_privateAddHooks", function()
     if not chatBox.allowedPrivate() then return end
-    hook.Add( "BC_PlayerConnect", "BC_PrivateChannelPlayerReload", function( ply )
+    hook.Add( "BC_playerConnect", "BC_privateChannelPlayerReload", function( ply )
         if not chatBox.enabled then return end
         for k, v in pairs( chatBox.channels ) do
             if v.plySID and v.plySID ~= "CONSOLE" then
@@ -109,7 +109,7 @@ hook.Add( "BC_PreInitPanels", "BC_PrivateAddHooks", function()
 
         if not ply:IsValid() then
             local tab = table.Add( { 
-                chatBox.ConsolePlayer, 
+                chatBox.consolePlayer, 
                 chatBox.colors.printBlue, 
                 " to ", 
                 { formatter = true, type = "clickable", signal = "Player-" .. LocalPlayer():SteamID(), text = "You", color = chatBox.colors.purple }, 
@@ -136,7 +136,7 @@ hook.Add( "BC_PreInitPanels", "BC_PrivateAddHooks", function()
                     isController = true, 
                     doSound = ( ply == sender ) and ( ply ~= LocalPlayer() )
                 }, 
-                sender:IsValid() and sender or chatBox.ConsolePlayer, 
+                sender:IsValid() and sender or chatBox.consolePlayer, 
                 chatBox.colors.white, 
                 ": "
             }, chatBox.formatText( text, nil, sender ) )
@@ -166,7 +166,7 @@ function chatBox.createPrivateChannel( ply )
         channel.plySID = getSteamID( ply )
         channel.needsData = nil
     end
-    channel.ply = ply:IsValid() and ply or chatBox.ConsolePlayer
+    channel.ply = ply:IsValid() and ply or chatBox.consolePlayer
     channel.displayName = getName( ply )
     if not channel.dataChanged then channel.dataChanged = {} end
     return channel

@@ -3,6 +3,26 @@ include( "betterchat/client/sidepanel/panels/players_add_option.lua" )
 
 chatBox.playerSettings = {}
 
+local function diff( a, b )
+    if #a ~= #b then
+        return true
+    end
+    for k, v in pairs( a, b ) do
+        if a[k] ~= b[k] then
+            return true
+        end
+    end
+    return false
+end
+
+local function map( input, f )
+    local out = {}
+    for k, v in pairs( input ) do
+        out[k] = f( v )
+    end
+    return out
+end
+
 net.Receive( "BC_sendPlayerState", function()
     local t = net.ReadString()
     local ply = net.ReadEntity()
@@ -13,16 +33,16 @@ net.Receive( "BC_sendPlayerState", function()
     end
 end )
 
-hook.Add( "BC_InitPanels", "BC_InitSidePanelPlayers", function()
+hook.Add( "BC_initPanels", "BC_initSidePanelPlayers", function()
     local g = chatBox.graphics
     chatBox.createSidePanel( "Player", 300, { icon = "icon16/group.png", border = 1 } )
     ownRank = team.GetName( LocalPlayer() )
 end )
 
-net.Receive( "BC_UserRankChange", function()
+net.Receive( "BC_userRankChange", function()
     chatBox.closeChatBox()
     chatBox.removeAllPlayerPanels()
-    hook.Run( "BC_UserAccessChange" )
+    hook.Run( "BC_userAccessChange" )
 end )
 
 function chatBox.generatePlayerPanelEntry( ply )
@@ -220,22 +240,3 @@ function chatBox.removeAllPlayerPanels()
     chatBox.sidePanels["Player"].graphics.panels = {}
 end
 
-function diff( a, b )
-    if #a ~= #b then
-        return true
-    end
-    for k, v in pairs( a, b ) do
-        if a[k] ~= b[k] then
-            return true
-        end
-    end
-    return false
-end
-
-function map( input, f )
-    local out = {}
-    for k, v in pairs( input ) do
-        out[k] = f( v )
-    end
-    return out
-end

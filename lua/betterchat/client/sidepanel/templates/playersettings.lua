@@ -145,7 +145,7 @@ chatBox.playerSettingsTemplate = {
     }, 
 }
 
-hook.Add( "BC_PlayerRightClick", "BC_AddPlySettings", function( ply, menu )
+hook.Add( "BC_playerRightClick", "BC_addPlySettings", function( ply, menu )
     for k, v in pairs( chatBox.playerSettingsTemplate ) do
         if v.addToPlayerContext and v.type == "button" then
 

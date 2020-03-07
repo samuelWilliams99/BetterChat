@@ -1,6 +1,63 @@
 chatBox.spriteSheets = {}
 
-hook.Add( "BC_InitPanels", "BC_InitImages", function()
+local function cleanPanel( panel, w, h, padding )
+    panel:SetSize( w - padding * 2 - 2, h - padding * 2 - 20 )
+
+    local bar = panel:GetVBar()
+    bar.Paint = nil
+    bar.btnUp.Paint = nil
+    bar.btnDown.Paint = nil
+    bar.btnGrip.Paint = function( self, w, h )
+        surface.SetDrawColor( Color( 65, 105, 225 ) )
+        surface.DrawRect( w - 2, 0, 2, h )
+    end
+    bar:SetWidth( 5 )
+end
+
+local function cleanTab( data, first )
+    tab = data.Tab
+    tab.first = first
+    tab.Paint = function( self, w, h )
+        local a = self:IsActive()
+        local bgCol = a and Color( 230, 230, 230 ) or Color( 210, 210, 210 )
+        surface.SetDrawColor( bgCol )
+        surface.DrawRect( 0, 0, w, h )
+
+        if a and self.selectProg < 100 then self.selectProg = self.selectProg + 2.5 end
+        if not a and self.selectProg > 0 then self.selectProg = self.selectProg - 2.5 end
+        self.selectProg = math.Clamp( self.selectProg, 0, 100 )
+
+        surface.SetDrawColor( Color( 65, 105, 225 ) )
+        local p = self.selectProg / 100
+        if self.first then
+            surface.DrawRect( ( 1 - p ) * w, h - 2, p * w, 2 )
+        else
+            surface.DrawRect( 0, h - 2, p * w, 2 )
+        end
+
+    end
+    tab.selectProg = first and 100 or 0
+    tab:SetContentAlignment( 5 )
+    tab.GetTabHeight = function() return 20 end
+
+    tab:SetTextColor( Color( 0, 0, 0 ) )
+
+    tab.ApplySchemeSettings = function( self )
+
+        local w, h = self:GetContentSize()
+        h = self:GetTabHeight()
+
+        local xI, _ = self:GetTextInset()
+        self:SetTextInset( xI, 0 )
+        self:SetSize( 72, h )
+
+        DLabel.ApplySchemeSettings( self )
+
+    end
+    return data
+end
+
+hook.Add( "BC_initPanels", "BC_initImages", function()
     chatBox.spriteSheets = {}
     local files, _ = file.Find( "materials/spritesheets/*.vmt", "GAME" )
 
@@ -89,14 +146,14 @@ hook.Add( "BC_InitPanels", "BC_InitImages", function()
     g.emojiAllPanel = aPanel
 end )
 
-hook.Add( "BC_ShowChat", "BC_showEmojiButton", function() chatBox.graphics.emojiButton:Show() end )
-hook.Add( "BC_HideChat", "BC_hideEmojiButton", function() 
+hook.Add( "BC_showChat", "BC_showEmojiButton", function() chatBox.graphics.emojiButton:Show() end )
+hook.Add( "BC_hideChat", "BC_hideEmojiButton", function() 
     chatBox.graphics.emojiButton:Hide()
     chatBox.graphics.emojiMenu:Hide()
 
 end )
 
-hook.Add( "BC_KeyCodeTyped", "BC_EmojiShortCutHook", function( code, ctrl, shift )
+hook.Add( "BC_keyCodeTyped", "BC_emojiShortCutHook", function( code, ctrl, shift )
     if ctrl and code == KEY_E then
         chatBox.toggleEmojiMenu()
     elseif chatBox.graphics.emojiMenu:IsVisible() then
@@ -240,63 +297,6 @@ function chatBox.addImage( richText, obj )
     richText:AddImage( obj.sheet.path, obj.text, 20, 20, im.posX * obj.sheet.spriteWidth, im.posY * obj.sheet.spriteHeight, obj.sheet.spriteWidth, obj.sheet.spriteHeight )        
 end
 
-function cleanPanel( panel, w, h, padding )
-    panel:SetSize( w - padding * 2 - 2, h - padding * 2 - 20 )
-
-    local bar = panel:GetVBar()
-    bar.Paint = nil
-    bar.btnUp.Paint = nil
-    bar.btnDown.Paint = nil
-    bar.btnGrip.Paint = function( self, w, h )
-        surface.SetDrawColor( Color( 65, 105, 225 ) )
-        surface.DrawRect( w - 2, 0, 2, h )
-    end
-    bar:SetWidth( 5 )
-end
-
-function cleanTab( data, first )
-    tab = data.Tab
-    tab.first = first
-    tab.Paint = function( self, w, h )
-        local a = self:IsActive()
-        local bgCol = a and Color( 230, 230, 230 ) or Color( 210, 210, 210 )
-        surface.SetDrawColor( bgCol )
-        surface.DrawRect( 0, 0, w, h )
-
-        if a and self.selectProg < 100 then self.selectProg = self.selectProg + 2.5 end
-        if not a and self.selectProg > 0 then self.selectProg = self.selectProg - 2.5 end
-        self.selectProg = math.Clamp( self.selectProg, 0, 100 )
-
-        surface.SetDrawColor( Color( 65, 105, 225 ) )
-        local p = self.selectProg / 100
-        if self.first then
-            surface.DrawRect( ( 1 - p ) * w, h - 2, p * w, 2 )
-        else
-            surface.DrawRect( 0, h - 2, p * w, 2 )
-        end
-
-    end
-    tab.selectProg = first and 100 or 0
-    tab:SetContentAlignment( 5 )
-    tab.GetTabHeight = function() return 20 end
-
-    tab:SetTextColor( Color( 0, 0, 0 ) )
-
-    tab.ApplySchemeSettings = function( self )
-
-        local w, h = self:GetContentSize()
-        h = self:GetTabHeight()
-
-        local xI, _ = self:GetTextInset()
-        self:SetTextInset( xI, 0 )
-        self:SetSize( 72, h )
-
-        DLabel.ApplySchemeSettings( self )
-
-    end
-    return data
-end
-
 function chatBox.toggleEmojiMenu()
     local g = chatBox.graphics
 
@@ -362,7 +362,7 @@ local function sendGif( channel, url, text )
     rt:InsertClickableTextEnd()
 end
 
-net.Receive( "BC_SendGif", function( len, ply )
+net.Receive( "BC_sendGif", function( len, ply )
     if not chatBox.enabled then return end
 
     if not chatBox.getSetting( "showGifs" ) then return end

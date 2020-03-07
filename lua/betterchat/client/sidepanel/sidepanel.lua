@@ -3,14 +3,14 @@ include( "betterchat/client/sidepanel/panels/channels.lua" )
 include( "betterchat/client/sidepanel/panels/players.lua" )
 include( "betterchat/client/sidepanel/panels/members.lua" )
 
-local default_width = 110
+local defaultWidth = 110
 
-renderSettingFuncs = { 
+local renderSettingFuncs = { 
     ["string"] = function( sPanel, panel, data, y, w, h, setting )
         local textEntry = vgui.Create( "DTextEntry", panel )
-        textEntry:SetName( "BC_SettingsEntry" )
-        textEntry:SetPos( w - default_width, y - 1 )
-        textEntry:SetSize( default_width, 18 )
+        textEntry:SetName( "BC_settingsEntry" )
+        textEntry:SetPos( w - defaultWidth, y - 1 )
+        textEntry:SetSize( defaultWidth, 18 )
         textEntry:SetText( data[setting.value] )
         textEntry:SetTooltip( setting.extra )
         textEntry:SetUpdateOnType( false )
@@ -55,14 +55,14 @@ renderSettingFuncs = {
         end
 
 
-        return default_width
+        return defaultWidth
     end, 
     ["key"] = function( sPanel, panel, data, y, w, h, setting )
         local textEntry = vgui.Create( "DTextEntry", panel )
-        textEntry:SetName( "BC_SettingsKeyEntry" )
-        textEntry:SetPos( w - default_width, y - 1 )
-        textEntry:SetSize( default_width, 18 )
-        textEntry:SetFont( "BC_Monospace" )
+        textEntry:SetName( "BC_settingsKeyEntry" )
+        textEntry:SetPos( w - defaultWidth, y - 1 )
+        textEntry:SetSize( defaultWidth, 18 )
+        textEntry:SetFont( "BC_monospace" )
         textEntry:SetDisabled( setting.disabled or false )
 
         textEntry:SetText( "" )
@@ -105,7 +105,7 @@ renderSettingFuncs = {
             return true
         end
 
-        return default_width
+        return defaultWidth
     end, 
     ["boolean"] = function( sPanel, panel, data, y, w, h, setting )
         local checkBox = vgui.Create( "DCheckBox", panel )
@@ -163,7 +163,7 @@ renderSettingFuncs = {
     end, 
     ["options"] = function( sPanel, panel, data, y, w, h, setting )
         if not setting.optionValues then setting.optionValues = setting.options end
-        local width = setting.overrideWidth or default_width
+        local width = setting.overrideWidth or defaultWidth
         local comboBox = vgui.Create( "DComboBox", panel )
         comboBox:SetSortItems( false )
         comboBox:SetPos( w - width, y - 2 )
@@ -235,7 +235,7 @@ renderSettingFuncs = {
     end, 
     ["button"] = function( sPanel, panel, data, y, w, h, setting )
         local button = vgui.Create( "DButton", panel )
-        local width = setting.overrideWidth or default_width
+        local width = setting.overrideWidth or defaultWidth
 
         local confirm = setting.requireConfirm
 
@@ -286,7 +286,7 @@ renderSettingFuncs = {
     end, 
     ["color"] = function( sPanel, panel, data, y, w, h, setting )
         local curCol = data[setting.value]
-        local width = setting.overrideWidth or default_width
+        local width = setting.overrideWidth or defaultWidth
         local allowedAlpha = setting.allowAlpha
 
         local button = vgui.Create( "DColorButton", panel )
@@ -296,7 +296,7 @@ renderSettingFuncs = {
         local bw, bh = width, 18
         button:SetSize( bw, bh )
         button:SetPos( w - bw, y - 2 )
-        button:SetFont( "BC_MonospaceSmall" )
+        button:SetFont( "BC_monospaceSmall" )
         button:SetTooltip( setting.extra )
         button:SetColor( data[setting.value], true )
 
@@ -335,7 +335,7 @@ renderSettingFuncs = {
             end
 
             mixerFrame.OnRemove = function( self )
-                timer.Remove( "BC_ColorHideTimer" )
+                timer.Remove( "BC_colorHideTimer" )
             end
 
             mixer = vgui.Create( "DColorMixer", mixerFrame )
@@ -346,7 +346,7 @@ renderSettingFuncs = {
             mixer:SetAlphaBar( allowedAlpha )
 
             local lastDown = false
-            timer.Create( "BC_ColorHideTimer", 1 / 30, 0, function()
+            timer.Create( "BC_colorHideTimer", 1 / 30, 0, function()
                 if not input.IsMouseDown( MOUSE_LEFT ) and not input.IsMouseDown( MOUSE_RIGHT ) then 
                     lastDown = false
                     return 
@@ -413,6 +413,7 @@ renderSettingFuncs = {
     end, 
 }
 
+-- Why isn't this a thing?
 function input.GetKeyEnum( keyCode )
     local name = input.GetKeyName( keyCode )
     return "KEY_" .. string.upper( name )
@@ -457,12 +458,12 @@ function chatBox.renderSetting( sPanel, data, setting, k )
     end
 end
 
-hook.Add( "BC_PreInitPanels", "BC_InitSidePanels", function()
+hook.Add( "BC_preInitPanels", "BC_initSidePanels", function()
     chatBox.sidePanels = {}
     chatBox.sidePanelsIDX = 0
 end )
 
-hook.Add( "BC_KeyCodeTyped", "BC_SidePanelShortCutHook", function( code, ctrl, shift )
+hook.Add( "BC_keyCodeTyped", "BC_sidePanelShortCutHook", function( code, ctrl, shift )
     if code == KEY_S then
         if ctrl then
             if shift then
@@ -523,7 +524,7 @@ function chatBox.createSidePanel( name, width, data )
     g.panels = {}
 
     g.pane = vgui.Create( "DFrame", chatBox.graphics.frame )
-    g.pane:SetName( "BC_SettingsPane" )
+    g.pane:SetName( "BC_settingsPane" )
     g.pane:SetPos( chatBox.graphics.size.x, 0 )
     g.pane:SetSize( s.size.x, s.size.y )
     g.pane:SetTitle( "" )
@@ -605,7 +606,7 @@ function chatBox.createSidePanel( name, width, data )
     end
 
     g.frame = vgui.Create( "DFrame", g.pane )
-    g.frame:SetName( "BC_SettingsFrame" )
+    g.frame:SetName( "BC_settingsFrame" )
     g.frame:SetPos( 0, 0 )
     g.frame:SetSize( g.pane:GetSize() )
     g.frame:SetTitle( "" )

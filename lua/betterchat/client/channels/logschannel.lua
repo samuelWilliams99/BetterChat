@@ -25,7 +25,7 @@ function chatBox.removeLogsButton()
     chatBox.logs.buttonEnabled = false
 end
 
-hook.Add( "BC_MakeChannelButtons", "BC_MakeLogsButton", function( menu )
+hook.Add( "BC_makeChannelButtons", "BC_makeLogsButton", function( menu )
     if not chatBox.logs.buttonEnabled then return end
     menu:AddOption( "Logs", function()
         local chan = chatBox.getChannel( "Logs" )
@@ -41,16 +41,6 @@ end )
 function chatBox.allowedLogs()
     return chatBox.getAllowed( "bc_chatlogs" )
 end
-
---[[
-chatBox.channelTypes = {
-    GLOBAL = 1,
-    TEAM = 2,
-    PRIVATE = 3,
-    ADMIN = 4,
-    GROUP = 5
-}
-]]
 
 net.Receive( "BC_LM", function()
     local channelType = net.ReadUInt( 4 )
@@ -108,17 +98,17 @@ function chatBox.addLogsChannel()
     return channel
 end
 
-hook.Add( "BC_PreInitPanels", "BC_InitAddLogsChannel", function()
+hook.Add( "BC_preInitPanels", "BC_initAddLogsChannel", function()
     chatBox.addLogsChannel()
 end )
 
-hook.Add( "BC_PostInitPanels", "BC_LogsAddButton", function()
+hook.Add( "BC_postInitPanels", "BC_logsAddButton", function()
     if chatBox.allowedLogs() then
         chatBox.addLogsButton()
     end
 end )
 
-hook.Add( "BC_UserAccessChange", "BC_LogsChannelCheck", function()
+hook.Add( "BC_userAccessChange", "BC_logsChannelCheck", function()
     local logsChannel = chatBox.getChannel( "Logs" )
     if chatBox.allowedLogs() then
         if not logsChannel then

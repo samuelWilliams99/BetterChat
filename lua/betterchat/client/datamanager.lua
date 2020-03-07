@@ -1,17 +1,34 @@
---[[
-	Save:
-		chatBox.extraPlayerSettings
-		chatBox.playerSettings
-		chatBox.channelSettings
-]]--
-
-function filter( tab, f )
+local function filter( tab, f )
     for k, v in pairs( tab ) do
         if not f( v ) then
             tab[k] = nil
         end
     end
     return tab
+end
+
+local function saveFromTemplate( src, data, template )
+    for k, v in pairs( template ) do
+        if not v.shouldSave then continue end
+        local value = src[v.value]
+        if value == v.default then continue end 
+        if v.preSave then 
+            value = v.preSave( src ) 
+        end
+        data[v.value] = value
+    end
+end
+
+local function loadFromTemplate( data, dest, template )
+    for k, v in pairs( template ) do
+        if not data[v.value] then continue end
+        -- If data is options but value isn't a valid option
+        if v.type == "options" and not table.HasValue( v.optionValues, data[v.value] ) then
+            data[v.value] = v.default
+        end
+        dest[v.value] = data[v.value]
+        dest.dataChanged[v.value] = true
+    end
 end
 
 function chatBox.saveData()
@@ -142,29 +159,4 @@ end
 
 function chatBox.deleteSaveData()
     file.Write( "bc_data_cl.txt", util.TableToJSON( { enabled = chatBox.enabled } ) )
-end
-
-
-function saveFromTemplate( src, data, template )
-    for k, v in pairs( template ) do
-        if not v.shouldSave then continue end
-        local value = src[v.value]
-        if value == v.default then continue end 
-        if v.preSave then 
-            value = v.preSave( src ) 
-        end
-        data[v.value] = value
-    end
-end
-
-function loadFromTemplate( data, dest, template )
-    for k, v in pairs( template ) do
-        if not data[v.value] then continue end
-        -- If data is options but value isn't a valid option
-        if v.type == "options" and not table.HasValue( v.optionValues, data[v.value] ) then
-            data[v.value] = v.default
-        end
-        dest[v.value] = data[v.value]
-        dest.dataChanged[v.value] = true
-    end
 end

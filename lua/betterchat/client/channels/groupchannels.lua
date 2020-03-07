@@ -54,12 +54,11 @@ function chatBox.allowedGroups()
 end
 
 function chatBox.removeGroupHooks()
-    hook.Remove( "BC_KeyCodeTyped", "BC_GroupMenuShortcut" )
-    hook.Remove( "PlayerConnect", "BC_ReloadMembersConnect" )
-    hook.Remove( "BC_PlayerDisconnect", "BC_ReloadMembersDisconnect" )
+    hook.Remove( "PlayerConnect", "BC_reloadMembersConnect" )
+    hook.Remove( "BC_playerDisconnect", "BC_reloadMembersDisconnect" )
 end
 
-hook.Add( "BC_PostInitPanels", "BC_groupAddButton", function() -- add group change check
+hook.Add( "BC_postInitPanels", "BC_groupAddButton", function() -- add group change check
     if chatBox.allowedGroups() then 
         chatBox.enableGroups()
     else
@@ -67,7 +66,7 @@ hook.Add( "BC_PostInitPanels", "BC_groupAddButton", function() -- add group chan
     end
 end )
 
-hook.Add( "BC_UserAccessChange", "BC_GroupChannelCheck", function()
+hook.Add( "BC_userAccessChange", "BC_groupChannelCheck", function()
     if chatBox.allowedGroups() then 
         chatBox.enableGroups()
     else
@@ -87,7 +86,7 @@ end
 
 function chatBox.enableGroups()
     chatBox.group.buttonEnabled = true
-    hook.Add( "PlayerConnect", "BC_ReloadMembersConnect", function()
+    hook.Add( "PlayerConnect", "BC_reloadMembersConnect", function()
         for k, v in pairs( chatBox.channels ) do
             if chatBox.isChannelOpen( v ) and v.group then
                 chatBox.reloadGroupMemberMenu( v )
@@ -95,7 +94,7 @@ function chatBox.enableGroups()
         end
     end )
 
-    hook.Add( "BC_PlayerDisconnect", "BC_ReloadMembersDisconnect", function()
+    hook.Add( "BC_playerDisconnect", "BC_reloadMembersDisconnect", function()
         for k, v in pairs( chatBox.channels ) do
             if chatBox.isChannelOpen( v ) and v.group then
                 chatBox.reloadGroupMemberMenu( v )
@@ -108,7 +107,7 @@ function chatBox.enableGroups()
     net.Receive( "BC_GM", chatBox.group.onMessage )
 end
 
-hook.Add( "BC_MakeChannelButtons", "BC_MakeGroupButton", function( menu )
+hook.Add( "BC_makeChannelButtons", "BC_makeGroupButton", function( menu )
     if not chatBox.group.buttonEnabled then return end
     local subMenu = menu:AddSubMenu( "Groups" )
     if #chatBox.group.groups < 5 then

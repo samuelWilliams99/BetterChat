@@ -1,6 +1,6 @@
 -- Thanks Acecool and HandsomeMatt for your code
  
-local function GenerateCircle( radius )
+local function generateCircle( radius )
     local seg = 100
     local cir = {}
 
@@ -26,7 +26,7 @@ function PANEL:Init()
 end
 
 function PANEL:UpdatePoly()
-    self.poly = GenerateCircle( self:GetWide() )
+    self.poly = generateCircle( self:GetWide() )
 end
 
 function PANEL:OnSizeChanged()

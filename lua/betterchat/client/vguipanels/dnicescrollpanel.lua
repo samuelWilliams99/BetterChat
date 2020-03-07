@@ -1,4 +1,4 @@
-NICESCROLLPANEL = {}
+local NICESCROLLPANEL = {}
 
 function NICESCROLLPANEL:Init()
     self:SetSize( 100, 100 )
@@ -42,28 +42,28 @@ function NICESCROLLPANEL:SetScrollbarEnabled( draw )
 end
 
 function NICESCROLLPANEL:PerformLayout()
-    local Tall = self.pnlCanvas:GetTall()
-    local Wide = self:GetWide() - 30
-    local YPos = 0
+    local tall = self.pnlCanvas:GetTall()
+    local wide = self:GetWide() - 30
+    local yPos = 0
 
     self:Rebuild()
 
     self.VBar:SetUp( self:GetTall(), self.pnlCanvas:GetTall() )
-    YPos = self.VBar:GetOffset()
+    yPos = self.VBar:GetOffset()
 
-    self.pnlCanvas:SetPos( 0, YPos )
-    self.pnlCanvas:SetWide( Wide )
+    self.pnlCanvas:SetPos( 0, yPos )
+    self.pnlCanvas:SetWide( wide )
 
     self:Rebuild()
 
-    if ( Tall ~= self.pnlCanvas:GetTall() ) then
+    if ( tall ~= self.pnlCanvas:GetTall() ) then
         self.VBar:SetScroll( self.VBar:GetScroll() ) -- Make sure we are not too far down!
     end
 end
 
 function NICESCROLLPANEL:Paint( w, h )
     self:SetVerticalScrollbarEnabled( self.scrollBarEnabled )
-    if self.scrollBarEnabled then
+    if self.scrollBarEnabled and not self:GetVBar():IsVisible() then
         self:GetVBar():Show()
     end
 end

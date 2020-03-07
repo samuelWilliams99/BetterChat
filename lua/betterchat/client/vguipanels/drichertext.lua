@@ -15,12 +15,12 @@ local upArrowRight = {
     { x = 12, y = 9 }
 }
 
-function getFrom( idx, ... ) -- Simple helper function that picks an input from a list. getFrom(2, a, b, c) = b
+local function getFrom( idx, ... ) -- Simple helper function that picks an input from a list. getFrom(2, a, b, c) = b
     local d = { ... }
     return d[idx]
 end
 
-function invertTab( tab ) -- For arrow rendering
+local function invertTab( tab ) -- For arrow rendering
     local out = {}
     for k = 1, #tab do
         local v = tab[k]
@@ -29,14 +29,61 @@ function invertTab( tab ) -- For arrow rendering
     return out
 end
 
-function drawUpArrow()
+local function drawUpArrow()
     surface.DrawPoly( upArrowLeft )
     surface.DrawPoly( upArrowRight )
 end
 
-function drawDownArrow()
+local function drawDownArrow()
     surface.DrawPoly( invertTab( upArrowLeft ) )
     surface.DrawPoly( invertTab( upArrowRight ) )
+end
+
+local function getElementSize( elem, subHalfChar )
+    if elem:GetClassName() == "Label" then
+        surface.SetFont( elem:GetFont() )
+        local txt = elem:GetText()
+        local sx, sy = surface.GetTextSize( txt )
+        return sx - ( subHalfChar and getFrom( 1, surface.GetTextSize( txt[#txt] ) ) / 2 or 0 ), sy
+    else
+        return elem:GetWide()
+    end
+end
+
+local function getElementSizeX( elem, subHalfChar )
+    return getFrom( 1, getElementSize( elem, subHalfChar ) )
+end
+
+local function getTextSizeX( txt, subHalfChar )
+    return getFrom( 1, surface.GetTextSize( txt ) )
+end
+
+local function isLabel( elem )
+    return elem:GetClassName() == "Label"
+end
+
+local function orderChars( s, e )
+    if s.line < e.line then 
+        return s, e
+    elseif s.line > e.line then
+        return e, s
+    end
+
+    if s.element < e.element then 
+        return s, e
+    elseif s.element > e.element then
+        return e, s
+    end
+
+    if s.char > e.char then 
+        return e, s
+    end
+
+    return s, e
+end
+
+local function isNewLineObj( obj )
+    return type( obj ) == "table" and obj.isNewLine
 end
 
 local idCounter = 0
@@ -314,27 +361,6 @@ function RICHERTEXT:OnRemove()
     hook.Remove( "RICHERTEXT:CopyText", "CopyText - " .. self.id )
 end
 
-function orderChars( s, e )
-    if s.line < e.line then 
-        return s, e
-    elseif s.line > e.line then
-        return e, s
-    end
-
-    if s.element < e.element then 
-        return s, e
-    elseif s.element > e.element then
-        return e, s
-    end
-
-    if s.char > e.char then 
-        return e, s
-    end
-
-    return s, e
-    
-end
-
 function RICHERTEXT:createContextMenu( dontOpen, m )
     m = m or DermaMenu()
     local mPos = { self:ScreenToCanvas( gui.MousePos() ) }
@@ -605,29 +631,6 @@ function RICHERTEXT:getCharacter( x, y )
     return { line = lineNum, element = elementNum, char = realChar, pos = { x = x, y = y } }
 end
 
-function getElementSize( elem, subHalfChar )
-    if elem:GetClassName() == "Label" then
-        surface.SetFont( elem:GetFont() )
-        local txt = elem:GetText()
-        local sx, sy = surface.GetTextSize( txt )
-        return sx - ( subHalfChar and getFrom( 1, surface.GetTextSize( txt[#txt] ) ) / 2 or 0 ), sy
-    else
-        return elem:GetWide()
-    end
-end
-
-function getElementSizeX( elem, subHalfChar )
-    return getFrom( 1, getElementSize( elem, subHalfChar ) )
-end
-
-function getTextSizeX( txt, subHalfChar )
-    return getFrom( 1, surface.GetTextSize( txt ) )
-end
-
-function isLabel( elem )
-    return elem:GetClassName() == "Label"
-end
-
 function RICHERTEXT:SetFont( font )
     if not font then return end
     self.innerFont = font
@@ -866,10 +869,6 @@ end
 
 function RICHERTEXT:IsReady()
     return self.ready and self.lines
-end
-
-function isNewLineObj( obj )
-    return type( obj ) == "table" and obj.isNewLine
 end
 
 function RICHERTEXT:addNewLines( txt ) -- Goes through big bit of text, puts in new lines when needed to avoid overspill. returns table of lines and "\n"s

@@ -2,9 +2,9 @@ local function useOverload()
     return chatBox.getSettingObject( "maxLength", true ).default ~= chatBox.getServerSetting( "maxLength" ) 
 end
 
-function globalSend( self, txt )
+local function globalSend( self, txt )
     if useOverload() then
-        net.Start( "BC_SayOverload" )
+        net.Start( "BC_sayOverload" )
         net.WriteBool( false )
         net.WriteBool( not LocalPlayer():Alive() )
         net.WriteString( txt )
@@ -13,9 +13,9 @@ function globalSend( self, txt )
         RunConsoleCommand( "say", txt )
     end
 end
-function teamSend( self, txt )
+local function teamSend( self, txt )
     if useOverload() then
-        net.Start( "BC_SayOverload" )
+        net.Start( "BC_sayOverload" )
         net.WriteBool( true )
         net.WriteBool( not LocalPlayer():Alive() )
         net.WriteString( txt )
@@ -25,7 +25,7 @@ function teamSend( self, txt )
     end
 end
 
-hook.Add( "BC_PreInitPanels", "BC_InitAddMainChannels", function()
+hook.Add( "BC_preInitPanels", "BC_initAddMainChannels", function()
     table.insert( chatBox.channels, { 
         name = "All", 
         icon = "world.png", 

@@ -101,7 +101,7 @@ if SERVER then
 end
 
 function lerpCol( a, b, l )
-    return Color( a.r * ( 1 - l ) + b.r * l, a.g * ( 1 - l ) + b.g * l, a.b * ( 1 - l ) + b.b * l, a.a * ( 1 - l ) + b.a * l )
+    return Color( Lerp( l, a.r, b.r ), Lerp( l, a.g, b.g ), Lerp( l, a.b, b.b ), Lerp( l, a.a, b.a ) )
 end
 
 -- Inline unpacking for single arg
@@ -158,7 +158,7 @@ local protocols = { [""] = 0, ["http://"] = 0, ["https://"] = 0, ["ftp://"] = 0 
 
 function chatBox.getNextUrl( inputStr )
     local pos_start, pos_end, url, prot, subd, tld, colon, port, slash, path = 
-    string.find( inputStr, "(([%w_.~!*:@&+$/?%%#-]-)(%w[-.%w]*%.)(%w+)(:?)(%d*)(/?)([%w_.~!*:@&+$/?%%#=-]*))" )
+        string.find( inputStr, "(([%w_.~!*:@&+$/?%%#-]-)(%w[-.%w]*%.)(%w+)(:?)(%d*)(/?)([%w_.~!*:@&+$/?%%#=-]*))" )
     if pos_start and protocols[prot:lower()] == ( 1 - #slash ) * #path and not string.find( subd, "%W%W" )
     and ( colon == "" or port ~= "" and port + 0 < 65536 )
     and ( tlds[tld:lower()] or string.find( tld, "^%d+$" ) and string.find( subd, "^%d+%.%d+%.%d+%.$" )
@@ -205,31 +205,31 @@ if CLIENT then
         end
     end
 
-    makeFonts( "Default", { 
+    makeFonts( "default", { 
         font = "Tahoma", 
         size = 21, 
         weight = 500, 
     } )
 
-    makeFonts( "DefaultLarge", { 
+    makeFonts( "defaultLarge", { 
         font = "Tahoma", 
         size = 26, 
         weight = 500, 
     } )
 
-    makeFonts( "Monospace", { 
+    makeFonts( "monospace", { 
         font = "Lucida Console", 
         size = 15, 
         weight = 500, 
     } )
 
-    makeFonts( "MonospaceLarge", { 
+    makeFonts( "monospaceLarge", { 
         font = "Lucida Console", 
         size = 22, 
         weight = 500, 
     } )
 
-    makeFonts( "MonospaceSmall", { 
+    makeFonts( "monospaceSmall", { 
         font = "Lucida Console", 
         size = 10, 
         weight = 300, 
@@ -257,11 +257,12 @@ if CLIENT then
         end
     end
 
+    -- Different to IsColor, as doesn't require mt to be set
     function chatBox.isColor( tab )
         return type( tab ) == "table" and tab.r and type( tab.r ) == "number" and tab.g and type( tab.g ) == "number" and tab.b and type( tab.b ) == "number" and tab.a and type( tab.a ) == "number" and #table.GetKeys( tab ) == 4
     end
 
-    function chatBox.goodMsgC( ... )
+    function chatBox.msgC( ... )
         local data = { ... }
 
         local lastCol = Color( 255, 255, 255 )

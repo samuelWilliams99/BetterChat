@@ -246,7 +246,7 @@ function chatBox.getAllowed( ply, perm )
 end
 
 if CLIENT then
-    hook.Add( "BC_InitPanels", "BC_ConVarInit", function()
+    hook.Add( "BC_initPanels", "BC_initClientConvars", function()
         for k, setting in pairs( chatBox.globalSettingsTemplate ) do
             local val = "bc_" .. setting.value
             if setting.type ~= "button" then
@@ -275,7 +275,7 @@ if CLIENT then
         end
     end )
 
-    hook.Add( "PopulateToolMenu", "BC_GlobalSettingsTool", function()
+    hook.Add( "PopulateToolMenu", "BC_globalSettingsTool", function()
         spawnmenu.AddToolMenuOption( "Options", "Better Chat", "bc_settings", "Global Settings", "", "", function( panel )
             panel:ClearControls()
             for k, setting in pairs( chatBox.globalSettingsTemplate ) do
@@ -349,7 +349,7 @@ function chatBox.getSettingObject( name, isServer )
     return nil
 end
 
-hook.Add( "BC_SharedInit", "BC_InitConvars", function()
+hook.Add( "BC_sharedInit", "BC_initServerConvars", function()
     for k, v in pairs( chatBox.globalSettingsTemplate ) do
         if v.type == "button" then continue end
         if not ConVarExists( "bc_" .. v.value .. "_default" ) then

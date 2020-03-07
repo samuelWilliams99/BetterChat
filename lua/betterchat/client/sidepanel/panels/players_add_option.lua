@@ -1,6 +1,5 @@
 chatBox.extraPlayerSettings = {}
 
-
 function chatBox.addPlayerSetting( ply )
     local sx, sy = 400, 300
     local frame = vgui.Create( "DFrame" )

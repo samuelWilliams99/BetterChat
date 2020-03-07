@@ -1,12 +1,12 @@
 include( "betterchat/client/input/autocomplete.lua" )
 
-hook.Add( "BC_InitPanels", "BC_InitInput", function()
+hook.Add( "BC_initPanels", "BC_initInput", function()
     chatBox.history = {}
     chatBox.historyIndex = 0
     chatBox.historyInput = ""
 end )
 
-hook.Add( "BC_KeyCodeTyped", "BC_InputHook", function( code, ctrl, shift, entry )
+hook.Add( "BC_keyCodeTyped", "BC_IiputHook", function( code, ctrl, shift, entry )
     if code == KEY_UP then
         if chatBox.historyIndex == 0 then
             chatBox.historyInput = entry:GetText()
@@ -65,7 +65,7 @@ hook.Add( "BC_KeyCodeTyped", "BC_InputHook", function( code, ctrl, shift, entry 
     
 end )
 
-hook.Add( "BC_MessageCanSend", "BC_RunConsoleCommand", function( channel, txt )
+hook.Add( "BC_messageCanSend", "BC_runConsoleCommand", function( channel, txt )
     if chatBox.getSetting( "allowConsole" ) then
         if txt and txt[1] == "%" then
             local cmd = txt:sub( 2 )
@@ -83,7 +83,7 @@ hook.Add( "BC_MessageCanSend", "BC_RunConsoleCommand", function( channel, txt )
     end
 end )
 
-hook.Add( "BC_MessageSent", "BC_RelayULX", function( channel, txt )
+hook.Add( "BC_messageSent", "BC_relayULX", function( channel, txt )
     if channel.runCommandSeparately and txt[1] == "!" then
         net.Start( "BC_forwardMessage" )
         net.WriteString( txt )

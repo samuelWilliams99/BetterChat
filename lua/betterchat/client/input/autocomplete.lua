@@ -1,4 +1,5 @@
-local setSuggestions, updateText, incOption, setOption, setText, getSimilarStrings, getSimilarCommands, getSimilarNames, getSimilarEmotes
+local setSuggestions, updateText, incOption, setOption, setText, getSimilarStrings, 
+    getSimilarCommands, getSimilarNames, getSimilarEmotes
 
 net.Receive( "BC_sendULXCommands", function()
     local cmds = util.JSONToTable( net.ReadString() )
@@ -18,17 +19,17 @@ net.Receive( "BC_sendULXCommands", function()
     chatBox.autoComplete.gotCommands = true
 end )
 
-hook.Add( "BC_HideChat", "BC_RemoveSuggestions", function()
+hook.Add( "BC_hideChat", "BC_removeSuggestions", function()
     setSuggestions()
 end )
 
-hook.Add( "BC_InitPanels", "BC_InitAutoComplete", function()
+hook.Add( "BC_initPanels", "BC_initAutoComplete", function()
     chatBox.autoComplete = chatBox.autoComplete or {}
     chatBox.autoComplete.cur = {}
     chatBox.autoComplete.cur.option = 0
 end )
 
-hook.Add( "BC_KeyCodeTyped", "BC_AutoCompleteHook", function( code, ctrl, shift, entry )
+hook.Add( "BC_keyCodeTyped", "BC_autoCompleteHook", function( code, ctrl, shift, entry )
     local txt = entry:GetText()
     if entry:GetCaretPos() ~= #txt then return end
     local txtEx = string.Explode( " ", txt )
@@ -66,7 +67,7 @@ hook.Add( "BC_KeyCodeTyped", "BC_AutoCompleteHook", function( code, ctrl, shift,
     end
 end )
 
-hook.Add( "BC_MessageSent", "BC_AutoCompleteUsageTracker", function( channel, txt )
+hook.Add( "BC_messageSent", "BC_autoCompleteUsageTracker", function( channel, txt )
     local tab = chatBox.formatMessage( LocalPlayer(), txt, false )
     local change = false
     for k, v in pairs( tab ) do
@@ -86,11 +87,11 @@ hook.Add( "BC_MessageSent", "BC_AutoCompleteUsageTracker", function( channel, tx
     end
 end )
 
-hook.Add( "BC_ChannelChanged", "BC_HideAutocomplete", function()
+hook.Add( "BC_channelChanged", "BC_hideAutocomplete", function()
     hook.Run( "ChatTextChanged", chatBox.graphics.textEntry:GetText() )
 end )
 
-hook.Add( "BC_ChatTextChanged", "AutoCompletePreview", function( txt )
+hook.Add( "BC_chatTextChanged", "autoCompletePreview", function( txt )
     if not chatBox.enabled then return end
     local txtEx = string.Explode( " ", txt )
     local options

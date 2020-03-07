@@ -1,8 +1,8 @@
-chatBox.linkColour = Color( 180, 200, 255 )
 chatBox.formatting = {}
 local f = chatBox.formatting
 
-f.colorNames = { 
+f.linkColor = Color( 180, 200, 255 )
+f.colorNames = {
     ["maroon"] = Color( 128, 0, 0 ), 
     ["brown"] = Color( 181, 101, 29 ), 
     ["crimson"] = Color( 220, 20, 60 ), 
@@ -56,7 +56,7 @@ function chatBox.formatMessage( ply, text, dead, defaultColor, dontRecolorColon,
     defaultColor = defaultColor or Color( 255, 255, 255, 255 )
     data = data or { ply, text, false, dead }
 
-    local preTab, lastCol = hook.Run( "BC_GetPreTab", unpack( data ) )
+    local preTab, lastCol = hook.Run( "BC_getPreTab", unpack( data ) )
     if preTab then
         table.Add( preTab, chatBox.formatText( text, lastCol, ply ) )
         tab = preTab
@@ -90,7 +90,6 @@ function chatBox.formatMessage( ply, text, dead, defaultColor, dontRecolorColon,
 end
 
 function chatBox.formatText( text, defaultColor, ply )
-    if not ply then error( "on no" ) end
     local tab = {}
 
     defaultColor = defaultColor or Color( 255, 255, 255, 255 )
@@ -401,6 +400,41 @@ function f.formatModifiersSingle( txt, state, allowed )
     return out
 end
 
+local function getSpecialWord( text, start )
+    local minS = #text + 1, #text + 1
+    local col, name = nil, nil
+    for k, v in pairs( player.GetAll() ) do
+        s, e = string.find( string.lower( text ), string.lower( v:GetName() ), start, true )
+        if s and s <= minS then
+            if s == minS then
+                if e < minE then continue end
+            end
+            minS = s
+            minE = e
+            col = team.GetColor( v:Team() )
+            name = v
+        end
+    end
+    if chatBox.getSetting( "formatColors" ) then
+        for k, v in pairs( f.colorNames ) do
+            s, e = string.find( string.lower( text ), string.lower( k ), start, true )
+            if s and s <= minS then
+                if s == minS then
+                    if e <= minE then continue end
+                end
+                minS = s
+                minE = e
+                col = v
+                name = string.sub( text, s, e )
+            end
+        end
+    end
+    if minS == #text + 1 then
+        return nil, nil
+    end
+    return minS, minE, col, name
+end
+
 -- for player names, colours and colourModifiers ([#ff0000])
 function f.formatSpecialWords( text, tab )
     tab = table.Copy( tab )
@@ -451,7 +485,7 @@ function f.formatLinks( tab )
     local newTab = {}
     for k, v in pairs( tab ) do
         if type( v ) == "string" then
-            local tab = chatBox.ConvertLinks( v )
+            local tab = chatBox.convertLinks( v )
             table.Add( newTab, tab )
         else
             table.insert( newTab, v )
@@ -460,7 +494,7 @@ function f.formatLinks( tab )
     return newTab
 end
 
-function chatBox.ConvertLinks( v )
+function chatBox.convertLinks( v )
     if type( v ) ~= "string" then return { v } end
     local tab = {}
     local lStart, lEnd, url = 0, 0, ""
@@ -472,7 +506,7 @@ function chatBox.ConvertLinks( v )
         if #preText > 0 then
             table.insert( tab, preText )
         end
-        table.insert( tab, { formatter = true, type = "clickable", signal = "Link-" .. url, text = url, color = chatBox.linkColour } )
+        table.insert( tab, { formatter = true, type = "clickable", signal = "Link-" .. url, text = url, color = f.linkColor } )
         v = postText
     end
     if #v > 0 then
@@ -482,7 +516,7 @@ function chatBox.ConvertLinks( v )
 end
 
 function chatBox.defaultFormatMessage( ply, text, teamChat, dead, col1, col2, data )
-    local tab, madeChange = hook.Run( "BC_GetDefaultTab", unpack( data ) )
+    local tab, madeChange = hook.Run( "BC_getDefaultTab", unpack( data ) )
     if tab and madeChange then
         return tab
     else
@@ -516,7 +550,7 @@ function chatBox.defaultFormatMessage( ply, text, teamChat, dead, col1, col2, da
     end
 end
 
-net.Receive( "BC_SayOverload", function()
+net.Receive( "BC_sayOverload", function()
     local ply = net.ReadEntity()
     local isTeam = net.ReadBool()
     local isDead = net.ReadBool()
@@ -527,7 +561,7 @@ net.Receive( "BC_SayOverload", function()
     end
 end )
 
-chatBox.OnPlayerSayHook = function( ... ) -- pre, col1 and col2 are supplied by DarkRP
+chatBox.onPlayerSayHook = function( ... ) -- pre, col1 and col2 are supplied by DarkRP
     for priority = -2, 2 do
         for k, v in pairs( chatBox.hookOverloads.OnPlayerChat ) do
             if type( v ) == "function" then
@@ -573,42 +607,6 @@ chatBox.OnPlayerSayHook = function( ... ) -- pre, col1 and col2 are supplied by 
     return true
 end
 
-function getSpecialWord( text, start )
-    local minS = #text + 1, #text + 1
-    local col, name = nil, nil
-    for k, v in pairs( player.GetAll() ) do
-        s, e = string.find( string.lower( text ), string.lower( v:GetName() ), start, true )
-        if s and s <= minS then
-            if s == minS then
-                if e < minE then continue end
-            end
-            minS = s
-            minE = e
-            col = team.GetColor( v:Team() )
-            name = v
-        end
-    end
-    if chatBox.getSetting( "formatColors" ) then
-        for k, v in pairs( f.colorNames ) do
-            s, e = string.find( string.lower( text ), string.lower( k ), start, true )
-            if s and s <= minS then
-                if s == minS then
-                    if e <= minE then continue end
-                end
-                minS = s
-                minE = e
-                col = v
-                name = string.sub( text, s, e )
-            end
-        end
-    end
-    if minS == #text + 1 then
-        return nil, nil
-    end
-    return minS, minE, col, name
-end
-
-
 function chatBox.print( ... )
     local data = { ... }
     local col = Color( 255, 255, 255, 255 )
@@ -626,7 +624,7 @@ function chatBox.print( ... )
                 end
             end
             if not isPly then
-                local tab = chatBox.ConvertLinks( v )
+                local tab = chatBox.convertLinks( v )
                 if #tab ~= 1 or tab[1] ~= v then 
                     table.remove( data, k )
                     for l = #tab, 1, -1 do
@@ -646,21 +644,21 @@ end
 
 function chatBox.triggerTick()
     if not chatBox.getSetting( "doTick" ) then return end
-    if timer.Exists( "BC_TriggerTick" ) then timer.Destroy( "BC_TriggerTick" ) end
-    timer.Create( "BC_TriggerTick", 0.05, 1, function()
+    if timer.Exists( "BC_triggerTick" ) then timer.Destroy( "BC_triggerTick" ) end
+    timer.Create( "BC_triggerTick", 0.05, 1, function()
         chat.PlaySound()
     end )
 end
 
 function chatBox.triggerPop()
     if not chatBox.getSetting( "doPop" ) then return end
-    if timer.Exists( "BC_TriggerTick" ) then timer.Destroy( "BC_TriggerTick" ) end
-    if timer.Exists( "BC_TriggerPop" ) then timer.Destroy( "BC_TriggerPop" ) end
-    timer.Create( "BC_TriggerPop", 0.05, 1, function()
-        chatBox.PlayPop()
+    if timer.Exists( "BC_triggerTick" ) then timer.Destroy( "BC_triggerTick" ) end
+    if timer.Exists( "BC_triggerPop" ) then timer.Destroy( "BC_triggerPop" ) end
+    timer.Create( "BC_triggerPop", 0.05, 1, function()
+        chatBox.playPop()
     end )
 end
 
-function chatBox.PlayPop()
+function chatBox.playPop()
     surface.PlaySound( "garrysmod/balloon_pop_cute.wav" )
 end

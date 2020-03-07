@@ -69,9 +69,9 @@ function chatBox.overloadFunctions()
     for k, v in pairs( hook.GetTable().OnPlayerChat or {} ) do
         hook.Remove( "OnPlayerChat", k )
     end
-    hook.Add( "OnPlayerChat", "BC_ChatHook", function( ... )
-        if chatBox.OnPlayerSayHook then
-            return chatBox.OnPlayerSayHook( ... )
+    hook.Add( "OnPlayerChat", "BC_chatHook", function( ... )
+        if chatBox.onPlayerSayHook then
+            return chatBox.onPlayerSayHook( ... )
         end
     end )
 
@@ -93,7 +93,7 @@ function chatBox.overloadFunctions()
         end
     end )
 
-    hook.Run( "BC_Overload" )
+    hook.Run( "BC_overload" )
 
     chatBox.overloaded = true
 end
@@ -106,9 +106,9 @@ function chatBox.returnFunctions()
     chat.Open = chatBox.overloadedFuncs.oldOpen
     chat.Close = chatBox.overloadedFuncs.oldClose
 
-    hook.Add = chatBox.overloadedFuncs.hookAdd
-    hook.Remove = chatBox.overloadedFuncs.hookRemove
-    hook.Remove( "OnPlayerChat", "BC_ChatHook" )
+    rawset( hook, "Add", chatBox.overloadedFuncs.hookAdd )
+    rawset( hook, "Remove", chatBox.overloadedFuncs.hookRemove )
+    hook.Remove( "OnPlayerChat", "BC_chatHook" )
     for id, data in pairs( chatBox.hookOverloads.OnPlayerChat ) do
         if type( fn ) == "table" then -- Ulib hooks have priority, must maintain that
             for priority, d in pairs( fn ) do
@@ -121,6 +121,6 @@ function chatBox.returnFunctions()
     chatBox.overloadedFuncs.plyMeta.ChatPrint = chatBox.overloadedFuncs.plyChatPrint
     chatBox.overloadedFuncs.plyMeta.IsTyping = chatBox.overloadedFuncs.plyIsTyping
     chatBox.overloadedFuncs = {}
-    hook.Run( "BC_Overload_Undo" )
+    hook.Run( "BC_overloadUndo" )
     chatBox.overloaded = false
 end

@@ -1,6 +1,6 @@
 include( "betterchat/client/sidepanel/templates/channelsettings.lua" )
 
-hook.Add( "BC_InitPanels", "BC_InitSidePanelChannels", function()
+hook.Add( "BC_initPanels", "BC_initSidePanelChannels", function()
     local g = chatBox.graphics
     chatBox.createSidePanel( "Channel Settings", 300, { icon = "icons/cog.png", rotate = true, col = Color( 50, 50, 50, 210 ) } )
 end )

@@ -27,7 +27,7 @@ chatBox.defaultTeamChannel = {
     replicateAll = true, 
 }
 
-hook.Add( "BC_PreInitPanels", "BC_InitAddTeamOverloadChannel", function()
+hook.Add( "BC_preInitPanels", "BC_initAddTeamOverloadChannel", function()
     if chatBox.getServerSetting( "replaceTeam" ) then
         local teamName = chatBox.teamName( LocalPlayer() )
         local chanName = "TeamOverload-" .. teamName

@@ -1,11 +1,11 @@
 include( "betterchat/client/sidepanel/templates/membersettings.lua" )
 
-hook.Add( "BC_InitPanels", "BC_InitSidePanelMembers", function()
+hook.Add( "BC_initPanels", "BC_initSidePanelMembers", function()
     local g = chatBox.graphics
     chatBox.createSidePanel( "Group Members", 250, { icon = "icon16/group.png", border = 1 } )
 end )
 
-hook.Add( "BC_ChatTextClick", "BC_GroupAccept", function( eventType, dataType, dataArg )
+hook.Add( "BC_chatTextClick", "BC_groupAccept", function( eventType, dataType, dataArg )
     if dataType == "GroupAcceptInvite" and ( eventType == "LeftClick" or eventType == "DoubleClick" ) then
         local groupId = tonumber( dataArg )
         if not groupId or type( groupId ) ~= "number" then return end
@@ -16,8 +16,8 @@ hook.Add( "BC_ChatTextClick", "BC_GroupAccept", function( eventType, dataType, d
     end
 end )
 
-hook.Add( "BC_PlayerDisconnect", "BC_MemberUpdateDiscon", chatBox.reloadAllMemberMenus )
-hook.Add( "BC_PlayerConnect", "BC_MemberUpdateCon", chatBox.reloadAllMemberMenus )
+hook.Add( "BC_playerDisconnect", "BC_memberUpdateDiscon", chatBox.reloadAllMemberMenus )
+hook.Add( "BC_playerConnect", "BC_memberUpdateCon", chatBox.reloadAllMemberMenus )
 
 function chatBox.reloadAllMemberMenus()
     if not chatBox.enabled then return end
