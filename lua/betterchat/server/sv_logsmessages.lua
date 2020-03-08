@@ -38,7 +38,7 @@ function chatBox.sendLogPlayers( channelType, channel, ... )
     net.Send( plys )
 end
 
-hook.Add( "PlayerSay", "BC_LogTeam", function( ply, text, t )
+hook.Add( "PlayerSay", "BC_logTeam", function( ply, text, t )
     if t then
         chatBox.sendLog( chatBox.channelTypes.TEAM, "Team - " .. team.GetName( ply:Team() ), ply, ": ", text )
     end

@@ -3,8 +3,8 @@ chatBox.giphy.counts = chatBox.giphy.counts or {}
 chatBox.giphy.lastResetHour = chatBox.giphy.lastResetHour or -1
 
 -- Single think hook call so http is ready
-hook.Add( "Think", "BC_GiphyInit", function()
-    hook.Remove( "Think", "BC_GiphyInit" )
+hook.Add( "Think", "BC_giphyInit", function()
+    hook.Remove( "Think", "BC_giphyInit" )
     chatBox.getGiphyURL( "thing", function( success, data )
         if success then
             print( "[BetterChat] Giphy key test successful, giphy command enabled." )
@@ -53,7 +53,7 @@ function chatBox.getGiphyURL( query, cb )
     end )
 end
 
-net.Receive( "BC_SendGif", function( len, ply )
+net.Receive( "BC_sendGif", function( len, ply )
     if not chatBox.giphy.enabled then return end
 
     if not chatBox.getAllowed( ply, "bc_giphy" ) then
@@ -84,7 +84,7 @@ net.Receive( "BC_SendGif", function( len, ply )
             if success then
                 ULib.clientRPC( ply, "chatBox.messageChannel", channel, chatBox.colors.printYellow, "You have " .. ( maxCount - curCount - 1 ) .. " giphy uses left for this hour." )
                 local recips = chatBox.getClients( channel, ply )
-                net.Start( "BC_SendGif" )
+                net.Start( "BC_sendGif" )
                 net.WriteString( data )
                 net.WriteString( channel )
                 net.WriteString( str )

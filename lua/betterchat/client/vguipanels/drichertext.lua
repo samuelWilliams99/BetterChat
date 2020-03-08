@@ -2,41 +2,9 @@ include( "drichertextgraphic.lua" )
 
 local RICHERTEXT = {}
 
-local upArrowLeft = { 
-    { x = 0, y = 6 }, 
-    { x = 8, y = 0 }, 
-    { x = 11, y = 3 }, 
-    { x = 3, y = 9 }, 
-}    
-local upArrowRight = { 
-    { x = 8, y = 5 }, 
-    { x = 11, y = 3 }, 
-    { x = 15, y = 7 },     
-    { x = 12, y = 9 }
-}
-
 local function getFrom( idx, ... ) -- Simple helper function that picks an input from a list. getFrom(2, a, b, c) = b
     local d = { ... }
     return d[idx]
-end
-
-local function invertTab( tab ) -- For arrow rendering
-    local out = {}
-    for k = 1, #tab do
-        local v = tab[k]
-        table.insert( out, { x = 15 - v.x, y = 15 - v.y } )
-    end
-    return out
-end
-
-local function drawUpArrow()
-    surface.DrawPoly( upArrowLeft )
-    surface.DrawPoly( upArrowRight )
-end
-
-local function drawDownArrow()
-    surface.DrawPoly( invertTab( upArrowLeft ) )
-    surface.DrawPoly( invertTab( upArrowRight ) )
 end
 
 local function getElementSize( elem, subHalfChar )

@@ -1,4 +1,4 @@
-timer.Create( "BC_DelayOverload", 5, 1, function()
+timer.Create( "BC_delayOverload", 5, 1, function()
     function ulx.psay( calling_ply, target_ply, message )
         if calling_ply:GetNWBool( "ulx_muted", false ) then
             ULib.tsayError( calling_ply, "You are muted, and therefore cannot speak! Use asay for admin chat if urgent.", true )

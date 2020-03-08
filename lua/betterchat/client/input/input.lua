@@ -6,7 +6,7 @@ hook.Add( "BC_initPanels", "BC_initInput", function()
     chatBox.historyInput = ""
 end )
 
-hook.Add( "BC_keyCodeTyped", "BC_IiputHook", function( code, ctrl, shift, entry )
+hook.Add( "BC_keyCodeTyped", "BC_inputHook", function( code, ctrl, shift, entry )
     if code == KEY_UP then
         if chatBox.historyIndex == 0 then
             chatBox.historyInput = entry:GetText()
@@ -76,7 +76,7 @@ hook.Add( "BC_messageCanSend", "BC_runConsoleCommand", function( channel, txt )
     end
     if chatBox.giphyEnabled and string.sub( txt, 1, 7 ) == "!giphy " then
         local str = string.sub( txt, 8 )
-        net.Start( "BC_SendGif" )
+        net.Start( "BC_sendGif" )
         net.WriteString( str )
         net.WriteString( channel.name == "All" and "Players" or channel.name )
         net.SendToServer()

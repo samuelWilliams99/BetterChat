@@ -23,8 +23,8 @@ for k, state in pairs( trackedStates ) do
     end
 end
 
-if timer.Exists( "BC_StateMonitor" ) then timer.Remove( "BC_StateMonitor" ) end
-timer.Create( "BC_StateMonitor", 1 / 30, 0, function()
+if timer.Exists( "BC_stateMonitor" ) then timer.Remove( "BC_stateMonitor" ) end
+timer.Create( "BC_stateMonitor", 1 / 30, 0, function()
     for k, state in pairs( trackedStates ) do
         for k1, ply in pairs( player.GetAll() ) do
             local newState = state( ply )
@@ -43,7 +43,7 @@ timer.Create( "BC_StateMonitor", 1 / 30, 0, function()
     end
 end )
 
-hook.Add( "BC_plyReady", "BC_StateInit", function( ply )
+hook.Add( "BC_plyReady", "BC_stateInit", function( ply )
     for k, state in pairs( trackedStates ) do
         for k1, sPly in pairs( player.GetAll() ) do
             net.Start( "BC_sendPlayerState" )
@@ -65,20 +65,20 @@ function accessChange( id, ... )
         ply = ULib.getPlyByID( id )
     end
     timer.Simple( 0.1, function() --Delay the message as ULibUserGroupChange is called before permission changes
-        net.Start( "BC_UserRankChange" )
+        net.Start( "BC_userRankChange" )
         net.Send( ply )
     end )
 end
 
 function accessChangeGlobal()
     timer.Simple( 0.1, function() --Delay the message as ULibUserGroupChange is called before permission changes
-        net.Start( "BC_UserRankChange" )
+        net.Start( "BC_userRankChange" )
         net.Broadcast()
     end )
 end
 
-hook.Add( "ULibUserGroupChange", "BC_RankChange", accessChange )
-hook.Add( "ULibUserAccessChange", "BC_RankChange", accessChange )
-hook.Add( "ULibUserRemoved", "BC_RankChange", accessChange )
-hook.Add( "ULibGroupAccessChanged", "BC_RankChange", accessChangeGlobal )
-hook.Add( "CAMI.PlayerUsergroupChanged", "BC_RankChange", accessChange )
+hook.Add( "ULibUserGroupChange", "BC_rankChange", accessChange )
+hook.Add( "ULibUserAccessChange", "BC_rankChange", accessChange )
+hook.Add( "ULibUserRemoved", "BC_rankChange", accessChange )
+hook.Add( "ULibGroupAccessChanged", "BC_rankChange", accessChangeGlobal )
+hook.Add( "CAMI.PlayerUsergroupChanged", "BC_rankChange", accessChange )

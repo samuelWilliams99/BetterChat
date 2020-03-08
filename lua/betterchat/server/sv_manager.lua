@@ -6,7 +6,7 @@ include( "sv_groups.lua" )
 include( "sv_giphy.lua" )
 
 
-net.Receive( "BC_SayOverload", function( len, ply )
+net.Receive( "BC_sayOverload", function( len, ply )
     local isTeam = net.ReadBool()
     local isDead = net.ReadBool()
     local msg = net.ReadString()
@@ -22,7 +22,7 @@ net.Receive( "BC_SayOverload", function( len, ply )
 
     if not msg or msg == "" then return end
 
-    net.Start( "BC_SayOverload" )
+    net.Start( "BC_sayOverload" )
     net.WriteEntity( ply )
     net.WriteBool( isTeam )
     net.WriteBool( isDead )
@@ -85,7 +85,7 @@ function chatBox.sendNormalClient( ply, ... )
     ULib.clientRPC( ply, "chat.AddText", unpack( data ) )
 end
 
-hook.Add( "BC_plyReady", "BC_SendCommandsInit", function( ply )
+hook.Add( "BC_plyReady", "BC_sendCommandsInit", function( ply )
     local tab = chatBox.getRunnableULXCommands( ply )
     net.Start( "BC_sendULXCommands" )
     net.WriteString( util.TableToJSON( tab ) )

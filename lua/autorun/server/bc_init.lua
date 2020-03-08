@@ -33,6 +33,7 @@ local function addFiles( dir )
         addFiles( dir .. "/" .. v )
     end
 end
-addFiles( "betterchat" )
+addFiles( "betterchat/client" )
+addFiles( "betterchat/shared" )
 
 include( "betterchat/sh_base.lua" )

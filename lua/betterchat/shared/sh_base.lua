@@ -139,8 +139,9 @@ if SERVER then
 
 end
 
-include( "betterchat/sh_util.lua" )
-include( "betterchat/sh_globalsettings.lua" )
+include( "betterchat/shared/sh_util.lua" )
+include( "betterchat/shared/sh_globalsettings.lua" )
+include( "betterchat/shared/sh_helper.lua" )
 hook.Run( "BC_sharedInit" )
 if SERVER then 
     return
