@@ -5,7 +5,6 @@ include( "sv_adminmessages.lua" )
 include( "sv_groups.lua" )
 include( "sv_giphy.lua" )
 
-
 net.Receive( "BC_sayOverload", function( len, ply )
     local isTeam = net.ReadBool()
     local isDead = net.ReadBool()
@@ -108,7 +107,7 @@ net.Receive( "BC_TM", function( len, ply )
     end
     local msg = net.ReadString()
 
-    print( "(" .. team.GetName( t ) .. ") " .. ply:GetName() .. ": " .. msg )
+    chatBox.sendLog( chatBox.channelTypes.TEAM, "Team - " .. team.GetName( t ), ply, ": ", msg )
 
     net.Start( "BC_TM" )
     net.WriteEntity( ply )

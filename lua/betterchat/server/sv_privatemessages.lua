@@ -31,48 +31,48 @@ function chatBox.canPrivateMessage( from, to )
     return chatBox.allowedPrivate( from ) and chatBox.allowedPrivate( to )
 end
 
+-- Dark rp
+
+local function DarkRP_PM( ply, args )
+    local namepos = string.find( args, " " )
+    if not namepos then
+        DarkRP.notify( ply, 1, 4, DarkRP.getPhrase( "invalid_x", DarkRP.getPhrase( "arguments" ), "" ) )
+        return ""
+    end
+
+    local name = string.sub( args, 1, namepos - 1 )
+    local msg = string.sub( args, namepos + 1 )
+
+    if msg == "" then
+        DarkRP.notify( ply, 1, 4, DarkRP.getPhrase( "invalid_x", DarkRP.getPhrase( "arguments" ), "" ) )
+        return ""
+    end
+
+    local target = DarkRP.findPlayer( name )
+    if not chatBox.canPrivateMessage( ply, target ) then return "" end
+    if target == ply then 
+        if chatBox.chatBoxEnabled[ply] then
+            chatBox.sendPrivate( ply, ply, ply, msg )
+        end
+        return "" 
+    end
+
+    if target then
+        chatBox.sendPrivate( ply, ply, target, msg )
+        chatBox.sendPrivate( target, ply, ply, msg )
+    else
+        DarkRP.notify( ply, 1, 4, DarkRP.getPhrase( "could_not_find", tostring( name ) ) )
+    end
+
+    return ""
+end
+
 hook.Add( "PostGamemodeLoaded", "BC_RPOverload", function()
     if DarkRP then
         local chatcommands = DarkRP.getChatCommands()
-        if chatcommands then
-            if chatcommands["pm"] then
-                print( "[BetterChat] Found DarkRP PM, replacing with BetterChat PM" )
-                local function PM( ply, args )
-                    local namepos = string.find( args, " " )
-                    if not namepos then
-                        DarkRP.notify( ply, 1, 4, DarkRP.getPhrase( "invalid_x", DarkRP.getPhrase( "arguments" ), "" ) )
-                        return ""
-                    end
-
-                    local name = string.sub( args, 1, namepos - 1 )
-                    local msg = string.sub( args, namepos + 1 )
-
-                    if msg == "" then
-                        DarkRP.notify( ply, 1, 4, DarkRP.getPhrase( "invalid_x", DarkRP.getPhrase( "arguments" ), "" ) )
-                        return ""
-                    end
-
-                    local target = DarkRP.findPlayer( name )
-                    if not chatBox.canPrivateMessage( ply, target ) then return "" end
-                    if target == ply then 
-                        if chatBox.chatBoxEnabled[ply] then
-                            chatBox.sendPrivate( ply, ply, ply, msg )
-                        end
-                        return "" 
-                    end
-
-                    if target then
-                        chatBox.sendPrivate( ply, ply, target, msg )
-                        chatBox.sendPrivate( target, ply, ply, msg )
-                    else
-                        DarkRP.notify( ply, 1, 4, DarkRP.getPhrase( "could_not_find", tostring( name ) ) )
-                    end
-
-                    return ""
-                end
-                DarkRP.defineChatCommand( "pm", PM, 1.5 )
-            end
+        if chatcommands and chatcommands["pm"] then
+            print( "[BetterChat] Found DarkRP PM, replacing with BetterChat PM" )
+            DarkRP.defineChatCommand( "pm", DarkRP_PM, 1.5 )
         end
     end
-
 end )

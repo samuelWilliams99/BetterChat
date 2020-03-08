@@ -1,6 +1,16 @@
 chatBox.group = {}
 chatBox.group.inviteExpires = 60
 
+local function joinTables( a, b )
+    local aCopy = table.Copy( a )
+    for k, val in pairs( b ) do
+        if not table.HasValue( aCopy, val ) then
+            table.insert( aCopy, val )
+        end
+    end
+    return aCopy
+end
+
 function chatBox.saveGroups()
     local data = table.Copy( chatBox.group )
     for k, v in pairs( data.groups ) do
@@ -60,22 +70,7 @@ function chatBox.sendGroupData( group, members, openNow )
 end
 
 function chatBox.getGroupMembers( group )
-    local members = {}
-    for k, v in pairs( group.members ) do
-        local member = player.GetBySteamID( v )
-        if member then table.insert( members, member ) end
-    end
-    return members
-end
-
-function joinTables( a, b )
-    local aCopy = table.Copy( a )
-    for k, val in pairs( b ) do
-        if not table.HasValue( aCopy, val ) then
-            table.insert( aCopy, val )
-        end
-    end
-    return aCopy
+    return table.map( group.members, player.GetBySteamID )
 end
 
 function chatBox.allowedGroups( ply )
@@ -83,13 +78,7 @@ function chatBox.allowedGroups( ply )
 end
 
 function chatBox.removeInvalidMembers( members )
-    local out = {}
-    for k, v in pairs( members ) do
-        if chatBox.allowedGroups( v ) then
-            table.insert( out, v )
-        end
-    end
-    return out
+    return table.filter( members, chatBox.allowedGroups )
 end
 
 function chatBox.handleInvites( group )
@@ -193,9 +182,7 @@ function chatBox.handleGroupRankChanges( old, new )
     end
 end
 
-do
-    chatBox.loadGroups()
-end
+chatBox.loadGroups()
 
 concommand.Add( "bc_loadgroups", function()
     chatBox.loadGroups()
@@ -214,7 +201,6 @@ end )
 net.Receive( "BC_newGroup", function( len, ply )
     local g = chatBox.newGroup( ply, "New Group" )
     chatBox.sendGroupData( g, nil, true )
-
 end )
 
 net.Receive( "BC_GM", function( len, ply )
@@ -243,40 +229,39 @@ net.Receive( "BC_updateGroup", function( len, ply )
     local groupID = net.ReadUInt( 16 )
     local newData = net.ReadString()
     for k, group in pairs( chatBox.group.groups ) do
-        if group.id == groupID then
-            if table.HasValue( group.admins, ply:SteamID() ) then
-                local oldMembers = chatBox.getGroupMembers( group )
+        if group.id ~= groupID then continue end
+        if not table.HasValue( group.admins, ply:SteamID() ) then break end
 
-                local oldGroup = table.Copy( group )
+        local oldMembers = chatBox.getGroupMembers( group )
 
-                chatBox.group.groups[k] = util.JSONToTable( newData )
-                group = chatBox.group.groups[k]
+        local oldGroup = table.Copy( group )
 
-                for k, v in pairs( group.invites ) do
-                    local invTime = oldGroup.invites[k]
-                    if invTime and invTime + chatBox.group.inviteExpires > CurTime() then
-                        group.invites[k] = invTime
-                    end
-                end
+        chatBox.group.groups[k] = util.JSONToTable( newData )
+        group = chatBox.group.groups[k]
 
-                local newMembers = chatBox.getGroupMembers( group )
-
-                local members = joinTables( oldMembers, newMembers ) --This means players removed and players added both are updated of the change
-
-                chatBox.handleInvites( group )
-
-                chatBox.sendGroupData( group, members )
-
-                if #group.members == 0 then
-                    table.remove( chatBox.group.groups, k )
-                else
-                    chatBox.handleGroupRankChanges( oldGroup, group )
-                end
-
-                chatBox.saveGroups()
+        for k, v in pairs( group.invites ) do
+            local invTime = oldGroup.invites[k]
+            if invTime and invTime + chatBox.group.inviteExpires > CurTime() then
+                group.invites[k] = invTime
             end
-            break
         end
+
+        local newMembers = chatBox.getGroupMembers( group )
+
+        local members = joinTables( oldMembers, newMembers ) --This means players removed and players added both are updated of the change
+
+        chatBox.handleInvites( group )
+
+        chatBox.sendGroupData( group, members )
+
+        if #group.members == 0 then
+            table.remove( chatBox.group.groups, k )
+        else
+            chatBox.handleGroupRankChanges( oldGroup, group )
+        end
+
+        chatBox.saveGroups()
+        break
     end
 end )
 
@@ -284,46 +269,39 @@ net.Receive( "BC_deleteGroup", function( len, ply )
     local groupID = net.ReadUInt( 16 )
     local newData = net.ReadString()
     for k, group in pairs( chatBox.group.groups ) do
-        if group.id == groupID then
-            if table.HasValue( group.admins, ply:SteamID() ) then
-                local oldMembers = chatBox.getGroupMembers( group ) -- Get current members
-                group.members = {} -- Empty the group
-                group.admins = {}
-                group.invites = {}
-                chatBox.sendGroupData( group, oldMembers ) -- Tell all members that there are no members anymore
-                table.remove( chatBox.group.groups, k ) -- Delete the group
-                chatBox.saveGroups() -- Give it a good ol' save
-            end
-            break
-        end
+        if group.id ~= groupID then continue end
+        if not table.HasValue( group.admins, ply:SteamID() ) then break end
+        local oldMembers = chatBox.getGroupMembers( group )
+        group.members = {}
+        group.admins = {}
+        group.invites = {}
+        chatBox.sendGroupData( group, oldMembers )
+        table.remove( chatBox.group.groups, k )
+        chatBox.saveGroups()
     end
 end )
 
 net.Receive( "BC_leaveGroup", function( len, ply )
     local groupID = net.ReadUInt( 16 )
     for k, group in pairs( chatBox.group.groups ) do
-        if group.id == groupID then
-            if table.HasValue( group.members, ply:SteamID() ) then
-                local oldMembers = chatBox.getGroupMembers( group )
+        if group.id ~= groupID then continue end
+        if not table.HasValue( group.members, ply:SteamID() ) then break end
 
-                table.RemoveByValue( group.members, ply:SteamID() )
-                table.RemoveByValue( group.admins, ply:SteamID() )
+        local oldMembers = chatBox.getGroupMembers( group )
 
-                chatBox.sendGroupData( group, oldMembers )
+        table.RemoveByValue( group.members, ply:SteamID() )
+        table.RemoveByValue( group.admins, ply:SteamID() )
 
-                if #group.members == 0 then
-                    table.remove( chatBox.group.groups, k )
-                else
-                    chatBox.groupRankChange( group, ply:SteamID(), 1, 2 )
-                end
+        chatBox.sendGroupData( group, oldMembers )
 
-                chatBox.saveGroups()
-                
-            end
-            break
+        if #group.members == 0 then
+            table.remove( chatBox.group.groups, k )
+        else
+            chatBox.groupRankChange( group, ply:SteamID(), 1, 2 )
         end
-    end
 
+        chatBox.saveGroups()
+    end
 end )
 
 net.Receive( "BC_groupAccept", function( len, ply )
@@ -331,24 +309,23 @@ net.Receive( "BC_groupAccept", function( len, ply )
     local sId = ply:SteamID()
 
     for k, group in pairs( chatBox.group.groups ) do
-        if group.id == groupID then
-            local t = group.invites[sId]
-            if t and t > 0 and ( ( t + chatBox.group.inviteExpires ) > CurTime() ) then
-                local oldMembers = chatBox.getGroupMembers( group )
-                table.insert( group.members, sId )
-                group.invites[sId] = nil
-                chatBox.sendGroupData( group, oldMembers )
-                chatBox.sendGroupData( group, { ply }, true )
-                chatBox.saveGroups()
+        if group.id ~= groupID then continue end
 
-                chatBox.groupRankChange( group, ply:SteamID(), 2, 1 )
-            else
-                group.invites[sId] = nil
-                ULib.clientRPC( ply, "chatBox.messageChannel", "All", 
-                    chatBox.colors.printYellow, "Sorry, this invite has expired or is no longer valid." )
-            end
-            break
+        local t = group.invites[sId]
+        if t and t > 0 and ( ( t + chatBox.group.inviteExpires ) > CurTime() ) then
+            local oldMembers = chatBox.getGroupMembers( group )
+            table.insert( group.members, sId )
+            group.invites[sId] = nil
+            chatBox.sendGroupData( group, oldMembers )
+            chatBox.sendGroupData( group, { ply }, true )
+            chatBox.saveGroups()
+
+            chatBox.groupRankChange( group, ply:SteamID(), 2, 1 )
+        else
+            group.invites[sId] = nil
+            ULib.clientRPC( ply, "chatBox.messageChannel", "All", 
+                chatBox.colors.printYellow, "Sorry, this invite has expired or is no longer valid." )
         end
+        break
     end
-
 end )

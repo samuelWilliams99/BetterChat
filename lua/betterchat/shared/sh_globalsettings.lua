@@ -249,29 +249,29 @@ if CLIENT then
     hook.Add( "BC_initPanels", "BC_initClientConvars", function()
         for k, setting in pairs( chatBox.globalSettingsTemplate ) do
             local val = "bc_" .. setting.value
-            if setting.type ~= "button" then
-                if not ConVarExists( val ) then
-                    local def
-                    if ConVarExists( val .. "_default" ) then
-                        if setting.type == "boolean" then
-                            def = GetConVar( val .. "_default" ):GetBool()
-                        elseif setting.type == "number" then
-                            def = GetConVar( val .. "_default" ):GetInt()
-                        end
-                    else
-                        def = setting.default
-                    end
-                    if type( def ) == "boolean" then def = def and 1 or 0 end
-                    local var = CreateClientConVar( val, def )
-                    if setting.min or setting.max then
-                        cvars.AddChangeCallback( val, function( cv, old, new )
-                            if new > ( setting.max or 1000000000 ) or new < ( setting.min or 0 ) then
-                                cv:SetInt( old )
-                            end
-                        end )
-                    end
+
+            if setting.type == "button" then continue end
+            if ConVarExists( val ) then continue end
+
+            local def
+            if ConVarExists( val .. "_default" ) then
+                if setting.type == "boolean" then
+                    def = GetConVar( val .. "_default" ):GetBool()
+                elseif setting.type == "number" then
+                    def = GetConVar( val .. "_default" ):GetInt()
                 end
+            else
+                def = setting.default
             end
+            if type( def ) == "boolean" then def = def and 1 or 0 end
+            local var = CreateClientConVar( val, def )
+            if setting.min or setting.max then
+                cvars.AddChangeCallback( val, function( cv, old, new )
+                    if new > ( setting.max or 1000000000 ) or new < ( setting.min or 0 ) then
+                        cv:SetInt( old )
+                    end
+                end )
+            end 
         end
     end )
 
@@ -290,7 +290,7 @@ if CLIENT then
                         c.setting = setting
                         c.lastClick = 0
                         c.val = val
-                        c.DoClick = function( self )
+                        function c:DoClick()
                             if CurTime() - self.lastClick < 2 then
                                 RunConsoleCommand( c.val )
                                 self.lastClick = 0
@@ -299,7 +299,7 @@ if CLIENT then
                             end
                         end
 
-                        c.Think = function( self )
+                        function c:Think()
                             if CurTime() - self.lastClick < 2 then
                                 self:SetText( "CONFIRM" )
                                 self:SetTextColor( Color( 255, 0, 0 ) )
@@ -314,7 +314,6 @@ if CLIENT then
                 end
 
                 c:SetTooltip( setting.extra )
-
             end
         end )
     end )
@@ -323,7 +322,8 @@ end
 
 function chatBox.getSetting( name, isServer )
     local setting = chatBox.getSettingObject( name, isServer )
-    if not setting then return nil end
+    if not setting then return end
+
     local var = GetConVar( "bc_" .. ( isServer and "server_" or "" ) .. name )
     if not var then return setting.default end
     if setting.type == "boolean" then
@@ -333,7 +333,6 @@ function chatBox.getSetting( name, isServer )
     elseif setting.type == "string" then
         return var:GetString()
     end
-    return nil
 end
 
 function chatBox.getServerSetting( name ) 
@@ -346,36 +345,34 @@ function chatBox.getSettingObject( name, isServer )
             return v
         end
     end
-    return nil
 end
 
 hook.Add( "BC_sharedInit", "BC_initServerConvars", function()
     for k, v in pairs( chatBox.globalSettingsTemplate ) do
-        if v.type == "button" then continue end
-        if not ConVarExists( "bc_" .. v.value .. "_default" ) then
-            local def = v.default
-            if type( def ) == "boolean" then def = def and 1 or 0 end
-            CreateConVar( "bc_" .. v.value .. "_default", def, FCVAR_REPLICATED + FCVAR_ARCHIVE + FCVAR_PROTECTED )
-        end
+        if v.type == "button" or ConVarExists( "bc_" .. v.value .. "_default" ) then continue end
+        
+        local def = v.default
+        if type( def ) == "boolean" then def = def and 1 or 0 end
+        CreateConVar( "bc_" .. v.value .. "_default", def, FCVAR_REPLICATED + FCVAR_ARCHIVE + FCVAR_PROTECTED )
     end
 
     for k, v in pairs( chatBox.serverSettings ) do
         local def = v.default
         if type( def ) == "boolean" then def = def and 1 or 0 end
         local cvar = CreateConVar( "bc_server_" .. v.value, def, FCVAR_REPLICATED + FCVAR_ARCHIVE + FCVAR_PROTECTED )
-        if v.onChange then
-            cvars.AddChangeCallback( "bc_server_" .. v.value, function( _, old, new ) 
-                local ret = v.onChange( v, old, new )
-                if ret ~= nil then
-                    if v.type == "bool" then
-                        cvar:SetBool( ret )
-                    elseif v.type == "number" then
-                        cvar:SetInt( ret )
-                    elseif v.type == "string" then
-                        cvar:SetString( ret )
-                    end
+        if not v.onChange then continue end
+
+        cvars.AddChangeCallback( "bc_server_" .. v.value, function( _, old, new ) 
+            local ret = v.onChange( v, old, new )
+            if ret ~= nil then
+                if v.type == "bool" then
+                    cvar:SetBool( ret )
+                elseif v.type == "number" then
+                    cvar:SetInt( ret )
+                elseif v.type == "string" then
+                    cvar:SetString( ret )
                 end
-            end )
-        end
+            end
+        end )
     end
 end )

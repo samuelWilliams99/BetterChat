@@ -105,6 +105,16 @@ function table.Repeat( x, n )
     return out
 end
 
+function table.filter( tab, f )
+    local out = {}
+    for k, v in pairs( tab ) do
+        if f( v ) then
+            table.insert( tab, v )
+        end
+    end
+    return out
+end
+
 table.rep = table.Repeat
 
 function chatHelper.const( x )
@@ -191,6 +201,19 @@ function hook.When( cond, f )
             f()
         end
     end )
+end
+
+function net.SendEmpty( id, ply )
+    net.Start( id )
+    if SERVER then
+        if ply then
+            net.Send( ply )
+        else
+            net.Broadcast()
+        end
+    else
+        net.SendToServer()
+    end
 end
 
 function chatHelper.errInfo( str, c )

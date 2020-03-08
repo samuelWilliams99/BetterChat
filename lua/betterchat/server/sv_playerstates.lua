@@ -1,6 +1,6 @@
 --add tracked states, idx is name (same as value in setting), func is how to get cur state, must return bool
 local trackedStates = { 
-    jailed = function( ply ) return ply.jail and true or false end, 
+    jailed = function( ply ) return asBool( ply.jail ) end, 
     inGod = function( ply ) return ply:HasGodMode() end, 
     isFrozen = function( ply ) return ply.frozen end, 
     isRagdolled = function( ply ) return ply.ragdoll end, 
@@ -9,34 +9,35 @@ local trackedStates = {
 }
 
 local onChanges = { 
-    isChatEnabled = function( ply, newVal ) ULib.clientRPC( chatBox.getEnabledPlayers(), "chatBox.reloadAllMemberMenus" ) end, 
+    isChatEnabled = function( ply, newVal )
+        ULib.clientRPC( chatBox.getEnabledPlayers(), "chatBox.reloadAllMemberMenus" )
+    end, 
 }
 
 --dont touch
 
 chatBox.states = chatBox.states or {}
 
-for k, state in pairs( trackedStates ) do
-    chatBox.states[k] = {}
+for state, getter in pairs( trackedStates ) do
+    chatBox.states[state] = {}
     for k1, ply in pairs( player.GetAll() ) do
-        chatBox.states[k][ply] = state( ply )
+        chatBox.states[state][ply] = getter( ply )
     end
 end
 
-if timer.Exists( "BC_stateMonitor" ) then timer.Remove( "BC_stateMonitor" ) end
 timer.Create( "BC_stateMonitor", 1 / 30, 0, function()
-    for k, state in pairs( trackedStates ) do
-        for k1, ply in pairs( player.GetAll() ) do
-            local newState = state( ply )
-            if newState ~= chatBox.states[k][ply] then
-                chatBox.states[k][ply] = newState
+    for state, getter in pairs( trackedStates ) do
+        for k, ply in pairs( player.GetAll() ) do
+            local newState = getter( ply )
+            if newState ~= chatBox.states[state][ply] then
+                chatBox.states[state][ply] = newState
                 net.Start( "BC_sendPlayerState" )
-                net.WriteString( k )
+                net.WriteString( state )
                 net.WriteEntity( ply )
                 net.WriteBool( newState )
                 net.Broadcast()
-                if onChanges[k] then
-                    onChanges[k]( ply, newState )
+                if onChanges[state] then
+                    onChanges[state]( ply, newState )
                 end
             end
         end
@@ -44,12 +45,12 @@ timer.Create( "BC_stateMonitor", 1 / 30, 0, function()
 end )
 
 hook.Add( "BC_plyReady", "BC_stateInit", function( ply )
-    for k, state in pairs( trackedStates ) do
-        for k1, sPly in pairs( player.GetAll() ) do
+    for state, getter in pairs( trackedStates ) do
+        for k, sPly in pairs( player.GetAll() ) do
             net.Start( "BC_sendPlayerState" )
-            net.WriteString( k )
+            net.WriteString( state )
             net.WriteEntity( sPly )
-            net.WriteBool( chatBox.states[k][sPly] )
+            net.WriteBool( chatBox.states[state][sPly] )
             net.Send( ply )
         end
     end
@@ -65,15 +66,13 @@ function accessChange( id, ... )
         ply = ULib.getPlyByID( id )
     end
     timer.Simple( 0.1, function() --Delay the message as ULibUserGroupChange is called before permission changes
-        net.Start( "BC_userRankChange" )
-        net.Send( ply )
+        net.SendEmpty( "BC_userRankChange", ply )
     end )
 end
 
 function accessChangeGlobal()
     timer.Simple( 0.1, function() --Delay the message as ULibUserGroupChange is called before permission changes
-        net.Start( "BC_userRankChange" )
-        net.Broadcast()
+        net.SendEmpty( "BC_userRankChange" )
     end )
 end
 

@@ -1,22 +1,19 @@
-chatBox.colors = { 
-    printYellow = Color( 255, 222, 102 ), 
-    printBlue = Color( 137, 222, 255 ), 
-    yellow = Color( 254, 254, 0 ), 
-    red = Color( 255, 0, 0 ), 
-    ulx = Color( 152, 212, 255 ), 
-    command = Color( 190, 190, 190 ), 
-    private = Color( 200, 95, 170 ), 
-    purple = Color( 75, 0, 130 ), 
-    white = color_white, 
-    tabText = Color( 200, 200, 200, 255 ), 
-    hTabText = Color( 220, 220, 220, 255 ), 
-    admin = Color( 0, 255, 0 ), 
-    green = Color( 0, 255, 0 ), 
-    group = Color( 0, 255, 255 ), 
+chatBox.colors = {
+    printYellow = Color( 255, 222, 102 ),
+    printBlue = Color( 137, 222, 255 ),
+    yellow = Color( 254, 254, 0 ),
+    red = Color( 255, 0, 0 ),
+    ulx = Color( 152, 212, 255 ),
+    command = Color( 190, 190, 190 ),
+    private = Color( 200, 95, 170 ),
+    purple = Color( 75, 0, 130 ),
+    white = color_white,
+    tabText = Color( 200, 200, 200, 255 ),
+    hTabText = Color( 220, 220, 220, 255 ),
+    admin = Color( 0, 255, 0 ),
+    green = Color( 0, 255, 0 ),
+    group = Color( 0, 255, 255 ),
 }
-
--- Adding strings is nice
-debug.getmetatable( "a" ).__add = function( a, b ) return a .. b end
 
 -- Explode a string using a pattern and return a table of { text = explodedText, sep = seperator after it }
 function string.ExplodeWithSep( pattern, str )
@@ -85,7 +82,6 @@ function chatBox.padString( str, chars, padChar, post )
 end
 
 if SERVER then
-
     function chatBox.getRunnableULXCommands( ply )
         local sayCmds = ULib.sayCmds
         local allCmds = {}
@@ -97,7 +93,6 @@ if SERVER then
 
         return allCmds
     end
-
 end
 
 function lerpCol( a, b, l )
@@ -166,7 +161,6 @@ function chatBox.getNextUrl( inputStr )
         return pos_start, pos_end, string.sub( inputStr, pos_start, pos_end )
     end
     
-
     pos_start, pos_end, url, prot, dom, colon, port, slash, path = 
         string.find( inputStr, "((%f[%w]%a+://)(%w[-.%w]*)(:?)(%d*)(/?)([%w_.~!*:@&+$/?%%#=-]*))" )
     if pos_start and not string.find( dom .. ".", "%W%W" )
@@ -238,8 +232,6 @@ if CLIENT then
     local blur = Material( "pp/blurscreen" )
 
     function chatBox.blur( panel, layers, density, alpha, w, h )
-        -- Its a scientifically proven fact that blur improves a script
-        -- It's also been proven that writing scripts lazily is generally not a good thing. --Script modified to support custom size
         local x, y = panel:LocalToScreen( 0, 0 )
         if not w then
             w, h = panel:GetSize()

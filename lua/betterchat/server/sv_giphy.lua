@@ -3,8 +3,7 @@ chatBox.giphy.counts = chatBox.giphy.counts or {}
 chatBox.giphy.lastResetHour = chatBox.giphy.lastResetHour or -1
 
 -- Single think hook call so http is ready
-hook.Add( "Think", "BC_giphyInit", function()
-    hook.Remove( "Think", "BC_giphyInit" )
+hook.Once( "Think", function()
     chatBox.getGiphyURL( "thing", function( success, data )
         if success then
             print( "[BetterChat] Giphy key test successful, giphy command enabled." )
@@ -15,7 +14,7 @@ hook.Add( "Think", "BC_giphyInit", function()
     end )
 end )
 
-function escape( s )
+local function escape( s )
     s = string.gsub( s, "([&=+%c])", function ( c )
         return string.format( "%%%02X", string.byte( c ) )
     end )
@@ -23,7 +22,7 @@ function escape( s )
     return s
 end
 
-function encode( t )
+local function encode( t )
     local s = ""
     for k, v in pairs( t ) do
         s = s .. "&" .. escape( k ) .. "=" .. escape( v )
@@ -57,8 +56,7 @@ net.Receive( "BC_sendGif", function( len, ply )
     if not chatBox.giphy.enabled then return end
 
     if not chatBox.getAllowed( ply, "bc_giphy" ) then
-        ULib.clientRPC( ply, "chatBox.messageChannel", channel, chatBox.colors.red, "You don't have permission to use !giphy" )
-        return
+        return ULib.clientRPC( ply, "chatBox.messageChannel", channel, chatBox.colors.red, "You don't have permission to use !giphy" )
     end
 
     local curDateTime = os.date( "*t", os.time() )
@@ -72,9 +70,9 @@ net.Receive( "BC_sendGif", function( len, ply )
     local maxCount = chatBox.getServerSetting( "giphyHourlyLimit" )
     chatBox.giphy.counts[ply:SteamID()] = curCount + 1
     if curCount >= maxCount then
-        ULib.clientRPC( ply, "chatBox.messageChannel", channel, chatBox.colors.red, "You have surpassed your hourly giphy limit of " .. maxCount .. 
+        return ULib.clientRPC( ply, "chatBox.messageChannel", channel, chatBox.colors.red,
+            "You have surpassed your hourly giphy limit of " .. maxCount ..
             ". Your quota will reset in approximately " .. ( 60 - curDateTime.min ) .. " minute(s)." )
-        return
     end
 
     local str = net.ReadString()
@@ -122,7 +120,6 @@ function chatBox.getClients( chanName, sender )
                 return chatBox.getGroupMembers( group )
             end
         end
-        return {}
     end
     return {}
 end

@@ -73,18 +73,10 @@ if SERVER then
         "BC_forwardMessage", "BC_sayOverload", "BC_sendGif", "BC_playerDisconnected", -- Misc
     }
 
-    for k, v in pairs( networkStrings ) do
-        util.AddNetworkString( v )
-    end
+    table.mapSelf( networkStrings, util.AddNetworkString )
 
     function chatBox.getEnabledPlayers()
-        local out = {}
-        for k, v in pairs( player.GetAll() ) do
-            if chatBox.chatBoxEnabled[v] then
-                table.insert( out, v )
-            end
-        end
-        return out
+        return table.filter( table.GetKeys( chatBox.chatBoxEnabled ), IsValid )
     end
 
     chatBox.chatBoxEnabled = {}
@@ -129,14 +121,11 @@ if SERVER then
     net.Receive( "BC_plyReady", function( len, ply ) --can now send data to ply
         chatBox.chatBoxEnabled[ply] = true
         hook.Run( "BC_plyReady", ply )
-
     end )
 
     net.Receive( "BC_disable", function( len, ply )
         chatBox.chatBoxEnabled[ply] = false
     end )
-
-
 end
 
 include( "betterchat/shared/sh_util.lua" )
@@ -176,21 +165,19 @@ concommand.Add( "bc_reload", function()
         include( "betterChat/sh_base.lua" )
         chatBox.enableChatBox()
     end )
-end, true, "Rebuilds the new chat box" )
+end, true, "Rebuilds BetterChat" )
 
-concommand.Add( "bc_savedata", chatBox.saveData, true, "Saves all chat data to file" )
+concommand.Add( "bc_savedata", chatBox.saveData, true, "Saves all BetterChat data to file" )
 
 concommand.Add( "bc_disable", function()
     if chatBox.enabled then
-        chatBox.closeChatBox()
         chatBox.disableChatBox()
     end
     chat.AddText( chatBox.colors.yellow, "BetterChat ", chatBox.colors.ulx, "has been disabled. Go to Q->Options->BetterChat (or run bc_enable) to enable it." )
-end )
+end, true, "Disables BetterChat" )
 
 concommand.Add( "bc_restart", function()
     if chatBox.enabled then
-        chatBox.closeChatBox()
         chatBox.disableChatBox()
     end
     chatBox.enableChatBox()
@@ -199,14 +186,13 @@ end )
 concommand.Add( "bc_removesavedata", function()
     chatBox.deleteSaveData()
     if chatBox.enabled then
-        chatBox.closeChatBox()
         chatBox.disableChatBox( true )
         chatBox.enableChatBox()
     end
     chat.AddText( chatBox.colors.yellow, "BetterChat ", chatBox.colors.ulx, "data has been deleted." )
 end )
 
-
+-- Delete if already defined, for development
 if chatBox and chatBox.graphics and chatBox.graphics.frame then 
     chatBox.graphics.frame:Remove()    
 end
@@ -223,8 +209,7 @@ hook.Add( "InitPostEntity", "BC_loaded", function()
     chatBox.loadEnabled()
     if chatBox.enabled then
         chatBox.buildBox()
-        net.Start( "BC_playerReady" )
-        net.SendToServer()
+        net.SendEmpty( "BC_playerReady" )
         chatBox.loadData()
     else
         chat.AddText( chatBox.colors.yellow, "BetterChat ", chatBox.colors.ulx, "is currently disabled. Go to Q->Options->BetterChat (or run bc_enable) to enable it." )
@@ -236,8 +221,7 @@ chatBox.validatePlayerSettings()
 function chatBox.enableChatBox()
     chatBox.enabled = true
     chatBox.buildBox()
-    net.Start( "BC_playerReady" )
-    net.SendToServer()
+    net.SendEmpty( "BC_playerReady" )
 
     chatBox.loadData()
     chatBox.enabled = true
@@ -245,6 +229,7 @@ function chatBox.enableChatBox()
 end
 
 function chatBox.disableChatBox( noSave )
+    chatBox.closeChatBox()
     chatBox.enabled = false
     if not noSave then
         chatBox.saveData()
@@ -256,8 +241,7 @@ function chatBox.disableChatBox( noSave )
     chatBox.autoComplete = nil
     chatBox.channels = nil
 
-    net.Start( "BC_disable" )
-    net.SendToServer()
+    net.SendEmpty( "BC_disable" )
 end
 
 function chatBox.resizeBox( w, h, final )
@@ -323,15 +307,13 @@ function chatBox.buildBox()
 
     g.visCheck = timer.Create( "BC_visCheck", 1 / 60, 0, function()
         if not g.frame or not g.frame:IsValid() then
-            timer.Destroy( "BC_visCheck" )
+            timer.Remove( "BC_visCheck" )
             return
         end
         if gui.IsGameUIVisible() then
             g.frame:Hide()
-        else
-            if not g.frame:IsVisible() then
-                g.frame:Show()
-            end
+        elseif not g.frame:IsVisible() then
+            g.frame:Show()
         end
     end )
 
@@ -402,8 +384,8 @@ function chatBox.buildBox()
     end
     g.chatFrame.doPaint = true
     g.chatFrame.Think = function( self )
-        if not g.textEntry:HasFocus() and ( ( not vgui.GetKeyboardFocus() ) or 
-        ( vgui.GetKeyboardFocus():GetName() ~= "BC_settingsEntry" and vgui.GetKeyboardFocus():GetName() ~= "BC_settingsKeyEntry" ) ) then
+        local focusName = vgui.GetKeyboardFocus() and vgui.GetKeyboardFocus():GetName() or ""
+        if focusName ~= "BC_settingsEntry" and focusName ~= "BC_settingsKeyEntry" then
             g.textEntry:RequestFocus()
         end
         if chatBox.dragging then
@@ -412,7 +394,6 @@ function chatBox.buildBox()
             if not input.IsMouseDown( MOUSE_LEFT ) then 
                 chatBox.dragging = false
             end
-            self.cursor = "hand"
         elseif chatBox.resizing then
             local x, y = gui.MousePos()
             local px, py = g.frame:GetPos()
@@ -444,9 +425,6 @@ function chatBox.buildBox()
             if final then
                 chatBox.resizing = false
             end
-            self.cursor = "sizeall"
-        else
-
         end
 
         if chatBox.sidePanels then
@@ -565,43 +543,41 @@ function chatBox.buildBox()
 end
 
 hook.Add( "VGUIMousePressed", "BC_mousePressed", function( self, keyCode )
-    if not chatBox.enabled then return end
-    if chatBox.isOpen then
-        local g = chatBox.graphics
-        local x, y = inDragCorner( g.frame )
-        if x then
-            if keyCode == MOUSE_LEFT then
-                chatBox.dragging = true
-                chatBox.draggingOffset = { x = x, y = y }
-            elseif keyCode == MOUSE_RIGHT then
-                local t = SysTime()
-                local diff = t - ( chatBox.lastRClick or 0 )
-                if diff < 0.5 then
-                    chatBox.resizeBox( g.originalSize.x, g.originalSize.y, true )
-                    g.frame:SetPos( g.originalFramePos.x, g.originalFramePos.y )
-                else
-                    g.frame:SetPos( g.originalFramePos.x, g.originalFramePos.y )
-                end
-                chatBox.lastRClick = t
+    if not chatBox.enabled or not chatBox.isOpen then return end
+    local g = chatBox.graphics
+    local x, y = inDragCorner( g.frame )
+    if x then
+        if keyCode == MOUSE_LEFT then
+            chatBox.dragging = true
+            chatBox.draggingOffset = { x = x, y = y }
+        elseif keyCode == MOUSE_RIGHT then
+            local t = SysTime()
+            local diff = t - ( chatBox.lastRClick or 0 )
+            if diff < 0.5 then
+                chatBox.resizeBox( g.originalSize.x, g.originalSize.y, true )
+                g.frame:SetPos( g.originalFramePos.x, g.originalFramePos.y )
+            else
+                g.frame:SetPos( g.originalFramePos.x, g.originalFramePos.y )
             end
-            return
+            chatBox.lastRClick = t
         end
+        return
+    end
 
-        local edge = inResizeEdge( g.frame )
-        if edge then
-            chatBox.resizing = true
-            chatBox.resizingData = { 
-                originalRight = getFrom( 1, g.frame:GetPos() ) + g.size.x, 
-                originalBottom = getFrom( 2, g.frame:GetPos() ) + g.size.y, 
-                type = edge
-            }
-        end
+    local edge = inResizeEdge( g.frame )
+    if edge then
+        chatBox.resizing = true
+        chatBox.resizingData = { 
+            originalRight = getFrom( 1, g.frame:GetPos() ) + g.size.x, 
+            originalBottom = getFrom( 2, g.frame:GetPos() ) + g.size.y, 
+            type = edge
+        }
     end
 end )
 
 hook.Add( "PlayerButtonDown", "BC_buttonDown", function( ply, keyCode )
-    if not chatBox.enabled then return end
-    if ply ~= LocalPlayer() then return end
+    if not chatBox.enabled or ply ~= LocalPlayer() then return end
+
     for k, v in pairs( chatBox.channels ) do
         if v.openKey and v.openKey == keyCode then
             chatBox.openChatBox( v.name )
@@ -609,8 +585,6 @@ hook.Add( "PlayerButtonDown", "BC_buttonDown", function( ply, keyCode )
         end
     end
 end )
-
-
 
 function chatBox.removeGraphics()
     local g = chatBox.graphics
@@ -624,9 +598,7 @@ function inDragCorner( elem )
     local x, y = elem:LocalCursorPos()
     local w, h = g.size.x, g.size.y
 
-    if x < 0 or y < 0 or x > w or y > h then
-        return
-    end
+    if x < 0 or y < 0 or x > w or y > h then return end
 
     if x > w - 30 and y < 30 then
         return x, y
@@ -638,9 +610,8 @@ function inResizeEdge( elem )
     local x, y = elem:LocalCursorPos()
     local w, h = g.size.x, g.size.y
 
-    if x < 0 or y < 0 or x > w or y > h then
-        return
-    end
+    if x < 0 or y < 0 or x > w or y > h then return end
+
     local edgeSize = 6
     if x < edgeSize then
         return 0
@@ -658,10 +629,8 @@ function chatBox.openChatBox( selectedTab )
     chatBox.overloadedFuncs.oldClose()
     selectedTab = selectedTab or "All"
 
-    if selectedTab == "All" and chatBox.getSetting( "rememberChannel" ) then
-        if chatBox.lastChannel then
-            selectedTab = chatBox.lastChannel
-        end
+    if chatBox.getSetting( "rememberChannel" ) and selectedTab == "All" and chatBox.lastChannel then
+        selectedTab = chatBox.lastChannel
     end
 
     local chan = chatBox.getAndOpenChannel( selectedTab )
@@ -734,8 +703,7 @@ hook.Add( "Think", "BC_hidePauseMenu", function()
 end )
 
 hook.Add( "PlayerBindPress", "BC_overrideChatBind", function( ply, bind, pressed )
-    if not chatBox.enabled then return end
-    if not pressed then return end
+    if not chatBox.enabled or not pressed then return end
 
     local chan = "All"
 
@@ -751,7 +719,7 @@ hook.Add( "PlayerBindPress", "BC_overrideChatBind", function( ply, bind, pressed
                 else
                     return true 
                 end
-            else -- Dont open normal team chat, do nothing to allow for bind
+            else
                 chan = "Team"
             end
         end

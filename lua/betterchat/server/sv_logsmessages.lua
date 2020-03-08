@@ -25,12 +25,10 @@ function chatBox.sendLogConsole( channel, ... )
 end
 
 function chatBox.sendLogPlayers( channelType, channel, ... )
-    local plys = {}
-    for k, v in pairs( player.GetAll() ) do
-        if chatBox.getAllowed( v, "bc_chatlogs" ) then
-            table.insert( plys, v )
-        end
-    end
+    local plys = table.filter( player.GetAll(), function( ply )
+        return chatBox.getAllowed( ply, "bc_chatlogs" )
+    end )
+
     net.Start( "BC_LM" )
     net.WriteUInt( channelType, 4 )
     net.WriteString( channel )

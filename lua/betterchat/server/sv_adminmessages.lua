@@ -24,9 +24,7 @@ function chatBox.sendAdmin( ply, text )
         table.insert( plys, ply )
     end
 
-    if #plys > 0 then
-        for k, v in pairs( plys ) do
-            chatBox.sendNormalClient( v, ply, " to admins: ", Color( 0, 255, 0 ), text )
-        end
+    for k, v in pairs( plys ) do
+        chatBox.sendNormalClient( v, ply, " to admins: ", Color( 0, 255, 0 ), text )
     end
 end
