@@ -14,7 +14,7 @@ chatBox.group.defaultChannel = {
         net.SendToServer()
     end, 
     allFunc = function( self, tab, idx )
-        table.insert( tab, idx, chatBox.colors.group )
+        table.insert( tab, idx, chatBox.defines.theme.group )
         table.insert( tab, idx + 1, "(" .. self.displayName .. ") " )
     end, 
     tickMode = 0, 
@@ -26,7 +26,7 @@ chatBox.group.defaultChannel = {
         membersBtn:SetPos( g.chatFrame:GetWide() - 59, 34 )
         membersBtn:SetSize( 24, 24 )
         membersBtn:SetText( "" )
-        membersBtn:SetColor( Color( 255, 255, 255, 150 ) )
+        membersBtn:SetColor( chatBox.defines.theme.groupMembers )
         membersBtn.name = data.name
         membersBtn.DoClick = function( self )
             local s = chatBox.sidePanels["Group Members"]
@@ -38,7 +38,7 @@ chatBox.group.defaultChannel = {
         end
         membersBtn.Paint = function( self, w, h )
             local animState = chatBox.sidePanels["Group Members"].animState
-            self:SetColor( lerpCol( Color( 255, 255, 255, 150 ), Color( 255, 255, 255, 230 ), animState ) )
+            self:SetColor( lerpCol( chatBox.defines.theme.groupMembers, chatBox.defines.theme.groupMembersFocused, animState ) )
             surface.SetMaterial( chatBox.materials.getMaterial( "icons/groupbw.png" ) )
             surface.SetDrawColor( self:GetColor() )
             surface.DrawTexturedRect( 0, 0, w, h )
@@ -46,7 +46,7 @@ chatBox.group.defaultChannel = {
     end, 
     runCommandSeparately = true, 
     hideChatText = true, 
-    textEntryColor = Color( 100, 200, 200 ), 
+    textEntryColor = chatBox.defines.theme.groupTextEntry, 
 }
 
 function chatBox.allowedGroups()
@@ -263,7 +263,8 @@ function chatBox.deleteGroup( group )
         end
         table.RemoveByValue( chatBox.channels, chan )
     end
-    chatBox.messageChannelDirect( "All", chatBox.colors.printYellow, "You have been removed from group \"", chatBox.colors.group, group.name, chatBox.colors.printYellow, "\"." )
+    chatBox.messageChannelDirect( "All", chatBox.defines.colors.printYellow, "You have been removed from group \"", 
+        chatBox.defines.theme.group, group.name, chatBox.defines.colors.printYellow, "\"." )
     chatBox.saveData()        
 end
 

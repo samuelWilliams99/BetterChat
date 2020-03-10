@@ -76,7 +76,7 @@ if SERVER then
     table.mapSelf( networkStrings, util.AddNetworkString )
 
     function chatBox.getEnabledPlayers()
-        return table.filter( table.GetKeys( chatBox.chatBoxEnabled ), IsValid )
+        return table.filterSeq( table.GetKeys( chatBox.chatBoxEnabled ), IsValid )
     end
 
     chatBox.chatBoxEnabled = {}
@@ -103,7 +103,7 @@ if SERVER then
         -- Just a cheeky lil welcome message for me
         if ply:SteamID() == "STEAM_0:1:46658202" then
             timer.Simple( 2, function()
-                ULib.clientRPC( plys, "chatBox.messageChannel", "All", chatBox.colors.printBlue, "Yay! ", ply, "'s here!" )
+                ULib.clientRPC( plys, "chatBox.messageChannel", "All", chatBox.defines.colors.printBlue, "Yay! ", ply, "'s here!" )
             end )
         end
 
@@ -173,7 +173,8 @@ concommand.Add( "bc_disable", function()
     if chatBox.enabled then
         chatBox.disableChatBox()
     end
-    chat.AddText( chatBox.colors.yellow, "BetterChat ", chatBox.colors.ulx, "has been disabled. Go to Q->Options->BetterChat (or run bc_enable) to enable it." )
+    chat.AddText( chatBox.defines.theme.betterChat, "BetterChat ", 
+        chatBox.defines.colors.printBlue, "has been disabled. Go to Q->Options->BetterChat (or run bc_enable) to enable it." )
 end, true, "Disables BetterChat" )
 
 concommand.Add( "bc_restart", function()
@@ -189,7 +190,7 @@ concommand.Add( "bc_removesavedata", function()
         chatBox.disableChatBox( true )
         chatBox.enableChatBox()
     end
-    chat.AddText( chatBox.colors.yellow, "BetterChat ", chatBox.colors.ulx, "data has been deleted." )
+    chat.AddText( chatBox.defines.theme.betterChat, "BetterChat ", chatBox.defines.colors.printBlue, "data has been deleted." )
 end )
 
 -- Delete if already defined, for development
@@ -212,7 +213,7 @@ hook.Add( "InitPostEntity", "BC_loaded", function()
         net.SendEmpty( "BC_playerReady" )
         chatBox.loadData()
     else
-        chat.AddText( chatBox.colors.yellow, "BetterChat ", chatBox.colors.ulx, "is currently disabled. Go to Q->Options->BetterChat (or run bc_enable) to enable it." )
+        chat.AddText( chatBox.defines.theme.betterChat, "BetterChat ", chatBox.defines.colors.printBlue, "is currently disabled. Go to Q->Options->BetterChat (or run bc_enable) to enable it." )
     end
 end )
 
@@ -367,19 +368,19 @@ function chatBox.buildBox()
         if not self.doPaint then return end
         chatBox.blur( self, 10, 20, 255 )
         --main box
-        draw.RoundedBox( 0, 0, 0, w, h - 33, Color( 30, 30, 30, 200 ) )
+        draw.RoundedBox( 0, 0, 0, w, h - 33, chatBox.defines.theme.background )
         --left text bg
-        draw.RoundedBox( 0, 0, h - 31, w - 32, 31, Color( 30, 30, 30, 200 ) )
+        draw.RoundedBox( 0, 0, h - 31, w - 32, 31, chatBox.defines.theme.background )
         --left text fg
         local c = chatBox.getActiveChannel()
-        local col = Color( 140, 140, 140, 100 )
+        local col = chatBox.defines.theme.foreground
         if c.textEntryColor then
             col = c.textEntryColor
             col.a = 100
         end
         draw.RoundedBox( 0, 5, h - 26, w - 42, 21, col )
         --right bg
-        draw.RoundedBox( 0, w - 30, h - 31, 30, 31, Color( 30, 30, 30, 200 ) )
+        draw.RoundedBox( 0, w - 30, h - 31, 30, 31, chatBox.defines.theme.background )
         
     end
     g.chatFrame.doPaint = true
@@ -446,9 +447,9 @@ function chatBox.buildBox()
     g.textEntry:SetPos( 10, g.size.y - 10 - 16 )
     g.textEntry:SetSize( g.size.x - 52, 20 )
     g.textEntry:SetFont( g.font )
-    g.textEntry:SetTextColor( Color( 255, 255, 255 ) )
-    g.textEntry:SetCursorColor( Color( 255, 255, 255 ) )
-    g.textEntry:SetHighlightColor( Color( 255, 156, 0 ) )
+    g.textEntry:SetTextColor( chatBox.defines.theme.inputText )
+    g.textEntry:SetCursorColor( chatBox.defines.theme.inputText )
+    g.textEntry:SetHighlightColor( chatBox.defines.theme.textHighlight )
     g.textEntry:SetHistoryEnabled( true )
 
     function g.textEntry:PerformLayout()
@@ -458,7 +459,7 @@ function chatBox.buildBox()
 
     g.textEntry.Paint = function( panel, w, h )
         surface.SetFont( panel:GetFont() )
-        surface.SetTextColor( 130, 130, 130 )
+        surface.SetTextColor( chatBox.defines.theme.inputSuggestionText )
         surface.SetTextPos( 3, -1 )
         surface.DrawText( g.textEntry.bgText )
 
@@ -534,7 +535,7 @@ function chatBox.buildBox()
 
     -- Wait for other prints
     timer.Simple( 0, function()
-        chatBox.messageChannel( nil, chatBox.colors.yellow, "BetterChat", chatBox.colors.printBlue, " initialisation complete." )
+        chatBox.messageChannel( nil, chatBox.defines.theme.betterChat, "BetterChat", chatBox.defines.colors.printBlue, " initialisation complete." )
     end )
 
     chatBox.initializing = false

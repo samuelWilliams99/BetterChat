@@ -1,4 +1,5 @@
 chatBox.spriteSheets = {}
+chatBox.giphyCommand = "!giphy"
 
 local function cleanPanel( panel, w, h, padding )
     panel:SetSize( w - padding * 2 - 2, h - padding * 2 - 20 )
@@ -7,7 +8,7 @@ local function cleanPanel( panel, w, h, padding )
     bar.Paint = nil
     bar.btnUp.Paint = nil
     bar.btnDown.Paint = nil
-    bar.btnGrip.Paint = function( self, w, h )
+    function bar.btnGrip:Paint( w, h )
         surface.SetDrawColor( Color( 65, 105, 225 ) )
         surface.DrawRect( w - 2, 0, 2, h )
     end
@@ -17,7 +18,7 @@ end
 local function cleanTab( data, first )
     tab = data.Tab
     tab.first = first
-    tab.Paint = function( self, w, h )
+    function tab:Paint( w, h )
         local a = self:IsActive()
         local bgCol = a and Color( 230, 230, 230 ) or Color( 210, 210, 210 )
         surface.SetDrawColor( bgCol )
@@ -38,12 +39,14 @@ local function cleanTab( data, first )
     end
     tab.selectProg = first and 100 or 0
     tab:SetContentAlignment( 5 )
-    tab.GetTabHeight = function() return 20 end
+    -- Something else calls the setter, so the only way to override permanently is with this
+    function tab:GetTabHeight()
+        return 20
+    end
 
     tab:SetTextColor( Color( 0, 0, 0 ) )
 
-    tab.ApplySchemeSettings = function( self )
-
+    function tab:ApplySchemeSettings()
         local w, h = self:GetContentSize()
         h = self:GetTabHeight()
 
@@ -52,7 +55,6 @@ local function cleanTab( data, first )
         self:SetSize( 72, h )
 
         DLabel.ApplySchemeSettings( self )
-
     end
     return data
 end
@@ -91,7 +93,7 @@ hook.Add( "BC_initPanels", "BC_initImages", function()
     imageBtn:SetMaterial( chatBox.materials.getMaterial( "icons/emojibutton.png" ) )
     imageBtn:SetPos( g.size.x - 25, g.size.y - 25 )
     imageBtn:SetIsMenu( true )
-    imageBtn.DoClick = function( self )
+    function imageBtn:DoClick()
         chatBox.toggleEmojiMenu()
     end
     local oldLayout = imageBtn.PerformLayout
@@ -109,8 +111,10 @@ hook.Add( "BC_initPanels", "BC_initImages", function()
     emojiMenu:MoveToFront()
     emojiMenu:Hide()
     emojiMenu:SetIsMenu( true )
-    emojiMenu.GetDeleteSelf = function() return false end
-    emojiMenu.Paint = function( self, w, h ) 
+    function emojiMenu:GetDeleteSelf()
+        return false
+    end
+    function emojiMenu:Paint( w, h ) 
         surface.SetDrawColor( 190, 190, 190, 255 )
         surface.DrawRect( 0, 0, w, h )
     end
@@ -150,7 +154,6 @@ hook.Add( "BC_showChat", "BC_showEmojiButton", function() chatBox.graphics.emoji
 hook.Add( "BC_hideChat", "BC_hideEmojiButton", function() 
     chatBox.graphics.emojiButton:Hide()
     chatBox.graphics.emojiMenu:Hide()
-
 end )
 
 hook.Add( "BC_keyCodeTyped", "BC_emojiShortCutHook", function( code, ctrl, shift )
@@ -236,8 +239,7 @@ function chatBox.addEmotesToPanel( panel, data, usage )
     for k = 1, #data do
         local str = data[k]
         local sprite = chatBox.spriteLookup.lookup[":" .. str .. ":"]
-        --print(str)
-        --PrintTable(table.GetKeys(chatBox.spriteLookup.lookup))
+
         local g = chatBox.createImage( sprite )
         g:SetParent( panel )
 
@@ -259,7 +261,7 @@ function chatBox.addEmotesToPanel( panel, data, usage )
         table.insert( panel.emojis, g.str )
 
         g:SetCursor( "hand" )
-        g.OnMousePressed = function( self, t )
+        function g:OnMousePressed( t )
             if t == MOUSE_LEFT then
                 local entry = chatBox.graphics.textEntry
                 local txt = entry:GetText()
@@ -276,9 +278,6 @@ function chatBox.addEmotesToPanel( panel, data, usage )
                 entry:SetCaretPos( newCPos )
             end
         end
-
-
-
     end
 end
 
@@ -295,6 +294,12 @@ end
 function chatBox.addImage( richText, obj )
     local im = obj.sheet.sprites[obj.idx]
     richText:AddImage( obj.sheet.path, obj.text, 20, 20, im.posX * obj.sheet.spriteWidth, im.posY * obj.sheet.spriteHeight, obj.sheet.spriteWidth, obj.sheet.spriteHeight )        
+end
+
+function chatBox.addGif( richText, obj )
+    richText:InsertClickableTextStart( "Link-" .. url )
+    richText:AddGif( obj.url, obj.text .. "\n", 100, 100 )
+    richText:InsertClickableTextEnd()
 end
 
 function chatBox.toggleEmojiMenu()
@@ -320,20 +325,20 @@ function chatBox.generateSpriteLookups()
 
     chatBox.autoComplete = chatBox.autoComplete or {}
     chatBox.autoComplete.emoteUsage = chatBox.autoComplete.emoteUsage or {}
-    local u = chatBox.autoComplete.emoteUsage
+    local usage = chatBox.autoComplete.emoteUsage
 
     for k, sheet in pairs( chatBox.spriteSheets ) do
         for i, sprite in pairs( sheet.sprites ) do
-            local strs = table.Copy( sprite.chatStrings )
-            table.insert( strs, ":" .. sprite.name .. ":" )
+            local names = table.Copy( sprite.chatStrings )
+            table.insert( names, ":" .. sprite.name .. ":" )
 
-            for l, str in pairs( strs ) do
-                table.insert( nameList, str )
-                if str[1] ~= ":" or str[#str] ~= ":" then
-                    table.insert( emotes, str )
+            for l, name in pairs( names ) do
+                table.insert( nameList, name )
+                if name[1] ~= ":" or name[#name] ~= ":" then
+                    table.insert( emotes, name )
                 end
-                u[str] = u[str] or 0
-                lookup[str] = { sheet = sheet, idx = i }
+                usage[name] = usage[name] or 0
+                lookup[name] = { sheet = sheet, idx = i }
             end
         end
     end
@@ -342,47 +347,31 @@ function chatBox.generateSpriteLookups()
         return #a > #b
     end )
 
-    chatBox.spriteLookup = { lookup = lookup, list = nameList, emotes = emotes }
-
+    chatBox.spriteLookup = { lookup = lookup, list = nameList, emotes = emotes } 
 end
 
 function chatBox.enableGiphy()
     chatBox.giphyEnabled = true
     if chatBox.autoComplete and chatBox.autoComplete.gotCommands then
-        chatBox.autoComplete.cmds["!giphy"] = chatBox.autoComplete.extraCmds["!giphy"] or 0
+        chatBox.autoComplete.cmds[chatBox.giphyCommand] = chatBox.autoComplete.extraCmds[chatBox.giphyCommand] or 0
     end
-end
-
-local function sendGif( channel, url, text )
-    -- Doesnt make it clickable :(
-    -- Fix this another time
-    local rt = chatBox.channelPanels[channel.name].text
-    rt:InsertClickableTextStart( "Link-" .. url )
-    rt:AddGif( url, text .. "\n", 100, 100 )
-    rt:InsertClickableTextEnd()
 end
 
 net.Receive( "BC_sendGif", function( len, ply )
     if not chatBox.enabled then return end
-
     if not chatBox.getSetting( "showGifs" ) then return end
 
-    local url = net.ReadString()
     local chanName = net.ReadString()
+    local url = net.ReadString()
     local text = net.ReadString()
+
     local channel = chatBox.getChannel( chanName )
-    if not channel or not chatBox.isChannelOpen( channel ) then return end
+    if not channel then return end
 
-    if not channel.replicateAll then
-        sendGif( channel, url, text )
-    end
-
-    if channel.relayAll then
-        sendGif( chatBox.getChannel( "All" ), url, text )
-        for k, v in pairs( chatBox.channels ) do
-            if v.replicateAll and chatBox.isChannelOpen( v ) then
-                sendGif( v, url, text )
-            end
-        end
-    end
+    chatBox.messageChannel( channel, {
+        formatter = true,
+        type = "gif",
+        text = text,
+        url = url
+    } )
 end )

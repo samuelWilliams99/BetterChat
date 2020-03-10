@@ -57,6 +57,20 @@ function chatHelper.unCurry( f )
     return function( a, ... ) return f( ... ) end
 end
 
+function chatHelper.spaceToCamel( str )
+    str = string.lower( str )
+    str = string.Trim( str )
+    return string.gsub( str, " .", function( s )
+        return string.upper( s[2] )
+    end )
+end
+
+function chatHelper.camelToSpace( str )
+    return string.gsub( str, "%u", function( l )
+        return " " .. string.lower( s[2] )
+    end )
+end
+
 function table.mapSelf( tab, f )
     for k, v in pairs( tab ) do
         tab[k] = f( v )
@@ -85,13 +99,13 @@ function table.product( tab )
     return table.reduce( tab, chatHelper.mul, 1 )
 end
 
-function table.all( tab ) 
+function table.all( tab )
     return table.reduce( tab, function( a, b )
         return a and b
     end, true )
 end
 
-function table.any( tab ) 
+function table.any( tab )
     return table.reduce( tab, function( a, b )
         return a or b
     end, false )
@@ -105,13 +119,27 @@ function table.Repeat( x, n )
     return out
 end
 
-function table.filter( tab, f )
+function table.filterSeq( tab, f )
     local out = {}
-    for k, v in pairs( tab ) do
+    for k, v in ipairs( tab ) do
         if f( v ) then
             table.insert( tab, v )
         end
     end
+    return out
+end
+
+function table.filterSelf( tab, f )
+    for k, v in pairs( tab ) do
+        if not f( v ) then
+            tab[k] = nil
+        end
+    end
+end
+
+function table.filter( tab, f )
+    local out = table.Copy( tab )
+    table.filterSelf( out, f )
     return out
 end
 

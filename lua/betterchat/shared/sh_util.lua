@@ -285,7 +285,7 @@ if CLIENT then
                     table.remove( data, k )
                     table.insert( data, k, lastCol )
                     table.insert( data, k, "Console" )
-                    table.insert( data, k, chatBox.colors.printBlue )
+                    table.insert( data, k, chatBox.defines.colors.printBlue )
                     k = k + 2
                 else
                     lastCol = v

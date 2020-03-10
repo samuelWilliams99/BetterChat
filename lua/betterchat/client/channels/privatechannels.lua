@@ -1,3 +1,11 @@
+local you = {
+    formatter = true,
+    type = "clickable",
+    signal = "Player-" .. LocalPlayer():SteamID(),
+    text = "You",
+    color = chatBox.defines.colors.ulxYou
+}
+
 chatBox.defaultPrivateChannel = { 
     init = false, 
     displayName = "[Offline]", 
@@ -14,8 +22,8 @@ chatBox.defaultPrivateChannel = {
             net.WriteString( txt )
             net.SendToServer()
         else -- if offline, print to chat, do nothing
-            chatBox.messageChannelDirect( "All", Color( 255, 0, 0 ), "This player is not online. They will not recieve this message. Right click the channel to close it." )
-            chatBox.messageChannelDirect( self, Color( 255, 0, 0 ), "This player is not online. They will not recieve this message. Right click the channel to close it." )
+            chatBox.messageChannelDirect( "All", chatBox.defines.colors.red, "This player is not online. They will not recieve this message. Right click the channel to close it." )
+            chatBox.messageChannelDirect( self, chatBox.defines.colors.red, "This player is not online. They will not recieve this message. Right click the channel to close it." )
         end
     end, 
     allFunc = function( self, tab, idx, isConsole )
@@ -24,12 +32,12 @@ chatBox.defaultPrivateChannel = {
         local arrow = isConsole and " to " or " → "
         if sender == self.ply then --Receive
             table.insert( tab, idx, self.ply )
-            table.insert( tab, idx + 1, chatBox.colors.printBlue )
+            table.insert( tab, idx + 1, chatBox.defines.colors.printBlue )
             table.insert( tab, idx + 2, arrow )
-            table.insert( tab, idx + 3, { formatter = true, type = "clickable", signal = "Player-" .. LocalPlayer():SteamID(), text = "You", color = chatBox.colors.purple } )
+            table.insert( tab, idx + 3, you )
         else --send
-            table.insert( tab, idx, { formatter = true, type = "clickable", signal = "Player-" .. LocalPlayer():SteamID(), text = "You", color = chatBox.colors.purple } )
-            table.insert( tab, idx + 1, chatBox.colors.printBlue )
+            table.insert( tab, idx, you )
+            table.insert( tab, idx + 1, chatBox.defines.colors.printBlue )
             table.insert( tab, idx + 2, arrow )
             table.insert( tab, idx + 3, self.ply )
         end
@@ -75,7 +83,7 @@ function chatBox.printOwnPrivate( name, txt )
             doSound = false
         }, 
         LocalPlayer(), 
-        chatBox.colors.white, 
+        chatBox.defines.colors.white, 
         ": "
     }, chatBox.formatText( txt, nil, LocalPlayer() ) )
     chatBox.messageChannel( { name, "MsgC" }, unpack( tab ) )
@@ -110,10 +118,10 @@ hook.Add( "BC_preInitPanels", "BC_privateAddHooks", function()
         if not ply:IsValid() then
             local tab = table.Add( { 
                 chatBox.consolePlayer, 
-                chatBox.colors.printBlue, 
-                " to ", 
-                { formatter = true, type = "clickable", signal = "Player-" .. LocalPlayer():SteamID(), text = "You", color = chatBox.colors.purple }, 
-                chatBox.colors.white, 
+                chatBox.defines.theme.server, 
+                " to ",
+                you,
+                chatBox.defines.colors.white,
                 ": "
             }, chatBox.formatText( text, nil, ply ) )
             chatBox.messageChannel( { "All", "MsgC" }, unpack( tab ) )
@@ -137,7 +145,7 @@ hook.Add( "BC_preInitPanels", "BC_privateAddHooks", function()
                     doSound = ( ply == sender ) and ( ply ~= LocalPlayer() )
                 }, 
                 sender:IsValid() and sender or chatBox.consolePlayer, 
-                chatBox.colors.white, 
+                chatBox.defines.colors.white, 
                 ": "
             }, chatBox.formatText( text, nil, sender ) )
             chatBox.messageChannel( { chan.name, "MsgC" }, unpack( tab ) )
@@ -175,6 +183,6 @@ end
 function chatBox.addPrivateChannel( channel )
     if not channel then return end
     chatBox.addChannel( channel )
-    chatBox.messageChannelDirect( "All", { isController = true, doSound = false }, chatBox.colors.printBlue, "Private channel with ", channel.ply, " has been opened." )
-    chatBox.messageChannelDirect( channel, { isController = true, doSound = false }, chatBox.colors.printBlue, "This is a private channel with ", channel.ply, ". Any messages posted here will not affect Expression2 or Starfall chips." )
+    chatBox.messageChannelDirect( "All", { isController = true, doSound = false }, chatBox.defines.colors.printBlue, "Private channel with ", channel.ply, " has been opened." )
+    chatBox.messageChannelDirect( channel, { isController = true, doSound = false }, chatBox.defines.colors.printBlue, "This is a private channel with ", channel.ply, ". Any messages posted here will not affect Expression2 or Starfall chips." )
 end

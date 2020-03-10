@@ -1,59 +1,12 @@
 chatBox.formatting = {}
 local f = chatBox.formatting
 
-f.linkColor = Color( 180, 200, 255 )
-f.colorNames = {
-    ["maroon"] = Color( 128, 0, 0 ), 
-    ["brown"] = Color( 181, 101, 29 ), 
-    ["crimson"] = Color( 220, 20, 60 ), 
-    ["red"] = Color( 255, 0, 0 ), 
-    ["tomato"] = Color( 255, 89, 61 ), 
-    ["coral"] = Color( 255, 127, 80 ), 
-    ["salmon"] = Color( 250, 128, 114 ), 
-    ["orange"] = Color( 255, 165, 0 ), 
-    ["gold"] = Color( 255, 215, 0 ), 
-    ["yellow"] = Color( 255, 255, 0 ), 
-    ["green"] = Color( 0, 255, 0 ), 
-    ["teal"] = Color( 0, 128, 128 ), 
-    ["aqua"] = Color( 0, 255, 255 ), 
-    ["cyan"] = Color( 0, 255, 255 ), 
-    ["turquoise"] = Color( 64, 224, 208 ), 
-    ["navy"] = Color( 0, 0, 128 ), 
-    ["blue"] = Color( 0, 0, 255 ), 
-    ["indigo"] = Color( 75, 0, 130 ), 
-    ["purple"] = Color( 128, 0, 128 ), 
-    ["mustard"] = Color( 254, 220, 86 ), 
-    ["trombone"] = Color( 210, 181, 91 ), 
-    ["violet"] = Color( 238, 130, 238 ), 
-    ["magenta"] = Color( 255, 0, 255 ), 
-    ["pink"] = Color( 255, 192, 203 ), 
-    ["carrot"] = Color( 255, 105, 180 ), 
-    ["beige"] = Color( 245, 245, 220 ), 
-    ["wheat"] = Color( 245, 222, 179 ), 
-    ["peanut"] = Color( 121, 92, 50 ), 
-    ["chocolate"] = Color( 210, 105, 30 ), 
-    ["black"] = Color( 0, 0, 0 ), 
-    ["white"] = Color( 255, 255, 255 ), 
-    ["gray"] = Color( 128, 128, 128 ), 
-    ["grey"] = Color( 128, 128, 128 ), 
-    ["silver"] = Color( 192, 192, 192 ), 
-    ["sky blue"] = Color( 0, 255, 255 ), 
-    ["light blue"] = Color( 0, 140, 255 ), 
-    ["hot pink"] = Color( 255, 105, 180 ), 
-    ["lime"] = Color( 191, 255, 127 ), 
-    ["mauve"] = Color( 103, 49, 71 ), 
-    ["stmaragdine"] = Color( 80, 200, 117 ), 
-    ["banana"] = Color( 255, 0, 128 ), 
-    ["print yellow"] = Color( 255, 222, 102 ), 
-    ["print blue"] = Color( 137, 222, 255 ), 
-}
-
 function chatBox.formatMessage( ply, text, dead, defaultColor, dontRecolorColon, data )
 
     local text = table.concat( string.Explode( "\t[\t]+", text, true ), "\t" )
 
     local tab = {}
-    defaultColor = defaultColor or Color( 255, 255, 255, 255 )
+    defaultColor = defaultColor or chatBox.defines.colors.white
     data = data or { ply, text, false, dead }
 
     local preTab, lastCol = hook.Run( "BC_getPreTab", unpack( data ) )
@@ -65,20 +18,20 @@ function chatBox.formatMessage( ply, text, dead, defaultColor, dontRecolorColon,
         end
     else
         if dead then
-            table.insert( tab, Color( 255, 0, 0 ) )
+            table.insert( tab, chatBox.defines.theme.dead )
             table.insert( tab, "*DEAD* " )
         end
 
         table.insert( tab, { formatter = true, type = "prefix" } )
 
         if not ply:IsValid() then
-            table.insert( tab, chatBox.colors.printBlue )
+            table.insert( tab, chatBox.defines.theme.server )
             table.insert( tab, "Server" )
         else
             table.insert( tab, { formatter = true, type = "escape" } ) --escape pop from ply name
             table.insert( tab, ply )
         end
-        table.insert( tab, dontRecolorColon and defaultColor or Color( 255, 255, 255 ) )
+        table.insert( tab, dontRecolorColon and defaultColor or chatBox.defines.colors.white )
         table.insert( tab, ": " )
         table.insert( tab, defaultColor )
 
@@ -92,14 +45,14 @@ end
 function chatBox.formatText( text, defaultColor, ply )
     local tab = {}
 
-    defaultColor = defaultColor or Color( 255, 255, 255, 255 )
+    defaultColor = defaultColor or chatBox.defines.colors.white
 
     -- Make ulx commands grey
     if text[1] == "!" and text[2] ~= "!" and chatBox.getSetting( "colorCmds" ) then
         local s, e = string.find( text, " ", nil, true )
         if not e then e = #text + 1 end
         if e ~= 2 then
-            table.insert( tab, chatBox.colors.command )
+            table.insert( tab, chatBox.defines.theme.commands )
             table.insert( tab, string.sub( text, 0, e - 1 ) )
             table.insert( tab, defaultColor )
             text = string.sub( text, e, -1 )
@@ -169,10 +122,11 @@ function f.formatCustomColorSingle( text )
             local b = tonumber( data[3], 16 )
             col = Color( r, g, b )
         elseif i == 2 then
-            col = Color( 255, 255, 255 )
+            col = chatBox.defines.colors.white
         else
             local colName = string.lower( data[1] )
-            col = f.colorNames[colName]
+            colName = chatHelper.spaceToCamel( colName )
+            col = chatBox.defines.colors[colName]
             if not col then
                 table.insert( out, string.sub( text, 1, e ) )
                 text = string.sub( text, e + 1 )
@@ -206,7 +160,7 @@ function f.formatEmotes( tab )
         madeChange = false
         loopCounter = loopCounter + 1
         if loopCounter > 30 then
-            MsgC( Color( 255, 0, 0 ), "[BetterChat] A message with too many images has been prevented from rendering fully to prevent lag" )
+            MsgC( chatBox.defines.colors.red, "[BetterChat] A message with too many images has been prevented from rendering fully to prevent lag" )
             break
         end
         local newTab = {}
@@ -416,7 +370,8 @@ local function getSpecialWord( text, start )
         end
     end
     if chatBox.getSetting( "formatColors" ) then
-        for k, v in pairs( f.colorNames ) do
+        for k, v in pairs( chatBox.defines.colors ) do
+            k = chatHelper.camelToSpace( k )
             s, e = string.find( string.lower( text ), string.lower( k ), start, true )
             if s and s <= minS then
                 if s == minS then
@@ -506,7 +461,7 @@ function chatBox.convertLinks( v )
         if #preText > 0 then
             table.insert( tab, preText )
         end
-        table.insert( tab, { formatter = true, type = "clickable", signal = "Link-" .. url, text = url, color = f.linkColor } )
+        table.insert( tab, { formatter = true, type = "clickable", signal = "Link-" .. url, text = url, color = chatBox.defines.theme.links } )
         v = postText
     end
     if #v > 0 then
@@ -522,23 +477,23 @@ function chatBox.defaultFormatMessage( ply, text, teamChat, dead, col1, col2, da
     else
         tab = {}
         if dead then
-            table.insert( tab, Color( 255, 0, 0 ) )
+            table.insert( tab, chatBox.defines.colors.red )
             table.insert( tab, "*DEAD* " )
         end
 
         if teamChat then
-            table.insert( tab, Color( 0, 170, 0 ) )
+            table.insert( tab, chatBox.defines.colors.teamGreen )
             table.insert( tab, "(TEAM) " )
         end
         
         if type( ply ) == "Player" and ply:IsValid() then
             table.insert( tab, GAMEMODE:GetTeamColor( ply ) )
             table.insert( tab, ply )
-            table.insert( tab, Color( 255, 255, 255 ) )
+            table.insert( tab, chatBox.defines.colors.white )
         elseif type( ply ) == "Entity" and not ply:IsValid() then
-            table.insert( tab, chatBox.colors.printBlue )
+            table.insert( tab, chatBox.defines.colors.printBlue )
             table.insert( tab, "Console" )
-            table.insert( tab, Color( 255, 255, 255 ) )
+            table.insert( tab, chatBox.defines.colors.white )
         else
             table.insert( tab, col1 )
             table.insert( tab, ply )
@@ -609,11 +564,11 @@ end
 
 function chatBox.print( ... )
     local data = { ... }
-    local col = Color( 255, 255, 255, 255 )
+    local col = chatBox.defines.colors.white
     for k, v in pairs( data ) do
         if type( v ) == "table" then
             col = v
-        elseif ( v == "You" or v == "Yourself" ) and col == Color( 75, 0, 130, 255 ) then
+        elseif ( v == "You" or v == "Yourself" ) and col == chatBox.defines.colors.ulxYou then
             data[k] = { formatter = true, type = "clickable", signal = "Player-" .. LocalPlayer():SteamID(), text = v }
         else
             local isPly = false

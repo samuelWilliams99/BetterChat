@@ -37,10 +37,10 @@ hook.Add( "BC_initPanels", "BC_initChannels", function()
     local btn = vgui.Create( "DButton", g.chatFrame )
     btn:SetPos( g.size.x - 50 - 33, 5 )
     btn:SetSize( 50, 19 )
-    btn:SetTextColor( Color( 220, 220, 220, 255 ) )
+    btn:SetTextColor( chatBox.defines.theme.buttonTextFocused )
     btn:SetText( "Open" )
     btn.Paint = function( self, w, h )
-        draw.RoundedBox( 0, 0, 0, w, h, Color( 150, 150, 150, 50 ) )
+        draw.RoundedBox( 0, 0, 0, w, h, chatBox.defines.theme.foreground )
     end
     function btn:DoClick()
         local menu = DermaMenu()
@@ -317,7 +317,6 @@ function chatBox.messageChannel( channelNames, ... )
         end
         chatBox.msgC( unpack( data ) )
     end
-
 end
 
 local function parseName( name )
@@ -367,15 +366,15 @@ function chatBox.messageChannelDirect( channel, controller, ... )
     end
 
     if channel.showTimestamps then
-        table.insert( data, 1, chatBox.colors.printYellow )
+        table.insert( data, 1, chatBox.defines.theme.timeStamps )
         local timeData = string.FormattedTime( os.time() )
         timeData.h = timeData.h % 24
         table.insert( data, 2, string.format( "%02i:%02i", timeData.h, timeData.m ) .. " - " )
-        table.insert( data, 3, Color( 255, 255, 255 ) )
+        table.insert( data, 3, chatBox.defines.colors.white )
     end
 
     local richText = chatBox.channelPanels[chanName].text
-    local prevCol = Color( 255, 255, 255, 255 )
+    local prevCol = chatBox.defines.colors.white
     richText:InsertColorChange( prevCol )
     richText:SetMaxLines( chatBox.getSetting( "chatHistory" ) )
     local ignoreNext = false
@@ -400,6 +399,8 @@ function chatBox.messageChannelDirect( channel, controller, ... )
                     end
                 elseif obj.type == "image" then
                     chatBox.addImage( richText, obj )
+                elseif obj.type == "gif" then
+                    chatBox.addGif( richText, obj )
                 elseif obj.type == "text" then
                     if obj.font then
                         richText:SetFont( obj.font )
@@ -412,7 +413,7 @@ function chatBox.messageChannelDirect( channel, controller, ... )
                     end
                 end
             elseif obj.isConsole then
-                richText:InsertColorChange( chatBox.colors.printBlue )
+                richText:InsertColorChange( chatBox.defines.theme.server )
                 richText:AppendText( "Server" )
                 richText:InsertColorChange( prevCol )
             elseif IsColor( obj ) then
@@ -461,7 +462,8 @@ function chatBox.removeChannel( channel ) --rename to closeChannel
     if not channel.hideInitMessage then
         local chanName = channel.hideRealName and channel.displayName or channel.name
         if channel.name ~= "All" and chatBox.getSetting( "printChannelEvents" ) then
-            chatBox.messageChannelDirect( "All", chatBox.colors.printBlue, "Channel ", chatBox.colors.yellow, chanName, chatBox.colors.printBlue, " removed." )
+            chatBox.messageChannelDirect( "All", chatBox.defines.colors.printBlue, "Channel ", 
+                chatBox.defines.theme.channels, chanName, chatBox.defines.colors.printBlue, " removed." )
         end
     end
     chatBox.removeFromSidePanel( "Channel Settings", channel.name )
@@ -495,8 +497,8 @@ function chatBox.addChannel( data )
     panel.Paint = function( self, w, h )
         self.settingsBtn:SetVisible( self.doPaint )
         if not self.doPaint then return end
-        draw.RoundedBox( 0, 5, 2, w - 10 - 28, h - 7, Color( 150, 150, 150, 50 ) )
-        draw.RoundedBox( 0, w - 10 - 19, 2, 24, h - 7, Color( 150, 150, 150, 50 ) )
+        draw.RoundedBox( 0, 5, 2, w - 10 - 28, h - 7, chatBox.defines.theme.foreground )
+        draw.RoundedBox( 0, w - 10 - 19, 2, 24, h - 7, chatBox.defines.theme.foreground )
     end
     panel.doPaint = true
 
@@ -614,7 +616,7 @@ function chatBox.addChannel( data )
     settingsBtn:SetPos( g.chatFrame:GetWide() - 59, 5 )
     settingsBtn:SetSize( 24, 24 )
     settingsBtn:SetText( "" )
-    settingsBtn:SetColor( Color( 50, 50, 50, 150 ) )
+    settingsBtn:SetColor( chatBox.defines.theme.channelCog )
     settingsBtn.ang = 0
     settingsBtn.name = data.name
 
@@ -634,7 +636,7 @@ function chatBox.addChannel( data )
     end
     settingsBtn.Paint = function( self, w, h )
         self.ang = -45 * chatBox.sidePanels["Channel Settings"].animState
-        self:SetColor( lerpCol( Color( 50, 50, 50, 150 ), Color( 50, 50, 50, 230 ), chatBox.sidePanels["Channel Settings"].animState ) )
+        self:SetColor( lerpCol( chatBox.defines.theme.channelCog, chatBox.defines.theme.channelCog, chatBox.sidePanels["Channel Settings"].animState ) )
         surface.SetMaterial( chatBox.materials.getMaterial( "icons/cog.png" ) )
         surface.SetDrawColor( self:GetColor() )
         surface.DrawTexturedRectRotated( w / 2, h / 2, w, h, self.ang )
@@ -650,9 +652,9 @@ function chatBox.addChannel( data )
     v.Tab.data = data
     v.Tab.Paint = function( self, w, h )
         local a = self:IsActive()
-        local c = a and 150 or 200
+        local col = a and chatBox.defines.theme.foreground or chatBox.defines.theme.foregroundLight
         
-        draw.RoundedBox( 0, 2, 0, w - 4, h, Color( c, c, c, 50 ) )
+        draw.RoundedBox( 0, 2, 0, w - 4, h, col )
         if self:GetText() ~= " " .. self.data.displayName then
             self:SetText( " " .. self.data.displayName )
             self:GetPropertySheet().tabScroller:InvalidateLayout( true ) -- to make the tabs resize correctly
@@ -703,10 +705,12 @@ function chatBox.addChannel( data )
 
         local function createdPrint()
             if not data.replicateAll then
-                chatBox.messageChannelDirect( data.name, chatBox.colors.printBlue, "Channel ", chatBox.colors.yellow, chanName, chatBox.colors.printBlue, " created." )
+                chatBox.messageChannelDirect( data.name, chatBox.defines.colors.printBlue, "Channel ", 
+                    chatBox.defines.theme.channels, chanName, chatBox.defines.colors.printBlue, " created." )
             end
             if data.name ~= "All" then
-                chatBox.messageChannelDirect( "All", chatBox.colors.printBlue, "Channel ", chatBox.colors.yellow, chanName, chatBox.colors.printBlue, " created." )
+                chatBox.messageChannelDirect( "All", chatBox.defines.colors.printBlue, "Channel ", 
+                    chatBox.defines.theme.channels, chanName, chatBox.defines.colors.printBlue, " created." )
             end
         end
         if chatBox.initializing then

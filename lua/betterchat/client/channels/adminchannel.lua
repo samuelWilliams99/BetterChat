@@ -10,7 +10,7 @@ chatBox.admin.defaultChannel = {
     doPrints = false, 
     addNewLines = true, 
     allFunc = function( self, tab, idx )
-        table.insert( tab, idx, Color( 255, 0, 0 ) )
+        table.insert( tab, idx, chatBox.defines.theme.admin )
         table.insert( tab, idx + 1, "(ADMIN) " )
     end, 
     openOnStart = function()
@@ -18,7 +18,7 @@ chatBox.admin.defaultChannel = {
     end, 
     runCommandSeparately = true, 
     hideChatText = true, 
-    textEntryColor = Color( 200, 100, 100 ), 
+    textEntryColor = chatBox.defines.theme.adminTextEntry, 
 }
 chatBox.admin.buttonEnabled = false
 
@@ -66,7 +66,7 @@ net.Receive( "BC_AM", function()
         isAdmin = ply:IsAdmin()
     end
 
-    local tab = chatBox.formatMessage( ply, text, not isAlive, isAdmin and chatBox.colors.white or chatBox.colors.admin )
+    local tab = chatBox.formatMessage( ply, text, not isAlive, isAdmin and chatBox.defines.colors.white or chatBox.defines.theme.nonAdminText )
     chatBox.messageChannel( { chan.name, "MsgC" }, unpack( tab ) )
 end )
 
@@ -130,11 +130,11 @@ hook.Add( "PostGamemodeLoaded", "BC_RPAdminOverload", function()
                 local Nick = ply:IsPlayer() and ply:Nick() or "Console"
                 local prefix = ( FAdmin.Access.PlayerHasPrivilege( ply, "AdminChat" ) or ply:IsAdmin() ) and "[Admin Chat] " or "[To admins] "
 
-                chat.AddNonParsedText( Color( 255, 0, 0, 255 ), prefix, team.GetColor( Team ), Nick .. ": ", Color( 255, 255, 255, 255 ), text )
+                chat.AddNonParsedText( chatBox.defines.colors.red, prefix, team.GetColor( Team ), Nick .. ": ", chatBox.defines.colors.white, text )
             else
                 local chan = chatBox.getChannel( "Admin" )
 
-                local tab = chatBox.formatMessage( ply, text, not ply:Alive(), ply:IsAdmin() and chatBox.colors.white or chatBox.colors.admin )
+                local tab = chatBox.formatMessage( ply, text, not ply:Alive(), ply:IsAdmin() and chatBox.defines.colors.white or chatBox.defines.theme.admin )
                 chatBox.messageChannel( { chan.name, "MsgC" }, unpack( tab ) )
             end
         end )

@@ -6,7 +6,7 @@ chatBox.logs.defaultChannel = {
     doPrints = false, 
     addNewLines = true, 
     allFunc = function( self, tab, idx )
-        table.insert( tab, idx, Color( 138, 43, 226 ) )
+        table.insert( tab, idx, chatBox.defines.theme.logs )
         table.insert( tab, idx + 1, "[LOGS] " )
     end, 
     openOnStart = function()
@@ -54,18 +54,17 @@ net.Receive( "BC_LM", function()
     if channelType == chatBox.channelTypes.TEAM then
         local ply = data[1]
         if ply:Team() == LocalPlayer():Team() then return end
-        chatBox.messageChannel( "Logs", Color( 0, 170, 0 ), "<TEAM - " .. team.GetName( ply:Team() ) .. ">", Color( 255, 255, 255 ), " | ", unpack( data ) )
+        chatBox.messageChannel( "Logs", chatBox.defines.theme.logsPrefix, "<TEAM - " .. team.GetName( ply:Team() ) .. ">", chatBox.defines.colors.white, " | ", unpack( data ) )
     elseif channelType == chatBox.channelTypes.PRIVATE then
         local from = data[1]
         local to = data[3]
         if from == LocalPlayer() or to == LocalPlayer() then return end
-        table.insert( data, 2, chatBox.colors.printBlue )
-        table.insert( data, 4, chatBox.colors.white )
-        chatBox.messageChannel( "Logs", Color( 0, 170, 0 ), "<PRIVATE>", Color( 255, 255, 255 ), " | ", unpack( data ) )
+        table.insert( data, 2, chatBox.defines.colors.printBlue )
+        table.insert( data, 4, chatBox.defines.colors.white )
+        chatBox.messageChannel( "Logs", chatBox.defines.theme.logsPrefix, "<PRIVATE>", chatBox.defines.colors.white, " | ", unpack( data ) )
     elseif channelType == chatBox.channelTypes.GROUP then
         local s, e, id = string.find( channelName, "^Group (%d+) " )
         id = tonumber( id )
-        print( id )
         for k, v in pairs( chatBox.group.groups ) do
             if v.id == id then
                 local group = v
@@ -75,7 +74,7 @@ net.Receive( "BC_LM", function()
                 end
             end
         end
-        chatBox.messageChannel( "Logs", Color( 0, 170, 0 ), "<" .. channelName .. ">", Color( 255, 255, 255 ), " | ", unpack( data ) )
+        chatBox.messageChannel( "Logs", chatBox.defines.theme.logsPrefix, "<" .. channelName .. ">", chatBox.defines.colors.white, " | ", unpack( data ) )
     end
 end )
 

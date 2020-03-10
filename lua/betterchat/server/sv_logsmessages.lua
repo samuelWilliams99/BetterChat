@@ -25,7 +25,7 @@ function chatBox.sendLogConsole( channel, ... )
 end
 
 function chatBox.sendLogPlayers( channelType, channel, ... )
-    local plys = table.filter( player.GetAll(), function( ply )
+    local plys = table.filterSeq( player.GetAll(), function( ply )
         return chatBox.getAllowed( ply, "bc_chatlogs" )
     end )
 

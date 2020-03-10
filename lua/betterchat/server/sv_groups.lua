@@ -78,7 +78,7 @@ function chatBox.allowedGroups( ply )
 end
 
 function chatBox.removeInvalidMembers( members )
-    return table.filter( members, chatBox.allowedGroups )
+    return table.filterSeq( members, chatBox.allowedGroups )
 end
 
 function chatBox.handleInvites( group )

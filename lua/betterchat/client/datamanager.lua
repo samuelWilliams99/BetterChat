@@ -1,12 +1,3 @@
-local function filter( tab, f )
-    for k, v in pairs( tab ) do
-        if not f( v ) then
-            tab[k] = nil
-        end
-    end
-    return tab
-end
-
 local function saveFromTemplate( src, data, template )
     for k, v in pairs( template ) do
         if not v.shouldSave then continue end
@@ -55,13 +46,9 @@ function chatBox.saveData()
     end
 
     if chatBox.autoComplete then
-        data.cmdUsage = filter( table.Copy( chatBox.autoComplete.cmds ), function( x ) return x > 0 end )
-        for k, v in pairs( chatBox.autoComplete.extraCmds ) do
-            if not data.cmdUsage[k] then
-                data.cmdUsage[k] = v
-            end
-        end
-        data.emoteUsage = filter( table.Copy( chatBox.autoComplete.emoteUsage ), function( x ) return x > 0 end )
+        local cmdUsage = table.filter( chatBox.autoComplete.cmds, function( x ) return x > 0 end )
+        data.cmdUsage = table.Merge( table.Copy( chatBox.autoComplete.extraCmds ), cmdUsage )
+        data.emoteUsage = table.filter( chatBox.autoComplete.emoteUsage, function( x ) return x > 0 end )
     end
 
     file.Write( "bc_data_cl.txt", util.TableToJSON( data ) )
@@ -131,12 +118,9 @@ function chatBox.loadData()
     end
     
     if data.emoteUsage then
-        for k, v in pairs( data.emoteUsage ) do
-            chatBox.autoComplete.emoteUsage[k] = v
-        end
+        table.Merge( chatBox.autoComplete.emoteUsage, data.emoteUsage )
         chatBox.reloadUsedEmotesMenu()
     end
-
 end
 
 function chatBox.loadEnabled() 
