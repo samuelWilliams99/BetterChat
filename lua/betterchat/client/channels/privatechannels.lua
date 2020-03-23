@@ -2,11 +2,11 @@ chatBox.private = {}
 local you
 
 chatBox.private.lastMessaged = nil
-chatBox.private.defaultChannel = { 
-    init = false, 
-    displayName = "[Offline]", 
-    icon = "user.png", 
-    addNewLines = true, 
+chatBox.private.defaultChannel = {
+    init = false,
+    displayName = "[Offline]",
+    icon = "user.png",
+    addNewLines = true,
     send = function( self, txt )
         if IsValid( self.ply ) then
             if self.ply ~= LocalPlayer() then --so you can PM yourself and not get the message twice
@@ -21,7 +21,7 @@ chatBox.private.defaultChannel = {
             chatBox.channels.messageDirect( "All", chatBox.defines.colors.red, "This player is not online. They will not recieve this message. Right click the channel to close it." )
             chatBox.channels.messageDirect( self, chatBox.defines.colors.red, "This player is not online. They will not recieve this message. Right click the channel to close it." )
         end
-    end, 
+    end,
     allFunc = function( self, tab, idx, isConsole )
         local sender = table.remove( tab, idx + 1 )
         sender = sender.isConsole and chatBox.defines.consolePlayer or sender
@@ -37,12 +37,12 @@ chatBox.private.defaultChannel = {
             table.insert( tab, idx + 2, arrow )
             table.insert( tab, idx + 3, self.ply )
         end
-    end, 
-    tickMode = 2, 
-    popMode = 0, 
-    hideRealName = true, 
-    hideInitMessage = true, 
-    runCommandSeparately = true, 
+    end,
+    tickMode = 2,
+    popMode = 0,
+    hideRealName = true,
+    hideInitMessage = true,
+    runCommandSeparately = true,
     hideChatText = true,
     position = 4,
 }
@@ -74,13 +74,13 @@ end
 
 function chatBox.private.printOwn( name, txt )
     if not chatBox.private.allowed() then return end
-    local tab = table.Add( { 
-        { 
-            isController = true, 
+    local tab = table.Add( {
+        {
+            isController = true,
             doSound = false
-        }, 
-        LocalPlayer(), 
-        chatBox.defines.colors.white, 
+        },
+        LocalPlayer(),
+        chatBox.defines.colors.white,
         ": "
     }, chatBox.formatting.formatText( txt, nil, LocalPlayer() ) )
     chatBox.channels.message( { name, "MsgC" }, unpack( tab ) )
@@ -91,7 +91,7 @@ hook.Add( "BC_userAccessChange", "BC_privateChannelCheck", function()
         for k, v in pairs( chatBox.channels.channels ) do
             if string.sub( v.name, 1, 9 ) == "Player - " then
                 chatBox.channels.remove( v )
-            end 
+            end
         end
     end
 end )
@@ -120,9 +120,9 @@ hook.Add( "BC_preInitPanels", "BC_privateAddHooks", function()
         local text = net.ReadString()
 
         if not ply:IsValid() then
-            local tab = table.Add( { 
-                chatBox.defines.consolePlayer, 
-                chatBox.defines.theme.server, 
+            local tab = table.Add( {
+                chatBox.defines.consolePlayer,
+                chatBox.defines.theme.server,
                 " to ",
                 you,
                 chatBox.defines.colors.white,
@@ -143,13 +143,13 @@ hook.Add( "BC_preInitPanels", "BC_privateAddHooks", function()
             if not chatBox.channels.isOpen( chan ) then
                 chatBox.private.addChannel( chan )
             end
-            local tab = table.Add( { 
-                { 
-                    isController = true, 
+            local tab = table.Add( {
+                {
+                    isController = true,
                     doSound = ( ply == sender ) and ( ply ~= LocalPlayer() )
-                }, 
-                sender:IsValid() and sender or chatBox.defines.consolePlayer, 
-                chatBox.defines.colors.white, 
+                },
+                sender:IsValid() and sender or chatBox.defines.consolePlayer,
+                chatBox.defines.colors.white,
                 ": "
             }, chatBox.formatting.formatText( text, nil, sender ) )
             chatBox.channels.message( { chan.name, "MsgC" }, unpack( tab ) )
@@ -171,8 +171,8 @@ function chatBox.private.createChannel( ply )
     end
     if channel.needsData then
         for k, v in pairs( chatBox.private.defaultChannel ) do
-            if channel[k] == nil then 
-                channel[k] = v 
+            if channel[k] == nil then
+                channel[k] = v
             end
         end
         channel.plySID = getSteamID( ply )

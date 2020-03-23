@@ -4,7 +4,7 @@ hook.Add( "BC_overload", "BC_ATAG_chatOverload", function()
     timer.Simple( 0.5, function()
         if ATAG then
             print( "[BetterChat] Found ATAG, attempting overload" )
-            
+
             if chatBox.hookOverloads.OnPlayerChat.ATAG_ChatTags then
                 print( "[BetterChat] Found ATAG_ChatTags hook, overloading" )
                 chatBox.compatibility.atagHook = chatBox.hookOverloads.OnPlayerChat.ATAG_ChatTags
@@ -18,7 +18,7 @@ hook.Add( "BC_overloadUndo", "BC_compatibilityUndo", function()
     if chatBox.compatibility.atagHook then
         print( "[BetterChat] Undoing ATAG Overload" )
         hook.Add( "OnPlayerChat", "ATAG_ChatTags", chatBox.compatibility.atagHook )
-    end    
+    end
 end )
 
 local function captureAddText( f, ... )
@@ -70,7 +70,7 @@ end )
 
 hook.Add( "BC_getDefaultTab", "BC_ATAG_default", function( ... )
     if not chatBox.compatibility.atagHook then return end
-    
+
     local data, madeChange = captureAddText( chatBox.compatibility.atagHook, ... )
     return data, madeChange
 end )

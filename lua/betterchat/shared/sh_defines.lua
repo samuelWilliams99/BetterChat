@@ -14,7 +14,7 @@ chatBox.defines.colors = {
     pink = Color( 255, 192, 203 ),
     gray = Color( 128, 128, 128 ),
     grey = Color( 128, 128, 128 ),
-    
+
     cyan = Color( 0, 255, 255 ),
     teal = Color( 0, 128, 128 ),
     indigo = Color( 75, 0, 130 ),
@@ -35,7 +35,7 @@ chatBox.defines.colors = {
     silver = Color( 192, 192, 192 ),
     mauve = Color( 103, 49, 71 ),
     smaragdine = Color( 80, 200, 117 ),
-    
+
     wheat = Color( 245, 222, 179 ),
     tomato = Color( 255, 89, 61 ),
     mustard = Color( 254, 220, 86 ),
@@ -116,20 +116,20 @@ chatBox.defines.materials = {
 
 chatBox.defines.consolePlayer = { isConsole = true }
 
-chatBox.defines.channelTypes = { 
-    GLOBAL = 1, 
-    TEAM = 2, 
-    PRIVATE = 3, 
-    ADMIN = 4, 
+chatBox.defines.channelTypes = {
+    GLOBAL = 1,
+    TEAM = 2,
+    PRIVATE = 3,
+    ADMIN = 4,
     GROUP = 5
 }
 
 chatBox.defines.giphyCommand = "!giphy"
 
-chatBox.defines.networkStrings = { 
+chatBox.defines.networkStrings = {
     "BC_chatOpenState", "BC_sendPlayerState", "BC_playerReady", "BC_disable", -- Chat states
     "BC_PM", "BC_AM", "BC_GM", "BC_TM", "BC_LM", -- Messages (Private, Admin, Group, Team)
     "BC_sendULXCommands", "BC_userRankChange", -- Ulx
     "BC_sendGroups", "BC_updateGroup", "BC_newGroup", "BC_groupAccept", "BC_leaveGroup", "BC_deleteGroup", -- Groups
     "BC_forwardMessage", "BC_sayOverload", "BC_sendGif", "BC_playerDisconnected", -- Misc
-}
+ }

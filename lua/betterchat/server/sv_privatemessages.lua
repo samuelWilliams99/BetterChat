@@ -44,11 +44,11 @@ local function DarkRP_PM( ply, args )
 
     local target = DarkRP.findPlayer( name )
     if not chatBox.private.canMessage( ply, target ) then return "" end
-    if target == ply then 
+    if target == ply then
         if chatBox.base.chatBoxEnabled[ply] then
             chatBox.private.sendPrivate( ply, ply, ply, msg )
         end
-        return "" 
+        return ""
     end
 
     if target then

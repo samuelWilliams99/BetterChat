@@ -1,5 +1,5 @@
 -- Thanks Acecool and HandsomeMatt for your code
- 
+
 local function generateCircle( radius )
     local seg = 100
     local cir = {}
@@ -16,9 +16,9 @@ local function generateCircle( radius )
 end
 
 local _material = Material( "effects/flashlight001" );
- 
+
 local PANEL = {}
- 
+
 function PANEL:Init()
     self.Avatar = vgui.Create( "AvatarImage", self )
     self.Avatar:SetPaintedManually( true )
@@ -33,11 +33,11 @@ function PANEL:OnSizeChanged()
     self:SetSize( self:GetWide(), self:GetWide() )
     self:UpdatePoly()
 end
- 
+
 function PANEL:PerformLayout()
     self.Avatar:SetSize( self:GetWide(), self:GetTall() )
 end
- 
+
 function PANEL:Paint( w, h )
     render.ClearStencil()
     render.SetStencilEnable( true )

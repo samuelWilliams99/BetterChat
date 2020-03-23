@@ -54,7 +54,7 @@ function chatBox.sidePanel.members.generateMenu( panel, group )
     -- first sort by value in panel.data, then alphabetically by name (names before sids)
     -- Then for nonmembers, invited at the top
     local sortedIds = table.GetKeys( panel.data )
-    table.sort( sortedIds, function( a, b ) 
+    table.sort( sortedIds, function( a, b )
         local aRole = panel.data[a]
         local bRole = panel.data[b]
 
@@ -112,7 +112,7 @@ function chatBox.sidePanel.members.generateMenu( panel, group )
     title.data = channel
     function title:Think()
         if self.data.displayName ~= self:GetText() then
-            self:SetText( self.data.displayName )    
+            self:SetText( self.data.displayName )
             title:SizeToContents()
         end
     end
@@ -151,7 +151,7 @@ function chatBox.sidePanel.members.generateMenu( panel, group )
         local ply = player.GetBySteamID( id )
         if ply then
             local chatEnabled = chatBox.sidePanel.players.settings[id] and chatBox.sidePanel.players.settings[id].isChatEnabled or false
-            if not chatEnabled then 
+            if not chatEnabled then
                 setting.nameColor = chatBox.defines.colors.red
                 setting.extra = setting.extra .. ". This person currently has BetterChat disabled"
             end

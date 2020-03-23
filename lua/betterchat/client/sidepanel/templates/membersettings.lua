@@ -1,12 +1,12 @@
-chatBox.sidePanel.members.template = { 
-    member = { 
-        name = "Player", 
-        value = "SteamID", 
-        type = "options", 
-        options = { "Admin", "Member", "Remove" }, 
-        optionValues = { 0, 1, 2 }, 
-        default = 1, 
-        extra = "Set this player's role in the group", 
+chatBox.sidePanel.members.template = {
+    member = {
+        name = "Player",
+        value = "SteamID",
+        type = "options",
+        options = { "Admin", "Member", "Remove" },
+        optionValues = { 0, 1, 2 },
+        default = 1,
+        extra = "Set this player's role in the group",
         onChange = function( data )
             local chan = chatBox.channels.getChannel( "Group - " .. data.group.id )
             if not chan or chan.needsData then return end -- Shouldn't be able to edit these but u kno
@@ -23,15 +23,15 @@ chatBox.sidePanel.members.template = {
             net.WriteUInt( newGroup.id, 16 )
             net.WriteString( util.TableToJSON( newGroup ) )
             net.SendToServer()
-        end, 
-        overrideWidth = 62, 
-    }, 
-    nonMember = { 
-        name = "Player", 
-        value = "SteamID", 
-        type = "button", 
-        text = "Invite", 
-        extra = "Invite this player to the group, limited to 1 invite per minute", 
+        end,
+        overrideWidth = 62,
+    },
+    nonMember = {
+        name = "Player",
+        value = "SteamID",
+        type = "button",
+        text = "Invite",
+        extra = "Invite this player to the group, limited to 1 invite per minute",
         onClick = function( data, self )
             local group = data.group
             local id = self.value
@@ -41,34 +41,34 @@ chatBox.sidePanel.members.template = {
             net.WriteUInt( group.id, 16 )
             net.WriteString( util.TableToJSON( group ) )
             net.SendToServer()
-        end, 
-        overrideWidth = 62, 
-    }, 
-    leaveGroup = { 
-        name = "", 
-        value = "", 
-        type = "button", 
-        text = "Leave Group", 
-        extra = "Leave this group and close the channel", 
+        end,
+        overrideWidth = 62,
+    },
+    leaveGroup = {
+        name = "",
+        value = "",
+        type = "button",
+        text = "Leave Group",
+        extra = "Leave this group and close the channel",
         onClick = function( data, self )
             net.Start( "BC_leaveGroup" )
             net.WriteUInt( data.group.id, 16 )
             net.SendToServer()
-        end, 
-        overrideWidth = -1, 
-    }, 
-    deleteGroup = { 
-        name = "", 
-        value = "", 
-        type = "button", 
-        text = "Delete Group", 
-        extra = "Delete this group permanently", 
+        end,
+        overrideWidth = -1,
+    },
+    deleteGroup = {
+        name = "",
+        value = "",
+        type = "button",
+        text = "Delete Group",
+        extra = "Delete this group permanently",
         onClick = function( data, self )
             net.Start( "BC_deleteGroup" )
             net.WriteUInt( data.group.id, 16 )
             net.SendToServer()
-        end, 
-        overrideWidth = -1, 
-        requireConfirm = true, 
+        end,
+        overrideWidth = -1,
+        requireConfirm = true,
     }
 }

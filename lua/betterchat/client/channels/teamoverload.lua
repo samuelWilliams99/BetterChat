@@ -1,28 +1,28 @@
 chatBox.teamOverload = {}
 
-chatBox.teamOverload.defaultChannel = { 
-    icon = "group.png", 
+chatBox.teamOverload.defaultChannel = {
+    icon = "group.png",
     send = function( self, msg )
         if DarkRP and not LocalPlayer():IsAlive() then return end
         net.Start( "BC_TM" )
         net.WriteString( msg )
         net.SendToServer()
-    end, 
+    end,
     onMessage = function()
         chatBox.private.lastMessaged = nil
-    end, 
-    doPrints = true, 
-    addNewLines = true, 
-    disabledSettings = { "openKey" }, 
+    end,
+    doPrints = true,
+    addNewLines = true,
+    disabledSettings = { "openKey" },
     allFunc = function( self, tab, idx )
         table.insert( tab, idx, chatBox.defines.theme.team )
         table.insert( tab, idx + 1, "(" .. chatHelper.teamName( LocalPlayer() ) .. ") " )
-    end, 
-    openOnStart = true, 
-    disallowClose = true, 
-    hideRealName = true, 
-    textEntryColor = chatBox.defines.theme.teamTextEntry, 
-    replicateAll = true, 
+    end,
+    openOnStart = true,
+    disallowClose = true,
+    hideRealName = true,
+    textEntryColor = chatBox.defines.theme.teamTextEntry,
+    replicateAll = true,
     position = 3,
 }
 
@@ -39,8 +39,8 @@ hook.Add( "BC_initPanels", "BC_initAddTeamOverloadChannel", function()
         end
         if channel.needsData then
             for k, v in pairs( chatBox.teamOverload.defaultChannel ) do
-                if channel[k] == nil then 
-                    channel[k] = v 
+                if channel[k] == nil then
+                    channel[k] = v
                 end
             end
             channel.needsData = nil
@@ -57,7 +57,7 @@ hook.Add( "BC_initPanels", "BC_initAddTeamOverloadChannel", function()
             local t = chatHelper.teamName( LocalPlayer() )
             local chanName = "TeamOverload-" .. t
             local chan = chatBox.channels.getChannel( chanName )
-            
+
             if chan and chatBox.channels.isOpen( chan ) then
                 local tab = chatBox.formatting.formatMessage( ply, text, not ply:Alive() )
                 chatBox.channels.message( { chan.name, "MsgC" }, unpack( tab ) )

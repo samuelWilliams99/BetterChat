@@ -18,12 +18,12 @@ function chatBox.overload.overload()
     end
 
     o.GetChatBoxPos = chat.GetChatBoxPos
-    function chat.GetChatBoxPos() 
+    function chat.GetChatBoxPos()
         return chatBox.graphics.derma.frame:GetPos()
     end
 
     o.GetChatBoxSize = chat.GetChatBoxSize
-    function chat.GetChatBoxSize() 
+    function chat.GetChatBoxSize()
         local xSum = chatBox.graphics.size.x
         for k, v in pairs( chatBox.sidePanel.panels ) do
             if v.animState > 0 then

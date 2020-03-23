@@ -1,6 +1,6 @@
 -- Order of function calls is annoying, can't be done by making all functions local
 -- just gonna declare all of them here
-local setSuggestions, updateText, incOption, setOption, setText, getSimilarStrings, 
+local setSuggestions, updateText, incOption, setOption, setText, getSimilarStrings,
     getSimilarCommands, getSimilarNames, getSimilarEmotes
 
 net.Receive( "BC_sendULXCommands", function()
@@ -53,7 +53,7 @@ hook.Add( "BC_keyCodeTyped", "BC_autoCompleteHook", function( code, ctrl, shift,
     elseif code == KEY_SPACE or code == KEY_ENTER then
         local strCompleted
         local c = chatBox.autoComplete.cur
-        
+
         if chatBox.autoComplete.cur.option ~= 0 then
             strCompleted = c.options[c.option]
         else
@@ -184,7 +184,7 @@ function getSimilarStrings( str, arr )
             table.insert( out, val )
         end
     end
-    
+
     return out
 end
 

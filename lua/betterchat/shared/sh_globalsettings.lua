@@ -1,169 +1,169 @@
 chatBox.settings = {}
-chatBox.settings.clientTemplate = { 
-    { 
-        name = "Chat Fade time", 
-        value = "fadeTime", 
-        type = "number", 
-        extra = "Time for a chat message to fade (0 for never)", 
-        default = 10, 
-        min = 0, 
-        max = 30, 
-    }, 
-    { 
-        name = "Maximum history", 
-        value = "chatHistory", 
-        type = "number", 
-        extra = "Number of messages received before old messages are deleted", 
-        default = 200, 
-        min = 20, 
-        max = 1000, 
-    }, 
-    { 
-        name = "Team chat opens recent PM", 
-        value = "teamOpenPM", 
-        type = "boolean", 
-        extra = "Should opening team chat open to most recent unread PM", 
-        default = true, 
-    }, 
-    { 
-        name = "Remember channel on close", 
-        value = "rememberChannel", 
-        type = "boolean", 
-        extra = "Should the chatbox remember your most recent channel when opening", 
-        default = false, 
-    }, 
-    { 
-        name = "Display suggestions", 
-        value = "acDisplay", 
-        type = "boolean", 
-        extra = "Should autocomplete suggestions be showed in the text input", 
-        default = true, 
-    }, 
-    { 
-        name = "Autocomplete Suggest on usage", 
-        value = "acUsage", 
-        type = "boolean", 
-        extra = "Should autocomplete order its suggestions based on your usage of them", 
-        default = true, 
-    }, 
-    { 
-        name = "Clickable links", 
-        value = "clickableLinks", 
-        type = "boolean", 
-        extra = "Should any hyperlinks posted to chat be clickable", 
-        default = true, 
-    }, 
-    { 
-        name = "Show channel events", 
-        value = "printChannelEvents", 
-        type = "boolean", 
-        extra = "Should messages like \"Channel All created\" be shown", 
+chatBox.settings.clientTemplate = {
+    {
+        name = "Chat Fade time",
+        value = "fadeTime",
+        type = "number",
+        extra = "Time for a chat message to fade (0 for never)",
+        default = 10,
+        min = 0,
+        max = 30,
+    },
+    {
+        name = "Maximum history",
+        value = "chatHistory",
+        type = "number",
+        extra = "Number of messages received before old messages are deleted",
+        default = 200,
+        min = 20,
+        max = 1000,
+    },
+    {
+        name = "Team chat opens recent PM",
+        value = "teamOpenPM",
+        type = "boolean",
+        extra = "Should opening team chat open to most recent unread PM",
+        default = true,
+    },
+    {
+        name = "Remember channel on close",
+        value = "rememberChannel",
+        type = "boolean",
+        extra = "Should the chatbox remember your most recent channel when opening",
+        default = false,
+    },
+    {
+        name = "Display suggestions",
+        value = "acDisplay",
+        type = "boolean",
+        extra = "Should autocomplete suggestions be showed in the text input",
+        default = true,
+    },
+    {
+        name = "Autocomplete Suggest on usage",
+        value = "acUsage",
+        type = "boolean",
+        extra = "Should autocomplete order its suggestions based on your usage of them",
+        default = true,
+    },
+    {
+        name = "Clickable links",
+        value = "clickableLinks",
+        type = "boolean",
+        extra = "Should any hyperlinks posted to chat be clickable",
+        default = true,
+    },
+    {
+        name = "Show channel events",
+        value = "printChannelEvents",
+        type = "boolean",
+        extra = "Should messages like \"Channel All created\" be shown",
         default = true
-    }, 
-    { 
-        name = "Console Commands with '%'", 
-        value = "allowConsole", 
-        type = "boolean", 
-        extra = "Should any message starting with '%' be run as a console command instead", 
-        default = false, 
-    }, 
-    { 
-        name = "Auto Convert Emoticons", 
-        value = "convertEmotes", 
-        type = "boolean", 
-        extra = "Should emotes like \":)\" be converted to their respective emoticon. Note this is purely client side, others will still see the emoticon", 
-        default = true, 
-    }, 
-    { 
-        name = "Show gifs", 
-        value = "showGifs", 
-        type = "boolean", 
-        extra = "Should gifs from !giphy (if it is enabled) be rendered", 
-        default = true, 
-    }, 
-    { 
-        name = "Pop enabled", 
-        value = "doPop", 
-        type = "boolean", 
-        extra = "Should the chat ever play the Pop sound (based on other settings)", 
-        default = true, 
-    }, 
-    { 
-        name = "Tick enabled", 
-        value = "doTick", 
-        type = "boolean", 
-        extra = "Should the chat ever play the Tick sound (based on other settings)", 
-        default = true, 
-    }, 
-    { 
-        name = "Format colors", 
-        value = "formatColors", 
-        type = "boolean", 
-        extra = "Should colors typed in chat be displayed in their respective color", 
-        default = true, 
-    }, 
-    { 
-        name = "Color commands", 
-        value = "colorCmds", 
-        type = "boolean", 
-        extra = "Should messages starting with ! be dimmed", 
-        default = true, 
-    }, 
-    {     
-        name = "Enable/Restart BetterChat", 
-        type = "button", 
-        extra = "Restart the entirety of BetterChat, this will remove all chat history.", 
+    },
+    {
+        name = "Console Commands with '%'",
+        value = "allowConsole",
+        type = "boolean",
+        extra = "Should any message starting with '%' be run as a console command instead",
+        default = false,
+    },
+    {
+        name = "Auto Convert Emoticons",
+        value = "convertEmotes",
+        type = "boolean",
+        extra = "Should emotes like \":)\" be converted to their respective emoticon. Note this is purely client side, others will still see the emoticon",
+        default = true,
+    },
+    {
+        name = "Show gifs",
+        value = "showGifs",
+        type = "boolean",
+        extra = "Should gifs from !giphy (if it is enabled) be rendered",
+        default = true,
+    },
+    {
+        name = "Pop enabled",
+        value = "doPop",
+        type = "boolean",
+        extra = "Should the chat ever play the Pop sound (based on other settings)",
+        default = true,
+    },
+    {
+        name = "Tick enabled",
+        value = "doTick",
+        type = "boolean",
+        extra = "Should the chat ever play the Tick sound (based on other settings)",
+        default = true,
+    },
+    {
+        name = "Format colors",
+        value = "formatColors",
+        type = "boolean",
+        extra = "Should colors typed in chat be displayed in their respective color",
+        default = true,
+    },
+    {
+        name = "Color commands",
+        value = "colorCmds",
+        type = "boolean",
+        extra = "Should messages starting with ! be dimmed",
+        default = true,
+    },
+    {
+        name = "Enable/Restart BetterChat",
+        type = "button",
+        extra = "Restart the entirety of BetterChat, this will remove all chat history.",
         value = "restart"
-    }, 
-    {     
-        name = "Reload all BetterChat Files", 
-        type = "button", 
-        extra = "A complete reload of all BetterChat files, as if you left and rejoined the game. Warning: This can lead to some unexpected behaviour", 
-        value = "reload", 
+    },
+    {
+        name = "Reload all BetterChat Files",
+        type = "button",
+        extra = "A complete reload of all BetterChat files, as if you left and rejoined the game. Warning: This can lead to some unexpected behaviour",
+        value = "reload",
         requireConfirm = true
-    }, 
-    { 
-        name = "Factory Reset BetterChat", 
-        type = "button", 
-        extra = "Remove all BetterChat save data on your client (This will not remove you from groups)", 
-        value = "removesavedata", 
-        requireConfirm = true, 
-    }, 
-    {     
-        name = "Revert to old chat", 
-        type = "button", 
-        extra = "Revert back to the default Garry's Mod chat, this chat can be re-enabled with bc_enablechat", 
+    },
+    {
+        name = "Factory Reset BetterChat",
+        type = "button",
+        extra = "Remove all BetterChat save data on your client (This will not remove you from groups)",
+        value = "removesavedata",
+        requireConfirm = true,
+    },
+    {
+        name = "Revert to old chat",
+        type = "button",
+        extra = "Revert back to the default Garry's Mod chat, this chat can be re-enabled with bc_enablechat",
         value = "disable"
     }
 }
 
-chatBox.settings.serverTemplate = { 
-    { 
-        name = "Replace Team chat", 
-        value = "replaceTeam", 
-        type = "boolean", 
-        extra = "Should BetterChat replace the team channel (This stops other addons like DarkRP overwriting/removing team chat)", 
+chatBox.settings.serverTemplate = {
+    {
+        name = "Replace Team chat",
+        value = "replaceTeam",
+        type = "boolean",
+        extra = "Should BetterChat replace the team channel (This stops other addons like DarkRP overwriting/removing team chat)",
         default = false
-    }, 
-    { 
-        name = "Maximum message length", 
-        value = "maxLength", 
-        type = "number", 
-        extra = "Maximum length of message", 
-        default = 126, 
+    },
+    {
+        name = "Maximum message length",
+        value = "maxLength",
+        type = "number",
+        extra = "Maximum length of message",
+        default = 126,
         onChange = function( self, old, new )
             if new ~= self.default and DarkRP then
                 print( "Custom message length not supported when using DarkRP, reverted to 126" )
                 return self.default
             end
         end
-    }, 
-    { 
-        name = "Giphy API Key", 
-        value = "giphyKey", 
-        type = "string", 
-        extra = "Giphy API key needed for !giphy", 
-        default = "", 
+    },
+    {
+        name = "Giphy API Key",
+        value = "giphyKey",
+        type = "string",
+        extra = "Giphy API key needed for !giphy",
+        default = "",
         onChange = function( self, old, new )
             chatBox.giphy.getGiphyURL( "thing", function( success, data )
                 if success then
@@ -175,62 +175,62 @@ chatBox.settings.serverTemplate = {
                 end
             end )
         end
-    }, 
-    { 
-        name = "Player gif hourly limit", 
-        value = "giphyHourlyLimit", 
-        type = "number", 
-        extra = "Maximum giphy calls a single player is allowed in 1 hour", 
+    },
+    {
+        name = "Player gif hourly limit",
+        value = "giphyHourlyLimit",
+        type = "number",
+        extra = "Maximum giphy calls a single player is allowed in 1 hour",
         default = 10
-    }, 
+    },
 }
 
-chatBox.settings.ulxPermissions = { 
-    { 
-        value = "chatlogs", 
-        defaultAccess = ULib.ACCESS_SUPERADMIN, 
-        extra = "Enables the 'Logs' channel which receives all messages from groups, PM, team, etc.", 
-    }, 
-    { 
-        value = "giphy", 
-        defaultAccess = ULib.ACCESS_OPERATOR, 
-        extra = "Ability to use !giphy if bc_server_giphykey is valid", 
-    }, 
-    { 
-        value = "color", 
-        defaultAccess = ULib.ACCESS_OPERATOR, 
-        extra = "Ability to use [#ff0000]Red in chat", 
-    }, 
-    { 
-        value = "groups", 
-        defaultAccess = ULib.ACCESS_ALL, 
-        extra = "Ability to use BetterChat groups", 
-    }, 
-    { 
-        value = "italics", 
-        defaultAccess = ULib.ACCESS_ALL, 
-        extra = "Ability to use *italics* in chat", 
-    }, 
-    { 
-        value = "bold", 
-        defaultAccess = ULib.ACCESS_ALL, 
-        extra = "Ability to use **bold** in chat", 
-    }, 
-    { 
-        value = "underline", 
-        defaultAccess = ULib.ACCESS_ALL, 
-        extra = "Ability to use __underline__ in chat", 
-    }, 
-    { 
-        value = "strike", 
-        defaultAccess = ULib.ACCESS_ALL, 
-        extra = "Ability to use ~~strike~~ in chat", 
+chatBox.settings.ulxPermissions = {
+    {
+        value = "chatlogs",
+        defaultAccess = ULib.ACCESS_SUPERADMIN,
+        extra = "Enables the 'Logs' channel which receives all messages from groups, PM, team, etc.",
+    },
+    {
+        value = "giphy",
+        defaultAccess = ULib.ACCESS_OPERATOR,
+        extra = "Ability to use !giphy if bc_server_giphykey is valid",
+    },
+    {
+        value = "color",
+        defaultAccess = ULib.ACCESS_OPERATOR,
+        extra = "Ability to use [#ff0000]Red in chat",
+    },
+    {
+        value = "groups",
+        defaultAccess = ULib.ACCESS_ALL,
+        extra = "Ability to use BetterChat groups",
+    },
+    {
+        value = "italics",
+        defaultAccess = ULib.ACCESS_ALL,
+        extra = "Ability to use *italics* in chat",
+    },
+    {
+        value = "bold",
+        defaultAccess = ULib.ACCESS_ALL,
+        extra = "Ability to use **bold** in chat",
+    },
+    {
+        value = "underline",
+        defaultAccess = ULib.ACCESS_ALL,
+        extra = "Ability to use __underline__ in chat",
+    },
+    {
+        value = "strike",
+        defaultAccess = ULib.ACCESS_ALL,
+        extra = "Ability to use ~~strike~~ in chat",
     }
 }
 
 if SERVER then
     for _, perm in pairs( chatBox.settings.ulxPermissions ) do
-        ULib.ucl.registerAccess( "ulx bc_" .. perm.value, perm.defaultAccess, perm.extra, "BetterChat" )    
+        ULib.ucl.registerAccess( "ulx bc_" .. perm.value, perm.defaultAccess, perm.extra, "BetterChat" )
     end
 end
 
@@ -272,7 +272,7 @@ if CLIENT then
                         cv:SetInt( old )
                     end
                 end )
-            end 
+            end
         end
     end )
 
@@ -281,7 +281,7 @@ if CLIENT then
             panel:ClearControls()
             for k, setting in pairs( chatBox.settings.clientTemplate ) do
                 local val = "bc_" .. setting.value
-                
+
                 local c
                 if setting.type == "boolean" then
                     c = panel:CheckBox( setting.name, val )
@@ -336,11 +336,11 @@ function chatBox.settings.getValue( name, isServer )
     end
 end
 
-function chatBox.settings.getServerValue( name ) 
+function chatBox.settings.getServerValue( name )
     return chatBox.settings.getValue( name, true )
 end
 
-function chatBox.settings.getObject( name, isServer ) 
+function chatBox.settings.getObject( name, isServer )
     for k, v in pairs( isServer and chatBox.settings.serverTemplate or chatBox.settings.clientTemplate ) do
         if v.value == name then
             return v
@@ -351,7 +351,7 @@ end
 hook.Add( "BC_sharedInit", "BC_initServerConvars", function()
     for k, v in pairs( chatBox.settings.clientTemplate ) do
         if v.type == "button" or ConVarExists( "bc_" .. v.value .. "_default" ) then continue end
-        
+
         local def = v.default
         if type( def ) == "boolean" then def = def and 1 or 0 end
         CreateConVar( "bc_" .. v.value .. "_default", def, FCVAR_REPLICATED + FCVAR_ARCHIVE + FCVAR_PROTECTED )
@@ -363,7 +363,7 @@ hook.Add( "BC_sharedInit", "BC_initServerConvars", function()
         local cvar = CreateConVar( "bc_server_" .. v.value, def, FCVAR_REPLICATED + FCVAR_ARCHIVE + FCVAR_PROTECTED )
         if not v.onChange then continue end
 
-        cvars.AddChangeCallback( "bc_server_" .. v.value, function( _, old, new ) 
+        cvars.AddChangeCallback( "bc_server_" .. v.value, function( _, old, new )
             local ret = v.onChange( v, old, new )
             if ret ~= nil then
                 if v.type == "bool" then

@@ -81,7 +81,7 @@ local function max4( a, b, c, d ) return math.max( a + 0, b + 0, c + 0, d + 0 ) 
 local protocols = { [""] = 0, ["http://"] = 0, ["https://"] = 0, ["ftp://"] = 0 }
 
 function chatBox.util.getNextUrl( inputStr )
-    local pos_start, pos_end, url, prot, subd, tld, colon, port, slash, path = 
+    local pos_start, pos_end, url, prot, subd, tld, colon, port, slash, path =
         string.find( inputStr, "(([%w_.~!*:@&+$/?%%#-]-)(%w[-.%w]*%.)(%w+)(:?)(%d*)(/?)([%w_.~!*:@&+$/?%%#=-]*))" )
     if pos_start and protocols[prot:lower()] == ( 1 - #slash ) * #path and not string.find( subd, "%W%W" )
             and ( colon == "" or port ~= "" and port + 0 < 65536 )
@@ -89,8 +89,8 @@ function chatBox.util.getNextUrl( inputStr )
             and max4( tld, string.match( subd, "^(%d+)%.(%d+)%.(%d+)%.$" ) ) < 256 ) then
         return pos_start, pos_end, string.sub( inputStr, pos_start, pos_end )
     end
-    
-    pos_start, pos_end, url, prot, dom, colon, port, slash, path = 
+
+    pos_start, pos_end, url, prot, dom, colon, port, slash, path =
         string.find( inputStr, "((%f[%w]%a+://)(%w[-.%w]*)(:?)(%d*)(/?)([%w_.~!*:@&+$/?%%#=-]*))" )
     if pos_start and not string.find( dom .. ".", "%W%W" )
             and protocols[prot:lower()] == ( 1 - #slash ) * #path
@@ -103,8 +103,8 @@ end
 
 -- Different to IsColor, as doesn't require mt to be set
 function chatBox.util.isColor( tab )
-    return type( tab ) == "table" and type( tab.r ) == "number" and 
-        type( tab.g ) == "number" and type( tab.b ) == "number" and 
+    return type( tab ) == "table" and type( tab.r ) == "number" and
+        type( tab.g ) == "number" and type( tab.b ) == "number" and
         type( tab.a ) == "number" and #table.GetKeys( tab ) == 4
 end
 
@@ -135,34 +135,34 @@ if CLIENT then
         end
     end
 
-    makeFonts( "default", { 
-        font = "Tahoma", 
-        size = 21, 
-        weight = 500, 
+    makeFonts( "default", {
+        font = "Tahoma",
+        size = 21,
+        weight = 500,
     } )
 
-    makeFonts( "defaultLarge", { 
-        font = "Tahoma", 
-        size = 26, 
-        weight = 500, 
+    makeFonts( "defaultLarge", {
+        font = "Tahoma",
+        size = 26,
+        weight = 500,
     } )
 
-    makeFonts( "monospace", { 
-        font = "Lucida Console", 
-        size = 15, 
-        weight = 500, 
+    makeFonts( "monospace", {
+        font = "Lucida Console",
+        size = 15,
+        weight = 500,
     } )
 
-    makeFonts( "monospaceLarge", { 
-        font = "Lucida Console", 
-        size = 22, 
-        weight = 500, 
+    makeFonts( "monospaceLarge", {
+        font = "Lucida Console",
+        size = 22,
+        weight = 500,
     } )
 
-    makeFonts( "monospaceSmall", { 
-        font = "Lucida Console", 
-        size = 10, 
-        weight = 300, 
+    makeFonts( "monospaceSmall", {
+        font = "Lucida Console",
+        size = 10,
+        weight = 300,
     } )
 
     local blur = Material( "pp/blurscreen" )

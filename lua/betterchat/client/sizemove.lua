@@ -15,7 +15,7 @@ function chatBox.sizeMove.think()
     if chatBox.sizeMove.dragging then
         local x, y = gui.MousePos()
         d.frame:SetPos( x - chatBox.sizeMove.draggingOffset.x, y - chatBox.sizeMove.draggingOffset.y )
-        if not input.IsMouseDown( MOUSE_LEFT ) then 
+        if not input.IsMouseDown( MOUSE_LEFT ) then
             chatBox.sizeMove.dragging = false
         end
     elseif chatBox.sizeMove.resizing then
@@ -62,7 +62,7 @@ function chatBox.sizeMove.resize( w, h, final )
     d.frame:SetSize( g.size.x + ( chatBox.sidePanel.totalWidth or 0 ), g.size.y )
 
     -- Seems some things don't update until mouseover, trigger them here instead
-    if d.channelButton then 
+    if d.channelButton then
         d.channelButton:InvalidateLayout()
     end
 
@@ -146,9 +146,9 @@ hook.Add( "VGUIMousePressed", "BC_sizeMoveMousePressed", function( self, keyCode
     local edge = inResizeEdge( g.derma.frame )
     if edge then
         chatBox.sizeMove.resizing = true
-        chatBox.sizeMove.resizingData = { 
-            originalRight = chatHelper.getFrom( 1, g.derma.frame:GetPos() ) + g.size.x, 
-            originalBottom = chatHelper.getFrom( 2, g.derma.frame:GetPos() ) + g.size.y, 
+        chatBox.sizeMove.resizingData = {
+            originalRight = chatHelper.getFrom( 1, g.derma.frame:GetPos() ) + g.size.x,
+            originalBottom = chatHelper.getFrom( 2, g.derma.frame:GetPos() ) + g.size.y,
             type = edge
         }
     end

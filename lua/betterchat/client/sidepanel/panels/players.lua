@@ -35,7 +35,7 @@ function chatBox.sidePanel.players.generateEntry( ply )
 
     local plySettings = chatBox.sidePanel.players.settings[ply:SteamID()]
 
-    if plySettings.needsData then 
+    if plySettings.needsData then
         for idx, v in pairs( chatBox.sidePanel.players.template ) do
             if not v.value then continue end
             if plySettings[v.value] == nil then
@@ -183,7 +183,7 @@ function chatBox.sidePanel.players.canAddSetting( ply, setting, settingsAdded )
     if setting.parentSetting then
         if not table.HasValue( settingsAdded, setting.parentSetting ) then
             return false
-        end    
+        end
     end
     return true
 end

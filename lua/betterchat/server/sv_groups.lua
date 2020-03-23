@@ -37,12 +37,12 @@ end
 
 function chatBox.group.newGroup( owner, name )
     local oId = owner:SteamID()
-    table.insert( chatBox.group.groups, { 
-        id = chatBox.group.groupIDCounter, 
-        name = name, 
-        members = { oId }, 
-        admins = { oId }, 
-        invites = {}, 
+    table.insert( chatBox.group.groups, {
+        id = chatBox.group.groupIDCounter,
+        name = name,
+        members = { oId },
+        admins = { oId },
+        invites = {},
     } )
     chatBox.group.groupIDCounter = chatBox.group.groupIDCounter + 1
     chatBox.group.saveGroups()
@@ -96,15 +96,15 @@ function chatBox.group.handleInvites( group )
             local ply = player.GetBySteamID( k )
             if not ply then continue end
             if not chatBox.group.allowed( ply ) then continue end
-            ULib.clientRPC( ply, "chatBox.channels.message", "All", 
-                chatBox.defines.colors.printYellow, "You have been invited to group \"", chatBox.manager.themeColor( "group" ), group.name, 
-                chatBox.defines.colors.printYellow, "\".\n\t", 
-                { 
-                    formatter = true, 
-                    type = "clickable", 
-                    signal = "GroupAcceptInvite-" .. group.id, 
-                    text = "Click here to join!", 
-                    colour = chatBox.defines.colors.green, 
+            ULib.clientRPC( ply, "chatBox.channels.message", "All",
+                chatBox.defines.colors.printYellow, "You have been invited to group \"", chatBox.manager.themeColor( "group" ), group.name,
+                chatBox.defines.colors.printYellow, "\".\n\t",
+                {
+                    formatter = true,
+                    type = "clickable",
+                    signal = "GroupAcceptInvite-" .. group.id,
+                    text = "Click here to join!",
+                    colour = chatBox.defines.colors.green,
                 }
             )
             timer.Simple( chatBox.group.inviteExpires + 0.5, function()
@@ -324,7 +324,7 @@ net.Receive( "BC_groupAccept", function( len, ply )
             chatBox.group.groupRankChange( group, ply:SteamID(), 2, 1 )
         else
             group.invites[sId] = nil
-            ULib.clientRPC( ply, "chatBox.channels.message", "All", 
+            ULib.clientRPC( ply, "chatBox.channels.message", "All",
                 chatBox.defines.colors.printYellow, "Sorry, this invite has expired or is no longer valid." )
         end
         break

@@ -31,19 +31,19 @@ local function isLabel( elem )
 end
 
 local function orderChars( s, e )
-    if s.line < e.line then 
+    if s.line < e.line then
         return s, e
     elseif s.line > e.line then
         return e, s
     end
 
-    if s.element < e.element then 
+    if s.element < e.element then
         return s, e
     elseif s.element > e.element then
         return e, s
     end
 
-    if s.char > e.char then 
+    if s.char > e.char then
         return e, s
     end
 
@@ -107,7 +107,7 @@ function RICHERTEXT:Init()
         end
         local scrollBar = self.scrollPanel:GetVBar()
         self.showSTBButton = scrollBar.Scroll < scrollBar.CanvasSize - 100
-        
+
         if self.STBButtonAnim < 100 and self.showSTBButton then
             if self.STBButtonAnim == 0 then
                 self.scrollToBottomBtn:Show()
@@ -232,8 +232,8 @@ function RICHERTEXT:Init()
 
     hook.Add( "RICHERTEXT:CopyText", "CopyText - " .. self.id, function()
         local t = self:GetSelectedText()
-        if t then 
-            return t 
+        if t then
+            return t
         end
     end )
 
@@ -311,13 +311,13 @@ function RICHERTEXT:Reload() -- Clear the text, reset a bunch of shit, then run 
     self.graphics = {}
     self.yRemoved = 0
 
-    local funcs = { 
-        ["text"] = RICHERTEXT.AppendText, 
-        ["col"] = RICHERTEXT.InsertColorChange, 
-        ["clickStart"] = RICHERTEXT.InsertClickableTextStart, 
-        ["clickEnd"] = RICHERTEXT.InsertClickableTextEnd, 
-        ["image"] = RICHERTEXT.AddImage, 
-        ["gif"] = RICHERTEXT.AddGif, 
+    local funcs = {
+        ["text"] = RICHERTEXT.AppendText,
+        ["col"] = RICHERTEXT.InsertColorChange,
+        ["clickStart"] = RICHERTEXT.InsertClickableTextStart,
+        ["clickEnd"] = RICHERTEXT.InsertClickableTextEnd,
+        ["image"] = RICHERTEXT.AddImage,
+        ["gif"] = RICHERTEXT.AddGif,
         ["decorations"] = RICHERTEXT.SetDecorations
     }
 
@@ -368,7 +368,7 @@ function RICHERTEXT:setClickEvents( panel )
     local prevMousePressed = panel.OnMousePressed
     function panel:OnMousePressed( keyCode )
         if keyCode == MOUSE_LEFT then
-            if this.lines and #this.lines >= 1 and #this.lines[1] >= 1 then 
+            if this.lines and #this.lines >= 1 and #this.lines[1] >= 1 then
                 hook.Run( "RICHERTEXT:NewTextSelection", this.id )
                 if CurTime() - this.select.lastClick < 0.2 then
                     this.select.clickCounter = this.select.clickCounter + 1
@@ -438,9 +438,9 @@ function RICHERTEXT:setClickEvents( panel )
                     local sChar = this.select.startChar
                     local line = this.lines[sChar.line]
 
-                    this.select.endChar = { 
-                        line = sChar.line, 
-                        element = #line, 
+                    this.select.endChar = {
+                        line = sChar.line,
+                        element = #line,
                         char = ( isLabel( line[#line] ) and ( #line[#line]:GetText() ) or 2 )
                     }
                     this.select.hasSelection = true
@@ -523,7 +523,7 @@ function RICHERTEXT:GetSelectedText()
         local sChar, eChar = 1, #lineTxt
 
         if l == s.line then
-            if not isLabel( line[s.element] ) and s.char == 2 then 
+            if not isLabel( line[s.element] ) and s.char == 2 then
                 sChar = line[s.element].rawTextIdx + #line[s.element].rawText
             else
                 sChar = line[s.element].rawTextIdx + s.char - 1
@@ -708,7 +708,7 @@ function RICHERTEXT:MakeClickable( element )
     --local oldPress = element.OnMousePressed  -- dont rly want old func called tbh
     function element:OnMousePressed( keyCode )
         --oldPress(self, keyCode)
-        if keyCode == MOUSE_LEFT then 
+        if keyCode == MOUSE_LEFT then
             if rText.EventHandler then
 
                 if CurTime() - rText.lastClick < 0.2 then
@@ -719,7 +719,7 @@ function RICHERTEXT:MakeClickable( element )
                 rText.lastClick = CurTime()
 
                 local tName = "RICHERTEXT_elementClickTimer"
-                if not timer.Exists( tName ) then 
+                if not timer.Exists( tName ) then
                     timer.Create( tName, 0.2, 1, function()
                         if rText.clickCounter == 1 then
                             rText:EventHandler( "LeftClick", clickVal )
@@ -783,7 +783,7 @@ end
 function RICHERTEXT:AddLabel()
     local line = self.lines[#self.lines] -- Get last line
     local idx = self:PrepNewElement()
-    
+
     local label = vgui.Create( "DLabel", self.scrollPanel:GetCanvas() ) -- Make a fokin label
     label:SetFont( self:GetLabelFont() )
     if self.doFormatting then
@@ -821,7 +821,7 @@ function RICHERTEXT:AddLabel()
     if self.NewElement then
         self:NewElement( label, #self.lines ) -- Call the new element func
     end
-    
+
     table.insert( line, label ) -- pop new label in line stack
     local scrollBar = self.scrollPanel:GetVBar()
     if scrollBar.Scroll >= scrollBar.CanvasSize - 1 then -- If current scroll at bottom, update for new message
@@ -935,7 +935,7 @@ function RICHERTEXT:AppendText( txt, noLog ) --Deals with the tumour that is tab
         end
         self:AddLabel()
     end
-    
+
 end
 
 function RICHERTEXT:AppendTextNoTab( txt ) --This func cannot handle tabs
@@ -950,7 +950,7 @@ function RICHERTEXT:AppendTextNoTab( txt ) --This func cannot handle tabs
 
         if char == "\n" then --Add character to curText buffer until reach a newline char
             local lastElement = line[#line] -- This will exist due to previous AddElement in this func
-            if not isLabel( lastElement ) then 
+            if not isLabel( lastElement ) then
                 self:AddLabel()
                 lastElement = line[#line]
             end
@@ -976,8 +976,8 @@ function RICHERTEXT:AppendTextNoTab( txt ) --This func cannot handle tabs
         end
     end
     if #curText > 0 then -- If no newline at end, buffer will still have text
-        local lastElement = line[#line] 
-        if not isLabel( lastElement ) then 
+        local lastElement = line[#line]
+        if not isLabel( lastElement ) then
             self:AddLabel()
             lastElement = line[#line]
         end
@@ -995,7 +995,7 @@ function RICHERTEXT:InsertColorChange( r, g, b, a )
     else
         self.textColor = Color( r, g, b, a )
     end
-    
+
     self:AddLabel()
 end
 function RICHERTEXT:InsertClickableTextStart( sigVal )
@@ -1068,13 +1068,13 @@ function RICHERTEXT:AddGraphic( element, rawText )
     if self.NewElement then
         self:NewElement( element, #self.lines ) -- Call the new element func
     end
-    
+
     local scrollBar = self.scrollPanel:GetVBar()
     if scrollBar.Scroll >= scrollBar.CanvasSize - 1 then -- If current scroll at bottom, update for new message
         self:scrollToBottom()
     end
 
-    element:SetTooltip( rawText[#rawText] == "\n" and string.sub( rawText, 1, #rawText - 1 ) or rawText ) 
+    element:SetTooltip( rawText[#rawText] == "\n" and string.sub( rawText, 1, #rawText - 1 ) or rawText )
 
     table.insert( self.graphics, element )
 
@@ -1099,7 +1099,7 @@ function RICHERTEXT:AddGif( ... )
 end
 
 function RICHERTEXT:CreateGraphic( t, path, text, sizeX, sizeY, imOffsetX, imOffsetY, imSizeX, imSizeY )
-    if not self.doFormatting or not self.showGraphics then 
+    if not self.doFormatting or not self.showGraphics then
         self:AppendText( text, true )
         return
     end

@@ -39,7 +39,7 @@ function RTG:UpdateColor()
 end
 
 function RTG:SetSubImage( x, y, w, h )
-    if x == nil then 
+    if x == nil then
         self.useOffset = false
     else
         self.offset.x = x
@@ -60,7 +60,7 @@ function RTG:UpdateGraphic()
     if self.graphic then self.graphic:Remove() end
     if not self.doRender then return end
     if not self.path or not self.type then return end
-    
+
     if self.type == "image" then
         local g = vgui.Create( "DImage", self )
         g:Dock( FILL )
@@ -72,7 +72,7 @@ function RTG:UpdateGraphic()
         g.useOffset = self.useOffset
 
         function g:Paint( w, h )
-            
+
             if ( !self.m_Material ) then return true end
 
             surface.SetMaterial( self.m_Material )
@@ -85,7 +85,7 @@ function RTG:UpdateGraphic()
                 local sx, sy = self.m_Material:Width(), self.m_Material:Height()
 
                 local u0, u1, v0, v1 = self.offset.x / sx, self.offset.y / sy, ( self.offset.x + self.offset.w ) / sx, ( self.offset.y + self.offset.h ) / sy
-                
+
                 surface.DrawTexturedRectUV( 0, 0, w, h, u0, u1, v0, v1 )
             end
         end
@@ -95,7 +95,7 @@ function RTG:UpdateGraphic()
     else
         local g = vgui.Create( "DHTML", self )
         g:Dock( FILL )
-        g:SetHTML( 
+        g:SetHTML(
             [[
 				<style> 
 					body, div, img {

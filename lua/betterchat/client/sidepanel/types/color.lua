@@ -84,9 +84,9 @@ local function openColorMixer( data, setting )
 
     local lastDown = false
     timer.Create( "BC_colorHideTimer", 1 / 30, 0, function()
-        if not input.IsMouseDown( MOUSE_LEFT ) and not input.IsMouseDown( MOUSE_RIGHT ) then 
+        if not input.IsMouseDown( MOUSE_LEFT ) and not input.IsMouseDown( MOUSE_RIGHT ) then
             lastDown = false
-            return 
+            return
         end
         if lastDown then return end
         lastDown = true

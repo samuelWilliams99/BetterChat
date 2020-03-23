@@ -155,7 +155,7 @@ function f.formatEmotes( tab )
     if not chatBox.images.emoteLookup then
         return tab
     end
-    
+
     while madeChange do
         madeChange = false
         loopCounter = loopCounter + 1
@@ -186,7 +186,7 @@ function f.formatEmotes( tab )
                     if isShort then
                         if not chatBox.settings.getValue( "convertEmotes" ) then continue end
                         if s > 1 then
-                            if s > 2 then 
+                            if s > 2 then
                                 if inpStr[s - 1] ~= " " then
                                     if not ( inpStr[s - 1] == "\\" and inpStr[s - 2] == " " ) then continue end
                                 end
@@ -196,14 +196,14 @@ function f.formatEmotes( tab )
                         end
                         if e < #inpStr and inpStr[e + 1] ~= " " then continue end
                     end
-                    
+
                     found = true
 
                     -- push string start to s
                     -- push image table
                     -- set string to e to end
-                    
-                    if s > 1 and inpStr[s - 1] == "\\" then 
+
+                    if s > 1 and inpStr[s - 1] == "\\" then
                         table.insert( newTab, string.sub( inpStr, 1, s - 2 ) )
                         table.insert( newTab, { formatter = true, type = "text", text = string.sub( inpStr, s, e ) } )
                     else
@@ -212,7 +212,7 @@ function f.formatEmotes( tab )
                         table.insert( newTab, { formatter = true, type = "image", sheet = data.sheet, idx = data.idx, text = str } )
                     end
                     inpStr = string.sub( inpStr, e + 1, #inpStr )
-                    
+
                     madeChange = true
                     break
                 end
@@ -236,9 +236,9 @@ local function backTrackModifier( tab, state, key )
         if not ( istable( v ) and v.formatter and v.type == "decoration" and v.modifierType == key ) then
             continue
         end
-        tab[k] = { 
-            formatter = true, 
-            type = "text", 
+        tab[k] = {
+            formatter = true,
+            type = "text",
             text = v.text
         }
         break
@@ -257,10 +257,10 @@ end
 
 function f.formatModifiers( tab, ply )
     local newTab = {}
-    local state = { 
-        bold = false, 
-        underline = false, 
-        strike = false, 
+    local state = {
+        bold = false,
+        underline = false,
+        strike = false,
         italic = false
     }
     for k, v in pairs( tab ) do
@@ -276,8 +276,8 @@ function f.formatModifiers( tab, ply )
         backTrackModifier( newTab, state, k )
     end
 
-    table.insert( newTab, { 
-        formatter = true, 
+    table.insert( newTab, {
+        formatter = true,
         type = "decoration"
     } )
     return newTab
@@ -291,10 +291,10 @@ __underline__
 ~~strike~~
 ]]
 
-local modifierKeyMap = { 
-    ["~~"] = "strike", 
-    ["**"] = "bold", 
-    ["__"] = "underline", 
+local modifierKeyMap = {
+    ["~~"] = "strike",
+    ["**"] = "bold",
+    ["__"] = "underline",
     ["*"] = "italic"
 }
 
@@ -335,10 +335,10 @@ function f.formatModifiersSingle( txt, state, allowed )
         txt = string.sub( txt, e )
         -- Make the decoration modifier
         state[key] = not state[key]
-        local elem = { 
-            formatter = true, 
-            type = "decoration", 
-            modifierType = key, 
+        local elem = {
+            formatter = true,
+            type = "decoration",
+            modifierType = key,
             text = c
         }
         table.Merge( elem, state )
@@ -399,7 +399,7 @@ function f.formatSpecialWords( text, tab )
             local prevChar = text[s - 1]
             if not table.HasValue( { " ", "'", "\"", "*", "_", "~" }, prevChar ) then
                 s, e, v, n = getSpecialWord( text, e + 1 )
-                continue 
+                continue
             end
         end
         if e < #text then
@@ -413,7 +413,7 @@ function f.formatSpecialWords( text, tab )
                     continue
                 end
             end
-                    
+
         end
         table.insert( tab, string.sub( text, 0, s - 1 ) )
         if type( n ) == "string" then
@@ -423,7 +423,7 @@ function f.formatSpecialWords( text, tab )
             table.insert( tab, { formatter = true, type = "escape" } ) --escape pop from ply name
         end
         table.insert( tab, n )
-        
+
         table.insert( tab, { defaultColor = true } )
         text = string.sub( text, e + 1, -1 )
         s, e, v, n = getSpecialWord( text )
@@ -491,7 +491,7 @@ function f.defaultFormatMessage( ply, text, teamChat, dead, col1, col2, data )
             table.insert( tab, chatBox.defines.colors.teamGreen )
             table.insert( tab, "(TEAM) " )
         end
-        
+
         if type( ply ) == "Player" and ply:IsValid() then
             table.insert( tab, GAMEMODE:GetTeamColor( ply ) )
             table.insert( tab, ply )
@@ -526,7 +526,7 @@ function f.onPlayerSayHook( ... )
     for priority = -2, 2 do
         for k, v in pairs( chatBox.overload.hooks.OnPlayerChat ) do
             if type( v ) == "function" then
-                v = { 
+                v = {
                     [0] = { fn = v }
                 }
             end
@@ -592,7 +592,7 @@ function f.print( ... )
             end
             if not isPly then
                 local tab = f.convertLinks( v )
-                if #tab ~= 1 or tab[1] ~= v then 
+                if #tab ~= 1 or tab[1] ~= v then
                     table.remove( data, k )
                     for l = #tab, 1, -1 do
                         table.insert( data, k, tab[l] )

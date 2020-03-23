@@ -1,17 +1,17 @@
 --add tracked states, idx is name (same as value in setting), func is how to get cur state, must return bool
-local trackedStates = { 
-    jailed = function( ply ) return asBool( ply.jail ) end, 
-    inGod = function( ply ) return ply:HasGodMode() end, 
-    isFrozen = function( ply ) return ply.frozen end, 
-    isRagdolled = function( ply ) return ply.ragdoll end, 
-    isChatEnabled = function( ply ) return chatBox.base.chatBoxEnabled[ply] end, 
-    isMuted = function( ply ) return ply:GetNWBool( "ulx_muted", false ) end, 
+local trackedStates = {
+    jailed = function( ply ) return asBool( ply.jail ) end,
+    inGod = function( ply ) return ply:HasGodMode() end,
+    isFrozen = function( ply ) return ply.frozen end,
+    isRagdolled = function( ply ) return ply.ragdoll end,
+    isChatEnabled = function( ply ) return chatBox.base.chatBoxEnabled[ply] end,
+    isMuted = function( ply ) return ply:GetNWBool( "ulx_muted", false ) end,
 }
 
-local onChanges = { 
+local onChanges = {
     isChatEnabled = function( ply, newVal )
         ULib.clientRPC( chatBox.base.getEnabledPlayers(), "chatBox.sidePanel.members.reloadAll" )
-    end, 
+    end,
 }
 
 --dont touch

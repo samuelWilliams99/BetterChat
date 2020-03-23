@@ -160,7 +160,7 @@ function chatBox.sidePanel.create( name, width, data )
             g.frame:SetPos( px, py )
         end
 
-        if not chatBox.base.isOpen then 
+        if not chatBox.base.isOpen then
             s.isOpen = false
         end
 
@@ -225,17 +225,17 @@ function chatBox.sidePanel.create( name, width, data )
     end
     function btn:Paint( w, h )
         draw.RoundedBox( 0, 0, 0, w, h, chatBox.defines.theme.foreground )
-        local cross1 = { 
-            { x = 2, y = 5 }, 
-            { x = 5, y = 2 }, 
-            { x = 18, y = 15 }, 
-            { x = 15, y = 18 }, 
+        local cross1 = {
+            { x = 2, y = 5 },
+            { x = 5, y = 2 },
+            { x = 18, y = 15 },
+            { x = 15, y = 18 },
         }
-        local cross2 = { 
-            { x = 2, y = 15 }, 
-            { x = 15, y = 2 }, 
-            { x = 18, y = 5 }, 
-            { x = 5, y = 18 }, 
+        local cross2 = {
+            { x = 2, y = 15 },
+            { x = 15, y = 2 },
+            { x = 18, y = 5 },
+            { x = 5, y = 18 },
         }
 
         surface.SetDrawColor( chatBox.defines.theme.sidePanelAccent )
@@ -261,7 +261,7 @@ function chatBox.sidePanel.createChild( pName, name )
         self:SetPos( 4 + 5, 27 + 5 )
         oldLayout( self )
     end
-    
+
     table.insert( g.panels, { Name = name, Panel = p } )
     p:Hide()
     return p

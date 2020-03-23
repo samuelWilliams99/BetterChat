@@ -34,8 +34,8 @@ function chatBox.sidePanel.renderSettingFuncs.string( sPanel, panel, data, y, w,
     function textEntry:AllowInput( char )
         local txt = self:GetText()
         if self.trim then
-            if #txt < 1 and char == " " then 
-                return true 
+            if #txt < 1 and char == " " then
+                return true
             end
         end
         if self.limit then

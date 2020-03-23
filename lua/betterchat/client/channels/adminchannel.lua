@@ -1,24 +1,24 @@
 chatBox.admin = {}
-chatBox.admin.defaultChannel = { 
-    name = "Admin", 
-    icon = "shield.png", 
+chatBox.admin.defaultChannel = {
+    name = "Admin",
+    icon = "shield.png",
     send = function( self, txt )
         net.Start( "BC_AM" )
         net.WriteString( txt )
         net.SendToServer()
-    end, 
-    doPrints = false, 
-    addNewLines = true, 
+    end,
+    doPrints = false,
+    addNewLines = true,
     allFunc = function( self, tab, idx )
         table.insert( tab, idx, chatBox.defines.theme.admin )
         table.insert( tab, idx + 1, "(ADMIN) " )
-    end, 
+    end,
     openOnStart = function()
         return chatBox.admin.allowed()
-    end, 
-    runCommandSeparately = true, 
-    hideChatText = true, 
-    textEntryColor = chatBox.defines.theme.adminTextEntry, 
+    end,
+    runCommandSeparately = true,
+    hideChatText = true,
+    textEntryColor = chatBox.defines.theme.adminTextEntry,
     position = 6,
 }
 chatBox.admin.buttonEnabled = false
@@ -79,8 +79,8 @@ function chatBox.admin.addChannel()
     end
     if channel.needsData then
         for k, v in pairs( chatBox.admin.defaultChannel ) do
-            if channel[k] == nil then 
-                channel[k] = v 
+            if channel[k] == nil then
+                channel[k] = v
             end
         end
         channel.needsData = nil
@@ -124,7 +124,7 @@ hook.Add( "PostGamemodeLoaded", "BC_RPAdminOverload", function()
         net.Receive( "FAdmin_ReceiveAdminMessage", function( len )
             local ply = net.ReadEntity()
             local text = net.ReadString()
-            
+
             if not chatBox.base.enabled then
 
                 local Team = ply:IsPlayer() and ply:Team() or 1

@@ -142,7 +142,7 @@ hook.Add( "BC_postInitPanels", "BC_postInitChannels", function()
     chatBox.channels.wackyString = "┘♣├ôÒ"
 
     updateRPListener()
-    
+
 end )
 
 hook.Add( "BC_channelChanged", "BC_changeRPListener", function()
@@ -182,7 +182,7 @@ hook.Add( "BC_keyCodeTyped", "BC_sendMessageHook", function( code, ctrl, shift )
         end
         chatBox.input.historyIndex = 0
         chatBox.input.historyInput = ""
-        
+
         hook.Run( "BC_messageSent", channel, txt )
         chatBox.base.closeChatBox()
         return true
@@ -194,9 +194,9 @@ hook.Add( "BC_keyCodeTyped", "BC_sendMessageHook", function( code, ctrl, shift )
 
             local tabIdx = table.KeyFromValue( tabs, activeTab )
 
-            if not tabIdx then 
+            if not tabIdx then
                 print( "(ERROR) TAB INDEX UNDEFINED" )
-                return true 
+                return true
             end --Shouldnt ever happen but would rather nothing over an error
 
             if not shift then
@@ -220,11 +220,11 @@ hook.Add( "BC_keyCodeTyped", "BC_sendMessageHook", function( code, ctrl, shift )
     end
 end )
 
-hook.Add( "BC_showChat", "BC_showChannelElements", function() 
+hook.Add( "BC_showChat", "BC_showChannelElements", function()
     chatBox.graphics.derma.psheet.tabScroller:Show()
     chatBox.graphics.derma.channelButton:Show()
 end )
-hook.Add( "BC_hideChat", "BC_hideChannelElements", function() 
+hook.Add( "BC_hideChat", "BC_hideChannelElements", function()
     chatBox.graphics.derma.psheet.tabScroller:Hide()
     chatBox.graphics.derma.channelButton:Hide()
 end )
@@ -280,7 +280,7 @@ function chatBox.channels.message( channelNames, ... )
         channelNames = { channelNames } --if passed single channel, pack into array
     end
 
-    
+
     local editIdx
     local useEditFunc = true
 
@@ -328,7 +328,7 @@ function chatBox.channels.message( channelNames, ... )
         if channel.replicateAll then continue end
         table.insert( channels, channel )
     end
-    
+
     local dataAll = table.Copy( data )
 
     if editChan and useEditFunc then
@@ -381,8 +381,8 @@ function chatBox.channels.messageDirect( channel, controller, ... )
 
     local doSound = true
     if type( controller ) == "table" and ( controller.isController or controller.controller ) then --if they gave a controller
-        if controller.doSound ~= nil then 
-            doSound = controller.doSound 
+        if controller.doSound ~= nil then
+            doSound = controller.doSound
         end
     else
         table.insert( data, 1, controller )
@@ -518,7 +518,7 @@ function chatBox.channels.remove( channel )
     if not channel.hideInitMessage then
         local chanName = channel.hideRealName and channel.displayName or channel.name
         if channel.name ~= "All" and chatBox.settings.getValue( "printChannelEvents" ) then
-            chatBox.channels.messageDirect( "All", chatBox.defines.colors.printBlue, "Channel ", 
+            chatBox.channels.messageDirect( "All", chatBox.defines.colors.printBlue, "Channel ",
                 chatBox.defines.theme.channels, chanName, chatBox.defines.colors.printBlue, " removed." )
         end
     end
@@ -577,7 +577,7 @@ function chatBox.channels.add( data )
         rtOldLayout( self )
     end
 
-    function richText:EventHandler( eventType, data, m ) 
+    function richText:EventHandler( eventType, data, m )
         local idx = string.find( data, "-" )
         local dataType = string.sub( data, 1, idx - 1 )
         local dataArg = string.sub( data, idx + 1, -1 );
@@ -658,7 +658,7 @@ function chatBox.channels.add( data )
                 local col = self:GetTextColor()
                 local dt = CurTime() - self.timeCreated
                 local fadeTime = chatBox.settings.getValue( "fadeTime" )
-                if fadeTime == 0 then 
+                if fadeTime == 0 then
                     col.a = 255
                 elseif dt > fadeTime + 1 then
                     col.a = 0
@@ -666,7 +666,7 @@ function chatBox.channels.add( data )
                     dt = math.Max( dt - fadeTime, 0 )
                     col.a = math.Max( 255 - dt * 255, 0 )
                 end
-                
+
                 self:SetTextColor( col )
             end
         end
@@ -726,7 +726,7 @@ function chatBox.channels.add( data )
     function v.Tab:Paint( w, h )
         local a = self:IsActive()
         local col = a and chatBox.defines.theme.foreground or chatBox.defines.theme.foregroundLight
-        
+
         draw.RoundedBox( 0, 2, 0, w - 4, h, col )
         if self:GetText() ~= self.data.displayName then
             self:SetText( self.data.displayName )
@@ -792,11 +792,11 @@ function chatBox.channels.add( data )
 
         local function createdPrint()
             if not data.replicateAll then
-                chatBox.channels.messageDirect( data.name, chatBox.defines.colors.printBlue, "Channel ", 
+                chatBox.channels.messageDirect( data.name, chatBox.defines.colors.printBlue, "Channel ",
                     chatBox.defines.theme.channels, chanName, chatBox.defines.colors.printBlue, " created." )
             end
             if data.name ~= "All" then
-                chatBox.channels.messageDirect( "All", chatBox.defines.colors.printBlue, "Channel ", 
+                chatBox.channels.messageDirect( "All", chatBox.defines.colors.printBlue, "Channel ",
                     chatBox.defines.theme.channels, chanName, chatBox.defines.colors.printBlue, " created." )
             end
         end
@@ -810,7 +810,7 @@ end
 
 function chatBox.channels.focus( channel )
     local tabName
-    if type( channel ) == "string" then 
+    if type( channel ) == "string" then
         tabName = channel
     else
         tabName = channel.name

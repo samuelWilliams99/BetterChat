@@ -62,8 +62,8 @@ function chatBox.sidePanel.renderSettingFuncs.options( sPanel, panel, data, y, w
     function comboBox:OnSelect( idx, name, val )
         local changed = self.data[self.val] ~= val
         self.data[self.val] = val
-        
-        if changed then 
+
+        if changed then
             if setting.onChange then setting.onChange( data ) end
             chatBox.data.saveData()
         end

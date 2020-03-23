@@ -1,18 +1,18 @@
 chatBox.logs = {}
-chatBox.logs.defaultChannel = { 
-    name = "Logs", 
-    icon = "book_open.png", 
-    noSend = true, 
-    doPrints = false, 
-    addNewLines = true, 
+chatBox.logs.defaultChannel = {
+    name = "Logs",
+    icon = "book_open.png",
+    noSend = true,
+    doPrints = false,
+    addNewLines = true,
     allFunc = function( self, tab, idx )
         table.insert( tab, idx, chatBox.defines.theme.logs )
         table.insert( tab, idx + 1, "[LOGS] " )
-    end, 
+    end,
     openOnStart = function()
         return chatBox.logs.allowed()
-    end, 
-    runCommandSeparately = true, 
+    end,
+    runCommandSeparately = true,
     showTimestamps = true,
     position = 7,
 }
@@ -87,8 +87,8 @@ function chatBox.logs.addChannel()
     end
     if channel.needsData then
         for k, v in pairs( chatBox.logs.defaultChannel ) do
-            if channel[k] == nil then 
-                channel[k] = v 
+            if channel[k] == nil then
+                channel[k] = v
             end
         end
         channel.needsData = nil

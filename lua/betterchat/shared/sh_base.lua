@@ -125,7 +125,7 @@ concommand.Add( "bc_disable", function()
     if chatBox.base.enabled then
         chatBox.base.disableChatBox()
     end
-    chat.AddText( chatBox.defines.theme.betterChat, "BetterChat ", 
+    chat.AddText( chatBox.defines.theme.betterChat, "BetterChat ",
         chatBox.defines.colors.printBlue, "has been disabled. Go to Q->Options->BetterChat (or run bc_enable) to enable it." )
 end, true, "Disables BetterChat" )
 

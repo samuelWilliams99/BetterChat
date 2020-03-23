@@ -114,7 +114,7 @@ hook.Add( "BC_initPanels", "BC_initImages", function()
     function emoteMenu:GetDeleteSelf()
         return false
     end
-    function emoteMenu:Paint( w, h ) 
+    function emoteMenu:Paint( w, h )
         surface.SetDrawColor( chatBox.defines.gray( 190 ) )
         surface.DrawRect( 0, 0, w, h )
     end
@@ -151,7 +151,7 @@ hook.Add( "BC_initPanels", "BC_initImages", function()
 end )
 
 hook.Add( "BC_showChat", "BC_showEmoteButton", function() chatBox.graphics.derma.emoteButton:Show() end )
-hook.Add( "BC_hideChat", "BC_hideEmoteButton", function() 
+hook.Add( "BC_hideChat", "BC_hideEmoteButton", function()
     chatBox.graphics.derma.emoteButton:Hide()
     chatBox.graphics.derma.emoteMenu:Hide()
 end )
@@ -293,7 +293,7 @@ end
 
 function chatBox.images.addEmote( richText, obj )
     local im = obj.sheet.sprites[obj.idx]
-    richText:AddImage( obj.sheet.path, obj.text, 20, 20, im.posX * obj.sheet.spriteWidth, im.posY * obj.sheet.spriteHeight, obj.sheet.spriteWidth, obj.sheet.spriteHeight )        
+    richText:AddImage( obj.sheet.path, obj.text, 20, 20, im.posX * obj.sheet.spriteWidth, im.posY * obj.sheet.spriteHeight, obj.sheet.spriteWidth, obj.sheet.spriteHeight )
 end
 
 function chatBox.images.addGif( richText, obj )

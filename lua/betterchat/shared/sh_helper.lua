@@ -39,7 +39,7 @@ function chatHelper.nEq( a, b )
 end
 
 function chatHelper.compose( a, b )
-    return function( ... ) 
+    return function( ... )
         return a( b( ... ) )
     end
 end
@@ -231,8 +231,8 @@ end
 
 function printA( ... )
     local d = { ... }
-    if #d == 0 then 
-        print(nil)
+    if #d == 0 then
+        print( nil )
         return
     end
     for k, v in ipairs( d ) do
@@ -253,14 +253,14 @@ end
 
 local function idxValid( a, b )
     if not a then return false end
-    local valid = asBool( string.match(b, "^%a%w-$") )
+    local valid = asBool( string.match( b, "^%a%w-$" ) )
     return valid
 end
 
 function chatHelper.index( tab, idx )
     local idxs = string.Explode( "[./]", idx, true )
     local allValid = table.reduce( idxs, idxValid, true )
-    if not allValid then 
+    if not allValid then
         error( "Malformed index " .. idx )
     end
 
@@ -311,7 +311,7 @@ end
 
 function chatHelper.errInfo( str, c )
     local pre = string.sub( str, 1, c )
-    local line = chatHelper.snd( string.gsub(pre, "\n", "") ) + 1
+    local line = chatHelper.snd( string.gsub( pre, "\n", "" ) ) + 1
     local col = c
     local nextN = string.find( str, "\n" ) - 1
     local lineStr = string.sub( str, 1, nextN )
@@ -328,34 +328,34 @@ end
 
 local index = {}
 function chatHelper.getProxy( x )
-    if type(x) ~= "table" then return x end
+    if type( x ) ~= "table" then return x end
     if ( debug.getmetatable( x ) or {} ).__IsProxy then return x end
 
     local newX = {}
     newX[index] = x
-    
+
     local oldmt = getmetatable( x ) or {}
     local mt = {}
-    
+
     for k, v in pairs( oldmt ) do
         if isfunction( v ) then
             local f_k = k
-            mt[k] = function( self, ... ) 
-                return oldmt[f_k]( self[index], ... ) 
+            mt[k] = function( self, ... )
+                return oldmt[f_k]( self[index], ... )
             end
         else
             mt[k] = oldmt[k]
         end
     end
-    
+
     function mt:__index( k )
         return self[index][k]
     end
-    
+
     function mt:__newindex( k, v )
         self[index][k] = v
     end
-    
+
     mt.__metatable = oldmt
     function mt:__pairs()
         return pairs( self[index] )
@@ -367,7 +367,7 @@ function chatHelper.getProxy( x )
         return type( x )
     end
     mt.__IsProxy = true
-    
+
     debug.setmetatable( newX, mt )
     return newX
 end

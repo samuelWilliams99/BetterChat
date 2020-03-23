@@ -1,15 +1,15 @@
 local NICESCROLLPANEL = {}
 
-local upArrowLeft = { 
-    { x = 0, y = 6 }, 
-    { x = 8, y = 0 }, 
-    { x = 11, y = 3 }, 
-    { x = 3, y = 9 }, 
-}    
-local upArrowRight = { 
-    { x = 8, y = 5 }, 
-    { x = 11, y = 3 }, 
-    { x = 15, y = 7 },     
+local upArrowLeft = {
+    { x = 0, y = 6 },
+    { x = 8, y = 0 },
+    { x = 11, y = 3 },
+    { x = 3, y = 9 },
+}
+local upArrowRight = {
+    { x = 8, y = 5 },
+    { x = 11, y = 3 },
+    { x = 15, y = 7 },
     { x = 12, y = 9 }
 }
 

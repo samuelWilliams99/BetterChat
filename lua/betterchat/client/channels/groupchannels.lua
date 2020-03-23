@@ -2,24 +2,24 @@ chatBox.group = {}
 chatBox.group.groups = {}
 chatBox.group.buttonEnabled = false
 
-chatBox.group.defaultChannel = { 
-    init = false, 
-    displayName = "[Loading]", 
-    icon = "group.png", 
-    addNewLines = true, 
+chatBox.group.defaultChannel = {
+    init = false,
+    displayName = "[Loading]",
+    icon = "group.png",
+    addNewLines = true,
     send = function( self, txt )
         net.Start( "BC_GM" )
         net.WriteUInt( self.group.id, 16 )
         net.WriteString( txt )
         net.SendToServer()
-    end, 
+    end,
     allFunc = function( self, tab, idx )
         table.insert( tab, idx, chatBox.defines.theme.group )
         table.insert( tab, idx + 1, "(" .. self.displayName .. ") " )
-    end, 
-    tickMode = 0, 
-    popMode = 1, 
-    hideRealName = true, 
+    end,
+    tickMode = 0,
+    popMode = 1,
+    hideRealName = true,
     postAdd = function( data, panel )
         local membersBtn = vgui.Create( "DButton", panel )
         membersBtn:SetPos( chatBox.graphics.derma.chatFrame:GetWide() - 59, 34 )
@@ -42,9 +42,9 @@ chatBox.group.defaultChannel = {
             surface.SetDrawColor( self:GetColor() )
             surface.DrawTexturedRect( 0, 0, w, h )
         end
-    end, 
-    runCommandSeparately = true, 
-    hideChatText = true, 
+    end,
+    runCommandSeparately = true,
+    hideChatText = true,
     textEntryColor = chatBox.defines.theme.groupTextEntry,
     position = 5,
 }
@@ -59,7 +59,7 @@ function chatBox.group.removeHooks()
 end
 
 hook.Add( "BC_postInitPanels", "BC_groupAddButton", function() -- add group change check
-    if chatBox.group.allowed() then 
+    if chatBox.group.allowed() then
         chatBox.group.enable()
     else
         chatBox.group.removeHooks()
@@ -67,7 +67,7 @@ hook.Add( "BC_postInitPanels", "BC_groupAddButton", function() -- add group chan
 end )
 
 hook.Add( "BC_userAccessChange", "BC_groupChannelCheck", function()
-    if chatBox.group.allowed() then 
+    if chatBox.group.allowed() then
         chatBox.group.enable()
     else
         chatBox.group.disable()
@@ -181,7 +181,7 @@ function chatBox.group.onUpdate()
                 chatBox.group.deleteGroup( group )
                 return
             end
-            
+
         end
     end
     if not foundLocal then
@@ -252,9 +252,9 @@ function chatBox.group.deleteGroup( group )
     if not chatBox.group.allowed() then return end
     -- table.RemoveByMember would work here
     for k, v in pairs( chatBox.group.groups ) do --table.RemoveByValue wasn't working so delete by id instead
-        if v.id == group.id then 
-            table.remove( chatBox.group.groups, k ) 
-        end 
+        if v.id == group.id then
+            table.remove( chatBox.group.groups, k )
+        end
     end
     local chan = chatBox.channels.getChannel( "Group - " .. group.id )
     if chan then
@@ -263,9 +263,9 @@ function chatBox.group.deleteGroup( group )
         end
         table.RemoveByValue( chatBox.channels.channels, chan )
     end
-    chatBox.channels.messageDirect( "All", chatBox.defines.colors.printYellow, "You have been removed from group \"", 
+    chatBox.channels.messageDirect( "All", chatBox.defines.colors.printYellow, "You have been removed from group \"",
         chatBox.defines.theme.group, group.name, chatBox.defines.colors.printYellow, "\"." )
-    chatBox.data.saveData()        
+    chatBox.data.saveData()
 end
 
 function chatBox.group.createChannel( group )
@@ -279,8 +279,8 @@ function chatBox.group.createChannel( group )
     end
     if channel.needsData then
         for k, v in pairs( chatBox.group.defaultChannel ) do
-            if channel[k] == nil then 
-                channel[k] = v 
+            if channel[k] == nil then
+                channel[k] = v
             end
         end
         channel.needsData = nil

@@ -64,7 +64,7 @@ hook.Add( "BC_keyCodeTyped", "BC_inputHook", function( code, ctrl, shift, entry 
         end
         return true
     end
-    
+
 end )
 
 hook.Add( "BC_messageCanSend", "BC_runConsoleCommand", function( channel, txt )

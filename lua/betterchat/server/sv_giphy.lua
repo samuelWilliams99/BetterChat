@@ -36,9 +36,9 @@ function chatBox.giphy.getGiphyURL( query, cb )
         return cb( false )
     end
 
-    http.Fetch( "https://api.giphy.com/v1/gifs/search?" .. encode( { 
-        api_key = key, 
-        q = query, 
+    http.Fetch( "https://api.giphy.com/v1/gifs/search?" .. encode( {
+        api_key = key,
+        q = query,
         limit = 1
     } ), function( body, _, _, code )
         local data = util.JSONToTable( body )

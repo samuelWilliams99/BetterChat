@@ -93,7 +93,7 @@ function chatBox.graphics.build()
         draw.RoundedBox( 0, 5, h - 26, w - 42, 21, col )
         --right bg
         draw.RoundedBox( 0, w - 30, h - 31, 30, 31, chatBox.defines.theme.background )
-        
+
     end
     d.chatFrame.doPaint = true
 
@@ -156,7 +156,7 @@ function chatBox.graphics.build()
         local shift = input.IsKeyDown( KEY_LSHIFT ) or input.IsKeyDown( KEY_RSHIFT )
         if code == KEY_ESCAPE then
             return true
-        end 
+        end
         return hook.Run( "BC_keyCodeTyped", code, ctrl, shift, self )
     end
     function d.textEntry:OnTextChanged()
@@ -250,7 +250,7 @@ hook.Add( "PlayerButtonDown", "BC_buttonDown", function( ply, keyCode )
     for k, v in pairs( chatBox.channels.channels ) do
         if v.openKey and v.openKey == keyCode then
             chatBox.base.openChatBox( v.name )
-            return 
+            return
         end
     end
 end )
@@ -284,7 +284,7 @@ hook.Add( "PlayerBindPress", "BC_overrideChatBind", function( ply, bind, pressed
                     local t = chatHelper.teamName( LocalPlayer() )
                     chan = "TeamOverload-" .. t
                 else
-                    return true 
+                    return true
                 end
             else
                 chan = "Team"

@@ -45,7 +45,7 @@ function chatBox.sidePanel.players.addCustomSetting( ply )
     function nameErrorLabel:Think()
         if self.errorOpacity > 0 then
             self.errorOpacity = self.errorOpacity - 3
-        else 
+        else
             self.errorOpacity = 0
         end
     end
@@ -209,7 +209,7 @@ function chatBox.sidePanel.players.addCustomSetting( ply )
     -- Cancel
     local cancelBtn = vgui.Create( "DButton", frame )
     cancelBtn:SetText( "Cancel" )
-    cancelBtn:SetSize( 100, 20 )    
+    cancelBtn:SetSize( 100, 20 )
     cancelBtn:SetPos( 5, sy - 25 )
     function cancelBtn:DoClick()
         frame:Close()
@@ -217,7 +217,7 @@ function chatBox.sidePanel.players.addCustomSetting( ply )
 
     local createBtn = vgui.Create( "DButton", frame )
     createBtn:SetText( "Create" )
-    createBtn:SetSize( 100, 20 )    
+    createBtn:SetSize( 100, 20 )
     createBtn:SetPos( sx - 100 - 5, sy - 25 )
     function createBtn:DoClick()
         --first check name exists
@@ -247,18 +247,18 @@ function chatBox.sidePanel.players.addCustomSetting( ply )
         for k = 1, #selected do
             selected[k] = selected[k]:GetColumnText( 2 )
         end
-        chatBox.sidePanel.players.createCustomSetting( { 
-            name = name:GetText(), 
-            command = command:GetText(), 
-            config = { 
-                quotes = quoteBox:GetChecked(), 
-                trunc = truncBox:GetChecked(), 
-            }, 
-            targetType = targType, 
-            selected = selected, 
-            require_confirm = confirm:GetChecked(), 
-            addToPlayerContext = plyContext:GetChecked(), 
-            call_ply = ply, 
+        chatBox.sidePanel.players.createCustomSetting( {
+            name = name:GetText(),
+            command = command:GetText(),
+            config = {
+                quotes = quoteBox:GetChecked(),
+                trunc = truncBox:GetChecked(),
+            },
+            targetType = targType,
+            selected = selected,
+            require_confirm = confirm:GetChecked(),
+            addToPlayerContext = plyContext:GetChecked(),
+            call_ply = ply,
         } )
         frame:Close()
     end
@@ -310,7 +310,7 @@ function chatBox.sidePanel.players.createCustomSetting( data )
         str = ""
         for k = 1, #cmdPlyExplode - 1 do
             str = str .. cmdPlyExplode[k]
-            
+
             str = str .. id
         end
         str = str .. cmdPlyExplode[#cmdPlyExplode]

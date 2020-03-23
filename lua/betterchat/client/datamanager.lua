@@ -4,9 +4,9 @@ local function saveFromTemplate( src, data, template )
     for k, v in pairs( template ) do
         if not v.shouldSave then continue end
         local value = src[v.value]
-        if value == v.default then continue end 
-        if v.preSave then 
-            value = v.preSave( src ) 
+        if value == v.default then continue end
+        if v.preSave then
+            value = v.preSave( src )
         end
         data[v.value] = value
     end
@@ -56,7 +56,7 @@ function chatBox.data.saveData()
     file.Write( "bc_data_cl.txt", util.TableToJSON( data ) )
 end
 
-function chatBox.data.loadData() 
+function chatBox.data.loadData()
     if not file.Exists( "bc_data_cl.txt", "DATA" ) then return end
 
     local data = util.JSONToTable( file.Read( "bc_data_cl.txt" ) )
@@ -118,17 +118,17 @@ function chatBox.data.loadData()
             chatBox.autoComplete.cmds[k] = v
         end
     end
-    
+
     if data.emoteUsage then
         table.Merge( chatBox.autoComplete.emoteUsage, data.emoteUsage )
         chatBox.images.reloadUsedEmotesMenu()
     end
 end
 
-function chatBox.data.loadEnabled() 
+function chatBox.data.loadEnabled()
     if not file.Exists( "bc_data_cl.txt", "DATA" ) then return end
     local data = util.JSONToTable( file.Read( "bc_data_cl.txt" ) )
-    if not data then 
+    if not data then
         chatBox.base.enabled = true
     else
         chatBox.base.enabled = data.enabled == nil or data.enabled
