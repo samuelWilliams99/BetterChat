@@ -1,58 +1,7 @@
-chatBox.colors = {
-    printYellow = Color( 255, 222, 102 ),
-    printBlue = Color( 137, 222, 255 ),
-    yellow = Color( 254, 254, 0 ),
-    red = Color( 255, 0, 0 ),
-    ulx = Color( 152, 212, 255 ),
-    command = Color( 190, 190, 190 ),
-    private = Color( 200, 95, 170 ),
-    purple = Color( 75, 0, 130 ),
-    white = color_white,
-    tabText = Color( 200, 200, 200, 255 ),
-    hTabText = Color( 220, 220, 220, 255 ),
-    admin = Color( 0, 255, 0 ),
-    green = Color( 0, 255, 0 ),
-    group = Color( 0, 255, 255 ),
-}
-
--- Explode a string using a pattern and return a table of { text = explodedText, sep = seperator after it }
-function string.ExplodeWithSep( pattern, str )
-    local startPos = nil
-    
-    local stopCount = 0
-    
-    local out = {}
-    repeat 
-        stopCount = stopCount + 1
-        local startPos, endPos = string.find( str, pattern )
-        if startPos ~= nil then
-            local text = string.sub( str, 0, startPos - 1 )
-            local sep = string.sub( str, startPos, endPos )
-            table.insert( out, { text = text, sep = sep } )
-            str = string.sub( str, endPos + 1 )
-        end
-    until startPos == nil or stopCount > 20
-    table.insert( out, { text = str, sep = nil } )
-    return out
-end
-
-function chatBox.PrintTable( tab, indent, done ) -- Seems some assholes like overloading PrintTable, disgustang.
-    done = done or { tab }
-    indent = indent or 0
-    local indentStr = string.rep( "\t", indent )
-    for k, v in pairs( tab ) do
-        if type( v ) == "table" and not table.HasValue( done, v ) then
-            table.insert( done, v )
-            print( indentStr .. tostring( k ) .. ":" )
-            chatBox.PrintTable( v, indent + 1, done )
-        else
-            print( indentStr .. tostring( k ) .. "\t=\t" .. tostring( v ) )
-        end
-    end
-end
+chatBox.util = {}
 
 -- Can a player run a command on a person (via ULX)
-function chatBox.canRunULX( cmd, target, ply )
+function chatBox.util.canRunULX( cmd, target, ply )
     if not ULib then return false end
     local ply = ply or LocalPlayer()
 
@@ -71,22 +20,12 @@ function chatBox.canRunULX( cmd, target, ply )
     return table.HasValue( users or {}, target )
 end
 
-function chatBox.padString( str, chars, padChar, post )
-    padChar = padChar or " "
-    str = tostring( str )
-    if post then
-        return str .. string.rep( padChar, math.max( 0, chars - #str ) )
-    else
-        return string.rep( padChar, math.max( 0, chars - #str ) ) .. str
-    end
-end
-
 if SERVER then
-    function chatBox.getRunnableULXCommands( ply )
+    function chatBox.util.getRunnableULXCommands( ply )
         local sayCmds = ULib.sayCmds
         local allCmds = {}
         for cmd, data in pairs( sayCmds ) do
-            if data.__cmd and chatBox.canRunULX( data.__cmd, nil, ply ) and cmd[1] == "!" then
+            if data.__cmd and chatBox.util.canRunULX( data.__cmd, nil, ply ) and cmd[1] == "!" then
                 table.insert( allCmds, string.sub( cmd, 0, #cmd - 1 ) )
             end
         end
@@ -95,29 +34,19 @@ if SERVER then
     end
 end
 
-function lerpCol( a, b, l )
-    return Color( Lerp( l, a.r, b.r ), Lerp( l, a.g, b.g ), Lerp( l, a.b, b.b ), Lerp( l, a.a, b.a ) )
-end
-
--- Inline unpacking for single arg
-function getFrom( idx, ... )
-    local d = { ... }
-    return d[idx]
-end
-
-function chatBox.isLetter( char )
+function chatBox.util.isLetter( char )
     return string.byte( char ) >= string.byte( "A" ) and string.byte( char ) <= string.byte( "z" )
 end
 
 -- Length treating tabs as 4 spaces
-function getChatTextLength( txt )
+function chatBox.util.getChatTextLength( txt )
     local _, count = string.gsub( txt, "\t", "" )
     return #txt + count * 3
 end
 
-function chatBox.shortenChatText( txt, len )
+function chatBox.util.shortenChatText( txt, len )
     local a = 1000
-    while getChatTextLength( txt ) > len and a > 0 do
+    while chatBox.util.getChatTextLength( txt ) > len and a > 0 do
         a = a - 1
         txt = string.sub( txt, 1, -2 )
     end
@@ -151,26 +80,33 @@ end
 local function max4( a, b, c, d ) return math.max( a + 0, b + 0, c + 0, d + 0 ) end
 local protocols = { [""] = 0, ["http://"] = 0, ["https://"] = 0, ["ftp://"] = 0 }
 
-function chatBox.getNextUrl( inputStr )
+function chatBox.util.getNextUrl( inputStr )
     local pos_start, pos_end, url, prot, subd, tld, colon, port, slash, path = 
         string.find( inputStr, "(([%w_.~!*:@&+$/?%%#-]-)(%w[-.%w]*%.)(%w+)(:?)(%d*)(/?)([%w_.~!*:@&+$/?%%#=-]*))" )
     if pos_start and protocols[prot:lower()] == ( 1 - #slash ) * #path and not string.find( subd, "%W%W" )
-    and ( colon == "" or port ~= "" and port + 0 < 65536 )
-    and ( tlds[tld:lower()] or string.find( tld, "^%d+$" ) and string.find( subd, "^%d+%.%d+%.%d+%.$" )
-    and max4( tld, string.match( subd, "^(%d+)%.(%d+)%.(%d+)%.$" ) ) < 256 ) then
+            and ( colon == "" or port ~= "" and port + 0 < 65536 )
+            and ( tlds[tld:lower()] or string.find( tld, "^%d+$" ) and string.find( subd, "^%d+%.%d+%.%d+%.$" )
+            and max4( tld, string.match( subd, "^(%d+)%.(%d+)%.(%d+)%.$" ) ) < 256 ) then
         return pos_start, pos_end, string.sub( inputStr, pos_start, pos_end )
     end
     
     pos_start, pos_end, url, prot, dom, colon, port, slash, path = 
         string.find( inputStr, "((%f[%w]%a+://)(%w[-.%w]*)(:?)(%d*)(/?)([%w_.~!*:@&+$/?%%#=-]*))" )
     if pos_start and not string.find( dom .. ".", "%W%W" )
-    and protocols[prot:lower()] == ( 1 - #slash ) * #path
-    and ( colon == "" or port ~= "" and port + 0 < 65536 ) then
+            and protocols[prot:lower()] == ( 1 - #slash ) * #path
+            and ( colon == "" or port ~= "" and port + 0 < 65536 ) then
         return pos_start, pos_end, string.sub( inputStr, pos_start, pos_end )
     end
     return nil
 end
 -- End urlFinding
+
+-- Different to IsColor, as doesn't require mt to be set
+function chatBox.util.isColor( tab )
+    return type( tab ) == "table" and type( tab.r ) == "number" and 
+        type( tab.g ) == "number" and type( tab.b ) == "number" and 
+        type( tab.a ) == "number" and #table.GetKeys( tab ) == 4
+end
 
 if CLIENT then
 
@@ -231,7 +167,7 @@ if CLIENT then
 
     local blur = Material( "pp/blurscreen" )
 
-    function chatBox.blur( panel, layers, density, alpha, w, h )
+    function chatBox.util.blur( panel, layers, density, alpha, w, h )
         local x, y = panel:LocalToScreen( 0, 0 )
         if not w then
             w, h = panel:GetSize()
@@ -249,15 +185,10 @@ if CLIENT then
         end
     end
 
-    -- Different to IsColor, as doesn't require mt to be set
-    function chatBox.isColor( tab )
-        return type( tab ) == "table" and tab.r and type( tab.r ) == "number" and tab.g and type( tab.g ) == "number" and tab.b and type( tab.b ) == "number" and tab.a and type( tab.a ) == "number" and #table.GetKeys( tab ) == 4
-    end
-
-    function chatBox.msgC( ... )
+    function chatBox.util.msgC( ... )
         local data = { ... }
 
-        local lastCol = Color( 255, 255, 255 )
+        local lastCol = chatBox.defines.colors.white
         local k = 1
         while k <= #data do
             local v = data[k]
@@ -295,21 +226,5 @@ if CLIENT then
         end
         data[#data + 1] = "\n"
         MsgC( unpack( data ) )
-    end
-
-    chatBox.materials = chatBox.materials or {}
-
-    chatBox.materials.mats = { 
-        ["icons/cog.png"] = Material( "icons/cog.png" ), 
-        ["icon16/cog.png"] = Material( "icon16/cog.png" ), 
-        ["icons/menu.png"] = Material( "icons/menu.png" ), 
-        ["icons/groupBW.png"] = Material( "icons/groupBW.png" ), 
-        ["icons/emojiButton.png"] = Material( "icons/emojiButton.png" ), 
-    }
-    function chatBox.materials.getMaterial( str )
-        if not chatBox.materials.mats[str] then
-            chatBox.materials.mats[str] = Material( str )
-        end
-        return chatBox.materials.mats[str]
     end
 end

@@ -56,6 +56,8 @@ end
 
 local idCounter = 0
 function RICHERTEXT:Init()
+    local this = self
+
     self:SetSize( 100, 100 )
     self.scrollPanel = vgui.Create( "DNiceScrollPanel", self ) -- Same as scrollPanel with nicer graphics
     self.id = idCounter
@@ -78,11 +80,11 @@ function RICHERTEXT:Init()
     self.select = {}
     self.select.lastClick = 0
     self.select.clickCounter = 0
-    self.select.selectCol = Color( 255, 156, 0 ) --orange
+    self.select.selectCol = Color( 0, 0, 255 ) -- normal blue highlight
 
     self.lastScroll = -1
 
-    self.Think = function()
+    function self:Think()
         if self.select.mouseDown then
             local sPanel = self.scrollPanel
             local x, y = gui.MousePos()
@@ -147,26 +149,26 @@ function RICHERTEXT:Init()
 
     self.scrollToBottomBtn = vgui.Create( "DImageButton", self )
     self.scrollToBottomBtn:SetImage( "icons/triple_arrows.png" )
-    self.scrollToBottomBtn.Paint = function( self, w, h )
-
-    end
+    self.scrollToBottomBtn.Paint = nil
     self.scrollToBottomBtn:SetSize( 32, 32 )
-    self.scrollToBottomBtn.DoClick = function()
-        self:scrollToBottom()
+    function self.scrollToBottomBtn:DoClick()
+        this:scrollToBottom()
     end
     self:InvalidateLayout( true )
     self.showSTBButton = false
     self.STBButtonAnim = 0
     self.STBButtonAnimSpeed = 2
 
-    self.scrollPanel:GetCanvas().Paint = function( canvas, w, h ) -- Rendering selection, if I put images in the line stack, this will need updating TODO
-        if self.select.hasSelection then
+    local canvas = self.scrollPanel:GetCanvas()
+
+    function canvas:Paint( w, h ) -- Rendering selection, if I put images in the line stack, this will need updating TODO
+        if this.select.hasSelection then
             --do draw selection stuff
-            local c = self.select.selectCol
+            local c = this.select.selectCol
             surface.SetDrawColor( c.r, c.g, c.b, 255 )
-            local s, e = orderChars( self.select.startChar, self.select.endChar )
+            local s, e = orderChars( this.select.startChar, this.select.endChar )
             for l = s.line, e.line do
-                local line = self.lines[l]
+                local line = this.lines[l]
 
                 if #line == 0 then continue end
 
@@ -208,13 +210,13 @@ function RICHERTEXT:Init()
                     endX = px + sx
                 end
 
-                local h = self.fontHeight
+                local h = this.fontHeight
 
                 if #line == 1 and not isLabel( lastElement ) and lastElement:GetTall() > h then
                     h = lastElement:GetTall()
                 end
 
-                surface.DrawRect( startX, ( l - 1 ) * self.fontHeight, endX - startX, h )
+                surface.DrawRect( startX, ( l - 1 ) * this.fontHeight, endX - startX, h )
 
             end
 
@@ -285,6 +287,10 @@ end
 
 function RICHERTEXT:SetMaxLines( val )
     self.maxLines = val
+end
+
+function RICHERTEXT:SetHighlightColor( col )
+    self.select.selectCol = col
 end
 
 function RICHERTEXT:Reload() -- Clear the text, reset a bunch of shit, then run through the logs again
@@ -358,35 +364,36 @@ function RICHERTEXT:createContextMenu( dontOpen, m )
 end
 
 function RICHERTEXT:setClickEvents( panel )
+    local this = self
     local prevMousePressed = panel.OnMousePressed
-    panel.OnMousePressed = function( panel, keyCode )
+    function panel:OnMousePressed( keyCode )
         if keyCode == MOUSE_LEFT then
-            if self.lines and #self.lines >= 1 and #self.lines[1] >= 1 then 
-                hook.Run( "RICHERTEXT:NewTextSelection", self.id )
-                if CurTime() - self.select.lastClick < 0.2 then
-                    self.select.clickCounter = self.select.clickCounter + 1
+            if this.lines and #this.lines >= 1 and #this.lines[1] >= 1 then 
+                hook.Run( "RICHERTEXT:NewTextSelection", this.id )
+                if CurTime() - this.select.lastClick < 0.2 then
+                    this.select.clickCounter = this.select.clickCounter + 1
                 else
-                    self.select.clickCounter = 1
+                    this.select.clickCounter = 1
                 end
-                self.select.lastClick = CurTime()
+                this.select.lastClick = CurTime()
 
-                if self.select.clickCounter > 1 then
-                    self.select.clickCounter = ( ( self.select.clickCounter ) % 2 ) + 2 --make it loop quad back to double, and quin to trip etc. so 1,2,3,4,5 -> 1,2,3,2,3
+                if this.select.clickCounter > 1 then
+                    this.select.clickCounter = ( ( this.select.clickCounter ) % 2 ) + 2 --make it loop quad back to double, and quin to trip etc. so 1,2,3,4,5 -> 1,2,3,2,3
                 end
 
-                local x, y = self:ScreenToCanvas( gui.MousePos() )
-                self.select.startPos = { x = x, y = y }
-                self.select.startChar = self:getCharacter( self.select.startPos.x, self.select.startPos.y )
+                local x, y = this:ScreenToCanvas( gui.MousePos() )
+                this.select.startPos = { x = x, y = y }
+                this.select.startChar = this:getCharacter( this.select.startPos.x, this.select.startPos.y )
 
-                if self.select.clickCounter == 1 then
-                    self.select.mouseDown = true
-                elseif self.select.clickCounter == 2 then
-                    self.select.mouseDown = false
+                if this.select.clickCounter == 1 then
+                    this.select.mouseDown = true
+                elseif this.select.clickCounter == 2 then
+                    this.select.mouseDown = false
                     --do this one somehow
-                    local c = self.select.startChar
-                    local lineText = self:GetLineRaw( c.line )
+                    local c = this.select.startChar
+                    local lineText = this:GetLineRaw( c.line )
 
-                    local element = self.lines[c.line][c.element]
+                    local element = this.lines[c.line][c.element]
 
                     if isLabel( element ) then
 
@@ -415,45 +422,45 @@ function RICHERTEXT:setClickEvents( panel )
                             end
                         end
 
-                        self.select.startChar = self:CharIdxToChar( c.line, sIdx + 1 )
-                        self.select.endChar = self:CharIdxToChar( c.line, eIdx + 1 )
+                        this.select.startChar = this:CharIdxToChar( c.line, sIdx + 1 )
+                        this.select.endChar = this:CharIdxToChar( c.line, eIdx + 1 )
                     else
-                        self.select.startChar = c
+                        this.select.startChar = c
                         local ec = table.Copy( c )
                         ec.char = ec.char + 1
-                        self.select.endChar = ec
+                        this.select.endChar = ec
                     end
-                    self.select.hasSelection = true
-                elseif self.select.clickCounter == 3 then
-                    self.select.mouseDown = false
-                    self.select.startChar.element = 1
-                    self.select.startChar.char = 1
-                    local sChar = self.select.startChar
-                    local line = self.lines[sChar.line]
+                    this.select.hasSelection = true
+                elseif this.select.clickCounter == 3 then
+                    this.select.mouseDown = false
+                    this.select.startChar.element = 1
+                    this.select.startChar.char = 1
+                    local sChar = this.select.startChar
+                    local line = this.lines[sChar.line]
 
-                    self.select.endChar = { 
+                    this.select.endChar = { 
                         line = sChar.line, 
                         element = #line, 
                         char = ( isLabel( line[#line] ) and ( #line[#line]:GetText() ) or 2 )
                     }
-                    self.select.hasSelection = true
+                    this.select.hasSelection = true
                 end
             end
         elseif keyCode == MOUSE_RIGHT then
-            self:createContextMenu()
+            this:createContextMenu()
         end
 
         if prevMousePressed then
-            prevMousePressed( panel, keyCode )
+            prevMousePressed( self, keyCode )
         end
     end
     local prevMouseReleased = panel.OnMouseReleased
-    panel.OnMouseReleased = function( panel, keyCode )
+    function panel:OnMouseReleased( keyCode )
         if keyCode == MOUSE_LEFT then
-            self.select.mouseDown = false
+            this.select.mouseDown = false
         end
         if prevMouseReleased then
-            prevMouseReleased( panel, keyCode )
+            prevMouseReleased( self, keyCode )
         end
     end
     panel:SetCursor( "beam" )
@@ -540,6 +547,10 @@ function RICHERTEXT:getCharacter( x, y )
     local lineNum = math.floor( y / self.fontHeight ) + 1 --calc line easily, since all lines are same width
     lineNum = math.Clamp( lineNum, 1, #self.lines - 1 )
     local line = self.lines[lineNum]
+
+    if not line then
+        return { line = 1, element = 1, char = 1, pos = { x = x, y = y } }
+    end
 
     while #line == 0 do
         lineNum = lineNum - 1
@@ -695,7 +706,7 @@ function RICHERTEXT:MakeClickable( element )
     rText.lastClick = 0
     rText.clickCounter = 1
     --local oldPress = element.OnMousePressed  -- dont rly want old func called tbh
-    element.OnMousePressed = function( self, keyCode )
+    function element:OnMousePressed( keyCode )
         --oldPress(self, keyCode)
         if keyCode == MOUSE_LEFT then 
             if rText.EventHandler then
@@ -711,9 +722,9 @@ function RICHERTEXT:MakeClickable( element )
                 if not timer.Exists( tName ) then 
                     timer.Create( tName, 0.2, 1, function()
                         if rText.clickCounter == 1 then
-                            rText.EventHandler( "LeftClick", clickVal )
+                            rText:EventHandler( "LeftClick", clickVal )
                         elseif rText.clickCounter == 2 then
-                            rText.EventHandler( "DoubleClick", clickVal )
+                            rText:EventHandler( "DoubleClick", clickVal )
                         end
                     end )
                 end
@@ -721,11 +732,11 @@ function RICHERTEXT:MakeClickable( element )
         elseif keyCode == MOUSE_RIGHT then
             if rText.EventHandler then
                 local m = DermaMenu()
-                local dontOpen = rText.EventHandler( "RightClickPreMenu", clickVal, m )
+                local dontOpen = rText:EventHandler( "RightClickPreMenu", clickVal, m )
 
                 rText:createContextMenu( true, m )
 
-                dontOpen = dontOpen or rText.EventHandler( "RightClick", clickVal, m )
+                dontOpen = dontOpen or rText:EventHandler( "RightClick", clickVal, m )
                 if not dontOpen then
                     m:Open()
                 end
@@ -790,7 +801,7 @@ function RICHERTEXT:AddLabel()
     label:SetMouseInputEnabled( true )
     label:MoveToFront()
 
-    label.SetDoRender = function( self, v )
+    function label:SetDoRender( v )
         if self.showText == v then return end
         self.showText = v
         if v then
@@ -808,7 +819,7 @@ function RICHERTEXT:AddLabel()
     end
 
     if self.NewElement then
-        self.NewElement( label, #self.lines ) -- Call the new element func
+        self:NewElement( label, #self.lines ) -- Call the new element func
     end
     
     table.insert( line, label ) -- pop new label in line stack
@@ -1029,12 +1040,11 @@ function RICHERTEXT:AddGraphic( element, rawText )
 
         element:SetPos( 5 + imagePadding + self.offset.x, self.offset.y - self.yRemoved )
         self.linesYs[#self.linesYs].bottom = self.linesYs[#self.linesYs].bottom + ( h - self.fontHeight )
-        local newLines = math.ceil( h / self.fontHeight )
+        local newLines = math.ceil( h / self.fontHeight ) - 1
         for k = 1, newLines do
             self:AddLine()
         end
     else
-        
         if self.offset.x + w > limitX then
             self:AddLine()
         end
@@ -1056,7 +1066,7 @@ function RICHERTEXT:AddGraphic( element, rawText )
     end
 
     if self.NewElement then
-        self.NewElement( element, #self.lines ) -- Call the new element func
+        self:NewElement( element, #self.lines ) -- Call the new element func
     end
     
     local scrollBar = self.scrollPanel:GetVBar()

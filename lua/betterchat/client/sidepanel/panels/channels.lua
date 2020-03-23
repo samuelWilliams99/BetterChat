@@ -1,11 +1,15 @@
+chatBox.sidePanel.channels = {}
 include( "betterchat/client/sidepanel/templates/channelsettings.lua" )
 
 hook.Add( "BC_initPanels", "BC_initSidePanelChannels", function()
-    local g = chatBox.graphics
-    chatBox.createSidePanel( "Channel Settings", 300, { icon = "icons/cog.png", rotate = true, col = Color( 50, 50, 50, 210 ) } )
+    chatBox.sidePanel.create( "Channel Settings", 300, {
+        icon = chatBox.defines.materials.cog,
+        rotate = true,
+        col = chatBox.defines.theme.channelCogFocused
+    } )
 end )
 
-function chatBox.generateChannelSettings( sPanel, data )
+function chatBox.sidePanel.channels.generateSettings( sPanel, data )
     local canvas = sPanel:GetCanvas()
     local w, h = sPanel:GetSize()
     local icon = vgui.Create( "DImage", canvas )
@@ -17,7 +21,7 @@ function chatBox.generateChannelSettings( sPanel, data )
     line:SetType( "Rect" )
     line:SetPos( 2, 22 )
     line:SetSize( w - 29, 2 )
-    line:SetColor( Color( 180, 180, 180, 200 ) )
+    line:SetColor( chatBox.defines.theme.sidePanelAccent )
 
     local title = vgui.Create( "DLabel", canvas )
     title:SetPos( 24, 0 )
@@ -25,7 +29,7 @@ function chatBox.generateChannelSettings( sPanel, data )
     title:SetText( data.displayName )
     title:SizeToContents()
     title.data = data
-    title.Think = function( self )
+    function title:Think()
         if self.data.name ~= self.data.displayName and not self.data.hideRealName then
             self:SetText( self.data.displayName .. " (" .. self.data.name .. ")" )
         else
@@ -35,30 +39,30 @@ function chatBox.generateChannelSettings( sPanel, data )
     end
 
     local k = 1
-    for idx, v in pairs( chatBox.channelSettingsTemplate ) do
+    for idx, v in pairs( chatBox.sidePanel.channels.template ) do
         if data.disabledSettings and table.HasValue( data.disabledSettings, v.value ) then continue end
         if v.shouldAdd then if not v.shouldAdd( data ) then return end end
 
-        chatBox.renderSetting( sPanel, data, chatBox.channelSettingsTemplate[idx], k )
+        chatBox.sidePanel.renderSetting( sPanel, data, chatBox.sidePanel.channels.template[idx], k )
         k = k + 1
     end
 
 end
 
-function chatBox.applyDefaults( data )
-    for k, v in pairs( chatBox.channelSettingsTemplate ) do
+function chatBox.sidePanel.channels.applyDefaults( data )
+    for k, v in pairs( chatBox.sidePanel.channels.template ) do
         if data[v.value] == nil then data[v.value] = v.default end
     end
 end
 
-function chatBox.reloadChannelSettings( data )
+function chatBox.sidePanel.channels.reloadSettings( data )
     local pName = "Channel Settings"
-    if chatBox.getSidePanelChild( pName, data.name ) then
-        chatBox.removeFromSidePanel( pName, data.name, true )
-        local p = chatBox.addToSidePanel( pName, data.name )
-        chatBox.generateChannelSettings( p, data )
-        if chatBox.sidePanels[pName].activePanel == data.name then
-            chatBox.showSidePanel( pName, data.name )
+    if chatBox.sidePanel.getChild( pName, data.name ) then
+        chatBox.sidePanel.removeChild( pName, data.name, true )
+        local p = chatBox.sidePanel.createChild( pName, data.name )
+        chatBox.sidePanel.channels.generateSettings( p, data )
+        if chatBox.sidePanel.panels[pName].activePanel == data.name then
+            chatBox.sidePanel.show( pName, data.name )
         end
     end
 end

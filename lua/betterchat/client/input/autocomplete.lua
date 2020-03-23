@@ -1,3 +1,5 @@
+-- Order of function calls is annoying, can't be done by making all functions local
+-- just gonna declare all of them here
 local setSuggestions, updateText, incOption, setOption, setText, getSimilarStrings, 
     getSimilarCommands, getSimilarNames, getSimilarEmotes
 
@@ -9,10 +11,10 @@ net.Receive( "BC_sendULXCommands", function()
     for k, v in pairs( cmds ) do
         newCmds[v] = chatBox.autoComplete.cmds[v] or 0
     end
-    if chatBox.giphyEnabled then
-        newCmds["!giphy"] = chatBox.autoComplete.cmds["!giphy"] or 0
+    if chatBox.images.giphyEnabled then
+        newCmds[chatBox.defines.giphyCommand] = chatBox.autoComplete.cmds[chatBox.defines.giphyCommand] or 0
     else
-        chatBox.autoComplete.extraCmds["!giphy"] = chatBox.autoComplete.cmds["!giphy"] or 0
+        chatBox.autoComplete.extraCmds[chatBox.defines.giphyCommand] = chatBox.autoComplete.cmds[chatBox.defines.giphyCommand] or 0
     end
     chatBox.autoComplete.cmds = newCmds
     chatBox.autoComplete.emoteUsage = chatBox.autoComplete.emoteUsage or {}
@@ -61,14 +63,14 @@ hook.Add( "BC_keyCodeTyped", "BC_autoCompleteHook", function( code, ctrl, shift,
         if txt[1] == "!" and #txtEx == 1 then --Is command
             if chatBox.autoComplete.cmds[strCompleted] ~= nil then
                 chatBox.autoComplete.cmds[strCompleted] = chatBox.autoComplete.cmds[strCompleted] + 1
-                chatBox.saveData()
+                chatBox.data.saveData()
             end
         end
     end
 end )
 
 hook.Add( "BC_messageSent", "BC_autoCompleteUsageTracker", function( channel, txt )
-    local tab = chatBox.formatMessage( LocalPlayer(), txt, false )
+    local tab = chatBox.formatting.formatMessage( LocalPlayer(), txt, false )
     local change = false
     for k, v in pairs( tab ) do
         if type( v ) == "table" and v.formatter and v.type == "image" then
@@ -82,17 +84,17 @@ hook.Add( "BC_messageSent", "BC_autoCompleteUsageTracker", function( channel, tx
     setSuggestions()
 
     if change then
-        chatBox.reloadUsedEmotesMenu()
-        chatBox.saveData()
+        chatBox.images.reloadUsedEmotesMenu()
+        chatBox.data.saveData()
     end
 end )
 
 hook.Add( "BC_channelChanged", "BC_hideAutocomplete", function()
-    hook.Run( "ChatTextChanged", chatBox.graphics.textEntry:GetText() )
+    hook.Run( "ChatTextChanged", chatBox.graphics.derma.textEntry:GetText() )
 end )
 
 hook.Add( "BC_chatTextChanged", "autoCompletePreview", function( txt )
-    if not chatBox.enabled then return end
+    if not chatBox.base.enabled then return end
     local txtEx = string.Explode( " ", txt )
     local options
     if #txtEx == 1 and txtEx[1][1] == "!" then
@@ -126,7 +128,7 @@ function setSuggestions( text, options )
 end
 
 function updateText()
-    if not chatBox.getSetting( "acDisplay" ) then return end
+    if not chatBox.settings.getValue( "acDisplay" ) then return end
     if #chatBox.autoComplete.cur.options > 0 then
         local c = chatBox.autoComplete.cur
         local OPTIONS_SHOWN = math.min( 4, #c.options )
@@ -145,9 +147,9 @@ function updateText()
         if c.option > ( #c.options - OPTIONS_SHOWN + 1 ) then
             t = t .. table.concat( c.options, "; ", 1, OPTIONS_SHOWN - ( #c.options - c.option ) - 1 )
         end
-        chatBox.graphics.textEntry.bgText = t
+        chatBox.graphics.derma.textEntry.bgText = t
     else
-        chatBox.graphics.textEntry.bgText = ""
+        chatBox.graphics.derma.textEntry.bgText = ""
     end
 
 end
@@ -167,8 +169,8 @@ function setOption( n )
 end
 
 function setText( txt )
-    chatBox.graphics.textEntry:SetText( txt )
-    chatBox.graphics.textEntry:SetCaretPos( #txt )
+    chatBox.graphics.derma.textEntry:SetText( txt )
+    chatBox.graphics.derma.textEntry:SetCaretPos( #txt )
 end
 
 --takes a string and assiative array, array format
@@ -189,7 +191,7 @@ end
 function getSimilarCommands( str )
     local out = getSimilarStrings( str, table.GetKeys( chatBox.autoComplete.cmds ) )
     table.sort( out, function( a, b )
-        if chatBox.autoComplete.cmds[a] == chatBox.autoComplete.cmds[b] or not chatBox.getSetting( "acUsage" ) then
+        if chatBox.autoComplete.cmds[a] == chatBox.autoComplete.cmds[b] or not chatBox.settings.getValue( "acUsage" ) then
             if #a == #b then
                 return a < b
             end
@@ -210,7 +212,7 @@ end
 
 function getSimilarEmotes( str )
     local longEmotes = {}
-    for k, v in pairs( chatBox.spriteLookup.list ) do
+    for k, v in pairs( chatBox.images.emoteLookup.list ) do
         if v[1] == ":" and v[#v] == ":" then
             table.insert( longEmotes, v )
         end
@@ -219,7 +221,7 @@ function getSimilarEmotes( str )
     local out = getSimilarStrings( str, longEmotes )
 
     table.sort( out, function( a, b )
-        if chatBox.autoComplete.emoteUsage[a] == chatBox.autoComplete.emoteUsage[b] or not chatBox.getSetting( "acUsage" ) then
+        if chatBox.autoComplete.emoteUsage[a] == chatBox.autoComplete.emoteUsage[b] or not chatBox.settings.getValue( "acUsage" ) then
             if #a == #b then
                 return a < b
             end

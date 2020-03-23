@@ -4,7 +4,7 @@ chatBox.giphy.lastResetHour = chatBox.giphy.lastResetHour or -1
 
 -- Single think hook call so http is ready
 hook.Once( "Think", function()
-    chatBox.getGiphyURL( "thing", function( success, data )
+    chatBox.giphy.getGiphyURL( "thing", function( success, data )
         if success then
             print( "[BetterChat] Giphy key test successful, giphy command enabled." )
             chatBox.giphy.enabled = true
@@ -30,8 +30,8 @@ local function encode( t )
     return string.sub( s, 2 )
 end
 
-function chatBox.getGiphyURL( query, cb )
-    local key = chatBox.getServerSetting( "giphyKey" )
+function chatBox.giphy.getGiphyURL( query, cb )
+    local key = chatBox.settings.getServerValue( "giphyKey" )
     if not key or #key == 0 then
         return cb( false )
     end
@@ -55,8 +55,8 @@ end
 net.Receive( "BC_sendGif", function( len, ply )
     if not chatBox.giphy.enabled then return end
 
-    if not chatBox.getAllowed( ply, "bc_giphy" ) then
-        return ULib.clientRPC( ply, "chatBox.messageChannel", channel, chatBox.colors.red, "You don't have permission to use !giphy" )
+    if not chatBox.settings.isAllowed( ply, "bc_giphy" ) then
+        return ULib.clientRPC( ply, "chatBox.channels.message", channel, chatBox.defines.colors.red, "You don't have permission to use !giphy" )
     end
 
     local curDateTime = os.date( "*t", os.time() )
@@ -67,10 +67,10 @@ net.Receive( "BC_sendGif", function( len, ply )
     end
 
     local curCount = chatBox.giphy.counts[ply:SteamID()] or 0
-    local maxCount = chatBox.getServerSetting( "giphyHourlyLimit" )
+    local maxCount = chatBox.settings.getServerValue( "giphyHourlyLimit" )
     chatBox.giphy.counts[ply:SteamID()] = curCount + 1
     if curCount >= maxCount then
-        return ULib.clientRPC( ply, "chatBox.messageChannel", channel, chatBox.colors.red,
+        return ULib.clientRPC( ply, "chatBox.channels.message", channel, chatBox.defines.colors.red,
             "You have surpassed your hourly giphy limit of " .. maxCount ..
             ". Your quota will reset in approximately " .. ( 60 - curDateTime.min ) .. " minute(s)." )
     end
@@ -78,48 +78,20 @@ net.Receive( "BC_sendGif", function( len, ply )
     local str = net.ReadString()
     local channel = net.ReadString()
     if string.match( str, "^[%w_%. %-]+$" ) then
-        chatBox.getGiphyURL( str, function( success, data )
+        chatBox.giphy.getGiphyURL( str, function( success, data )
             if success then
-                ULib.clientRPC( ply, "chatBox.messageChannel", channel, chatBox.colors.printYellow, "You have " .. ( maxCount - curCount - 1 ) .. " giphy uses left for this hour." )
-                local recips = chatBox.getClients( channel, ply )
+                ULib.clientRPC( ply, "chatBox.channels.message", channel, chatBox.defines.colors.printYellow, "You have " .. ( maxCount - curCount - 1 ) .. " giphy uses left for this hour." )
+                local recips = chatBox.manager.getClients( channel, ply )
                 net.Start( "BC_sendGif" )
                 net.WriteString( channel )
                 net.WriteString( data )
                 net.WriteString( str )
                 net.Send( recips )
             else
-                ULib.clientRPC( ply, "chatBox.messageChannel", channel, chatBox.colors.red, "Giphy query failed, server wide hourly limit may have been reached" )
+                ULib.clientRPC( ply, "chatBox.channels.message", channel, chatBox.defines.colors.red, "Giphy query failed, server wide hourly limit may have been reached" )
             end
         end )
     else
-        ULib.clientRPC( ply, "chatBox.messageChannel", channel, chatBox.colors.red, "Invalid giphy query string, only alphanumeric characters, underscores or dots." )
+        ULib.clientRPC( ply, "chatBox.channels.message", channel, chatBox.defines.colors.red, "Invalid giphy query string, only alphanumeric characters, underscores or dots." )
     end
 end )
-
-function chatBox.getClients( chanName, sender )
-    if chanName == "All" or chanName == "Players" then
-        return player.GetAll()
-    elseif chanName == "Team" then
-        return team.GetPlayers( sender:Team() )
-    elseif chanName == "Admin" then
-        local out = {}
-        for k, p in pairs( player.GetAll() ) do
-            if chatBox.getAllowed( v, "ulx seeasay" ) then
-                table.insert( out, p )
-            end
-        end
-        return out
-    elseif string.sub( chanName, 1, 9 ) == "Player - " then
-        local ply = player.GetBySteamID( string.sub( chanName, 10 ) )
-        if ply then return { sender, ply } end
-        return { sender }
-    elseif string.sub( chanName, 1, 8 ) == "Group - " then
-        local groupId = tonumber( string.sub( chanName, 9 ) )
-        for k, group in pairs( chatBox.group.groups ) do
-            if group.id == groupId then
-                return chatBox.getGroupMembers( group )
-            end
-        end
-    end
-    return {}
-end

@@ -73,5 +73,24 @@ end
 function PANEL:SetPlayer( ply )
     self.Avatar:SetPlayer( ply )
 end
- 
+
+function PANEL:SetClickable( c )
+    self.clickable = c
+    if self.clickable then
+        function self.Avatar.OnMousePressed( keyCode )
+            if keyCode == MOUSE_LEFT then
+                ply:ShowProfile()
+            end
+        end
+        self.Avatar:SetCursor( "hand" )
+    else
+        self.Avatar.OnMousePressed = nil
+        self.Avatar:SetCursor( "none" )
+    end
+end
+
+function PANEL:GetClickable()
+    return self.clickable
+end
+
 vgui.Register( "AvatarImageCircle", PANEL )

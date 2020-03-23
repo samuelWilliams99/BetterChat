@@ -1,9 +1,11 @@
-function chatBox.sendLog( channelType, channelName, ... )
-    chatBox.sendLogConsole( channelName, ... )
-    chatBox.sendLogPlayers( channelType, channelName, ... )
+chatBox.logs = {}
+
+function chatBox.logs.sendLog( channelType, channelName, ... )
+    chatBox.logs.sendLogConsole( channelName, ... )
+    chatBox.logs.sendLogPlayers( channelType, channelName, ... )
 end
 
-function chatBox.sendLogConsole( channel, ... )
+function chatBox.logs.sendLogConsole( channel, ... )
     local data = {}
     for k, v in ipairs( { ... } ) do
         if type( v ) == "string" then
@@ -24,9 +26,10 @@ function chatBox.sendLogConsole( channel, ... )
     end
 end
 
-function chatBox.sendLogPlayers( channelType, channel, ... )
+function chatBox.logs.sendLogPlayers( channelType, channel, ... )
+    do return end
     local plys = table.filterSeq( player.GetAll(), function( ply )
-        return chatBox.getAllowed( ply, "bc_chatlogs" )
+        return chatBox.settings.isAllowed( ply, "bc_chatlogs" )
     end )
 
     net.Start( "BC_LM" )
@@ -38,6 +41,6 @@ end
 
 hook.Add( "PlayerSay", "BC_logTeam", function( ply, text, t )
     if t then
-        chatBox.sendLog( chatBox.channelTypes.TEAM, "Team - " .. team.GetName( ply:Team() ), ply, ": ", text )
+        chatBox.logs.sendLog( chatBox.defines.channelTypes.TEAM, "Team - " .. team.GetName( ply:Team() ), ply, ": ", text )
     end
 end, HOOK_MONITOR_HIGH )

@@ -4,13 +4,13 @@ local trackedStates = {
     inGod = function( ply ) return ply:HasGodMode() end, 
     isFrozen = function( ply ) return ply.frozen end, 
     isRagdolled = function( ply ) return ply.ragdoll end, 
-    isChatEnabled = function( ply ) return chatBox.chatBoxEnabled[ply] end, 
+    isChatEnabled = function( ply ) return chatBox.base.chatBoxEnabled[ply] end, 
     isMuted = function( ply ) return ply:GetNWBool( "ulx_muted", false ) end, 
 }
 
 local onChanges = { 
     isChatEnabled = function( ply, newVal )
-        ULib.clientRPC( chatBox.getEnabledPlayers(), "chatBox.reloadAllMemberMenus" )
+        ULib.clientRPC( chatBox.base.getEnabledPlayers(), "chatBox.sidePanel.members.reloadAll" )
     end, 
 }
 
@@ -44,7 +44,7 @@ timer.Create( "BC_stateMonitor", 1 / 30, 0, function()
     end
 end )
 
-hook.Add( "BC_plyReady", "BC_stateInit", function( ply )
+hook.Add( "BC_playerReady", "BC_stateInit", function( ply )
     for state, getter in pairs( trackedStates ) do
         for k, sPly in pairs( player.GetAll() ) do
             net.Start( "BC_sendPlayerState" )
@@ -56,7 +56,7 @@ hook.Add( "BC_plyReady", "BC_stateInit", function( ply )
     end
 end )
 
-function accessChange( id, ... )
+local function accessChange( id, ... )
     local ply
     if type( id ) == "Player" then
         ply = id
@@ -70,7 +70,7 @@ function accessChange( id, ... )
     end )
 end
 
-function accessChangeGlobal()
+local function accessChangeGlobal()
     timer.Simple( 0.1, function() --Delay the message as ULibUserGroupChange is called before permission changes
         net.SendEmpty( "BC_userRankChange" )
     end )

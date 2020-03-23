@@ -67,7 +67,7 @@ end
 
 function chatHelper.camelToSpace( str )
     return string.gsub( str, "%u", function( l )
-        return " " .. string.lower( s[2] )
+        return " " .. string.lower( l )
     end )
 end
 
@@ -118,12 +118,13 @@ function table.Repeat( x, n )
     end
     return out
 end
+table.rep = table.Repeat
 
 function table.filterSeq( tab, f )
     local out = {}
     for k, v in ipairs( tab ) do
         if f( v ) then
-            table.insert( tab, v )
+            table.insert( out, v )
         end
     end
     return out
@@ -143,7 +144,52 @@ function table.filter( tab, f )
     return out
 end
 
-table.rep = table.Repeat
+function table.equalSeq( a, b )
+    if #a ~= #b then
+        return false
+    end
+    for k, v in pairs( a, b ) do
+        if a[k] ~= b[k] then
+            return false
+        end
+    end
+    return true
+end
+
+table.hasValue = table.HasValue
+function table.hasMember( tab, member, value )
+    for k, v in pairs( tab ) do
+        if not istable( v ) then continue end
+        if v[member] == value then
+            return true
+        end
+    end
+    return false
+end
+
+if CLIENT then
+    -- Why isn't this a thing?
+    function input.GetKeyEnum( keyCode )
+        local name = input.GetKeyName( keyCode )
+        return "KEY_" .. string.upper( name )
+    end
+end
+
+function chatHelper.setR( col, r )
+    return Color( r, col.g, col.b, col.a )
+end
+
+function chatHelper.setG( col, g )
+    return Color( col.r, g, col.b, col.a )
+end
+
+function chatHelper.setB( col, b )
+    return Color( col.r, col.g, b, col.a )
+end
+
+function chatHelper.setA( col, a )
+    return Color( col.r, col.g, col.b, a )
+end
 
 function chatHelper.const( x )
     return function() return x end
@@ -153,8 +199,27 @@ function chatHelper.getFrom( k, ... )
     return ( { ... } )[k]
 end
 
+function chatHelper.lerpCol( a, b, l )
+    return Color( Lerp( l, a.r, b.r ), Lerp( l, a.g, b.g ), Lerp( l, a.b, b.b ), Lerp( l, a.a, b.a ) )
+end
+
 chatHelper.fst = chatHelper.curry( chatHelper.getFrom, 1 )
 chatHelper.snd = chatHelper.curry( chatHelper.getFrom, 2 )
+
+function chatHelper.padString( str, chars, padChar, post )
+    padChar = padChar or " "
+    str = tostring( str )
+    local spaces = string.rep( padChar, math.max( 0, chars - #str ) )
+    if post then
+        return str .. spaces
+    else
+        return spaces .. str
+    end
+end
+
+function chatHelper.teamName( ply )
+    return team.GetName( ply:Team() )
+end
 
 function pack( ... )
     return { ... }
@@ -283,22 +348,24 @@ function chatHelper.getProxy( x )
         end
     end
     
-    mt.__index = function( t, k )
-        return t[index][k]
+    function mt:__index( k )
+        return self[index][k]
     end
     
-    mt.__newindex = function( t, k, v )
-        t[index][k] = v
+    function mt:__newindex( k, v )
+        self[index][k] = v
     end
     
     mt.__metatable = oldmt
-    mt.__pairs = function( tbl )
-        return pairs( tbl[index] )
+    function mt:__pairs()
+        return pairs( self[index] )
     end
-    mt.__ipairs = function( tbl )
-        return ipairs( tbl[index] )
+    function mt:__ipairs()
+        return ipairs( self[index] )
     end
-    mt.__type = function() return type( x ) end
+    function mt:__type()
+        return type( x )
+    end
     mt.__IsProxy = true
     
     debug.setmetatable( newX, mt )

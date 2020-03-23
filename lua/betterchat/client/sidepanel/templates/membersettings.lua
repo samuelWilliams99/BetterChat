@@ -1,4 +1,4 @@
-chatBox.groupMemberOptions = { 
+chatBox.sidePanel.members.template = { 
     member = { 
         name = "Player", 
         value = "SteamID", 
@@ -8,7 +8,7 @@ chatBox.groupMemberOptions = {
         default = 1, 
         extra = "Set this player's role in the group", 
         onChange = function( data )
-            local chan = chatBox.getChannel( "Group - " .. data.group.id )
+            local chan = chatBox.channels.getChannel( "Group - " .. data.group.id )
             if not chan or chan.needsData then return end -- Shouldn't be able to edit these but u kno
 
             local oldGroup = data.group

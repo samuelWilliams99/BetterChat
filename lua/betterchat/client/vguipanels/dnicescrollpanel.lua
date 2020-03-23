@@ -40,7 +40,7 @@ function NICESCROLLPANEL:Init()
     scrollBar.Enabled = true
     local ownSelf = self
     scrollBar.Paint = nil
-    scrollBar.btnUp.Paint = function( self, w, h )
+    function scrollBar.btnUp:Paint( w, h )
         if not ownSelf.scrollBarEnabled then return end
         local canScrollUp = scrollBar:GetScroll() ~= 0
         if canScrollUp then
@@ -51,10 +51,10 @@ function NICESCROLLPANEL:Init()
         draw.NoTexture()
         drawUpArrow()
     end
-    scrollBar.btnDown.Paint = function( self, w, h )
+    function scrollBar.btnDown:Paint( w, h )
         if not ownSelf.scrollBarEnabled then return end
-        local canScrollUp = scrollBar.Scroll < scrollBar.CanvasSize - 1
-        if canScrollUp then
+        local canScrollDown = scrollBar.Scroll < scrollBar.CanvasSize - 1
+        if canScrollDown then
             surface.SetDrawColor( 200, 200, 200, 100 )
         else
             surface.SetDrawColor( 150, 150, 150, 100 )
@@ -62,7 +62,7 @@ function NICESCROLLPANEL:Init()
         draw.NoTexture()
         drawDownArrow()
     end
-    scrollBar.btnGrip.Paint = function( self, w, h )
+    function scrollBar.btnGrip:Paint( w, h )
         if not ownSelf.scrollBarEnabled then return end
         draw.RoundedBox( 0, 5, 0, w - 10, h, Color( 200, 200, 200, 100 ) )
     end

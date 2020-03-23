@@ -1,5 +1,5 @@
 local function useOverload()
-    return chatBox.getSettingObject( "maxLength", true ).default ~= chatBox.getServerSetting( "maxLength" ) 
+    return chatBox.settings.getObject( "maxLength", true ).default ~= chatBox.settings.getServerValue( "maxLength" ) 
 end
 
 local function globalSend( self, txt )
@@ -25,8 +25,8 @@ local function teamSend( self, txt )
     end
 end
 
-hook.Add( "BC_preInitPanels", "BC_initAddMainChannels", function()
-    table.insert( chatBox.channels, { 
+hook.Add( "BC_initPanels", "BC_initAddMainChannels", function()
+    table.insert( chatBox.channels.channels, { 
         name = "All", 
         icon = "world.png", 
         send = globalSend, 
@@ -39,9 +39,10 @@ hook.Add( "BC_preInitPanels", "BC_initAddMainChannels", function()
         popMode = 2, 
         openOnStart = true, 
         disallowClose = true, 
-        relayAll = false, 
+        relayAll = false,
+        position = 1,
     } ) 
-    table.insert( chatBox.channels, { 
+    table.insert( chatBox.channels.channels, { 
         name = "Players", 
         icon = "group.png", 
         send = globalSend, 
@@ -49,26 +50,28 @@ hook.Add( "BC_preInitPanels", "BC_initAddMainChannels", function()
         addNewLines = true, 
         openOnStart = true, 
         disallowClose = true, 
+        position = 2,
     } )
     if not DarkRP then
-        table.insert( chatBox.channels, { 
+        table.insert( chatBox.channels.channels, { 
             name = "Team", 
             icon = "group.png", 
             send = teamSend, 
             onMessage = function()
-                chatBox.lastPrivate = nil
+                chatBox.private.lastMessaged = nil
             end, 
             doPrints = true, 
             addNewLines = true, 
             disabledSettings = { "openKey" }, 
             allFunc = function( self, tab, idx )
-                table.insert( tab, idx, Color( 0, 170, 0 ) )
+                table.insert( tab, idx, chatBox.defines.theme.team )
                 table.insert( tab, idx + 1, "(TEAM) " )
             end, 
             openOnStart = true, 
             disallowClose = true, 
-            textEntryColor = Color( 100, 200, 100 ), 
+            textEntryColor = chatBox.defines.theme.teamTextEntry, 
             replicateAll = true, 
+            position = 3,
         } )
     end
 end )

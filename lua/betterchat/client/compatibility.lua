@@ -24,7 +24,7 @@ end )
 local function captureAddText( f, ... )
     local oldAddText = chat.AddText
     local data = {}
-    chat.AddText = function( ... )
+    function chat.AddText( ... )
         table.Add( data, { ... } )
     end
     local out = f( ... )
@@ -33,9 +33,9 @@ local function captureAddText( f, ... )
 end
 
 hook.Add( "BC_getPreTab", "BC_ATAG_preTab", function( ply, msg, teamChat, dead, d )
-    if chatBox.hookOverloads.OnPlayerChat.ATAG_ChatTags then
+    if chatBox.overload.hooks.OnPlayerChat.ATAG_ChatTags then
         print( "[BetterChat] Found ATAG_ChatTags hook while processing message, overloading" )
-        chatBox.compatibility.atagHook = chatBox.hookOverloads.OnPlayerChat.ATAG_ChatTags
+        chatBox.compatibility.atagHook = chatBox.overload.hooks.OnPlayerChat.ATAG_ChatTags
         hook.Remove( "OnPlayerChat", "ATAG_ChatTags" )
     end
     if not chatBox.compatibility.atagHook then return end
@@ -53,13 +53,13 @@ hook.Add( "BC_getPreTab", "BC_ATAG_preTab", function( ply, msg, teamChat, dead, 
         if v == ply:Nick() then
             data[k] = ply
             table.insert( data, k, { formatter = true, type = "escape" } )
-        elseif chatBox.isColor( v ) then
+        elseif chatBox.util.isColor( v ) then
             data[k] = Color( v.r, v.g, v.b, v.a ) -- Pack back into a proper colour object, with its metatable
         end
     end
-    local lastCol = Color( 255, 255, 255 )
+    local lastCol = chatBox.defines.colors.white
     for k = #data, 1, -1 do
-        if chatBox.isColor( data[k] ) then
+        if chatBox.util.isColor( data[k] ) then
             lastCol = data[k]
             break
         end

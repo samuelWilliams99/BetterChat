@@ -1,4 +1,4 @@
-chatBox.channelSettingsTemplate = { 
+chatBox.sidePanel.channels.template = { 
     { 
         name = "Channel name", 
         value = "displayName", 
@@ -59,7 +59,7 @@ chatBox.channelSettingsTemplate = {
         default = true, 
         extra = "Set whether this channel should display color, links, images, etc.", 
         onChange = function( data )
-            local txt = chatBox.channelPanels[data.name].text
+            local txt = chatBox.channels.panels[data.name].text
             if not txt or not IsValid( txt ) then return end
             txt:SetFormattingEnabled( data.doFormatting )
             txt:Reload()
@@ -76,7 +76,7 @@ chatBox.channelSettingsTemplate = {
         default = true, 
         extra = "Set whether this channel should display images", 
         onChange = function( data )
-            local txt = chatBox.channelPanels[data.name].text
+            local txt = chatBox.channels.panels[data.name].text
             if not txt or not IsValid( txt ) then return end
             txt:SetGraphicsEnabled( data.showImages )
             txt:Reload()
@@ -93,7 +93,7 @@ chatBox.channelSettingsTemplate = {
         default = true, 
         extra = "Set whether this channel should render gifs (can be laggy)", 
         onChange = function( data )
-            local txt = chatBox.channelPanels[data.name].text
+            local txt = chatBox.channels.panels[data.name].text
             if not txt or not IsValid( txt ) then return end
             txt:SetGifsEnabled( data.showGifs )
             txt:Reload()
@@ -125,7 +125,7 @@ chatBox.channelSettingsTemplate = {
         type = "color", 
         extra = "Set the color of the text input background", 
         shouldSave = true, 
-        default = Color( 140, 140, 140 )
+        default = chatBox.defines.theme.foreground
     }, 
     { 
         name = "Font", 
@@ -136,10 +136,10 @@ chatBox.channelSettingsTemplate = {
         default = "BC_default", 
         extra = "Set the font of this channel", 
         onChange = function( data )
-            local txt = chatBox.channelPanels[data.name].text
+            local txt = chatBox.channels.panels[data.name].text
             if not txt or not IsValid( txt ) then return end
             if data.font == "ChatFont" then
-                chatBox.messageChannelDirect( data, Color( 255, 103, 0 ), "Warning: This font is not compatible with font editors like **bold**" )
+                chatBox.channels.messageDirect( data, chatBox.defines.colors.orange, "Warning: This font is not compatible with font editors like **bold**" )
             end
             txt:SetAllowDecorations( data.font ~= "ChatFont" )
             surface.SetFont( data.font )

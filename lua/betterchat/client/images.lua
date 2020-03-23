@@ -1,5 +1,4 @@
-chatBox.spriteSheets = {}
-chatBox.giphyCommand = "!giphy"
+chatBox.images = {}
 
 local function cleanPanel( panel, w, h, padding )
     panel:SetSize( w - padding * 2 - 2, h - padding * 2 - 20 )
@@ -9,7 +8,7 @@ local function cleanPanel( panel, w, h, padding )
     bar.btnUp.Paint = nil
     bar.btnDown.Paint = nil
     function bar.btnGrip:Paint( w, h )
-        surface.SetDrawColor( Color( 65, 105, 225 ) )
+        surface.SetDrawColor( chatBox.defines.theme.emoteAccent )
         surface.DrawRect( w - 2, 0, 2, h )
     end
     bar:SetWidth( 5 )
@@ -20,7 +19,7 @@ local function cleanTab( data, first )
     tab.first = first
     function tab:Paint( w, h )
         local a = self:IsActive()
-        local bgCol = a and Color( 230, 230, 230 ) or Color( 210, 210, 210 )
+        local bgCol = a and chatBox.defines.gray( 230 ) or chatBox.defines.gray( 210 )
         surface.SetDrawColor( bgCol )
         surface.DrawRect( 0, 0, w, h )
 
@@ -28,7 +27,7 @@ local function cleanTab( data, first )
         if not a and self.selectProg > 0 then self.selectProg = self.selectProg - 2.5 end
         self.selectProg = math.Clamp( self.selectProg, 0, 100 )
 
-        surface.SetDrawColor( Color( 65, 105, 225 ) )
+        surface.SetDrawColor( chatBox.defines.theme.emoteAccent )
         local p = self.selectProg / 100
         if self.first then
             surface.DrawRect( ( 1 - p ) * w, h - 2, p * w, 2 )
@@ -44,7 +43,7 @@ local function cleanTab( data, first )
         return 20
     end
 
-    tab:SetTextColor( Color( 0, 0, 0 ) )
+    tab:SetTextColor( chatBox.defines.colors.black )
 
     function tab:ApplySchemeSettings()
         local w, h = self:GetContentSize()
@@ -60,7 +59,7 @@ local function cleanTab( data, first )
 end
 
 hook.Add( "BC_initPanels", "BC_initImages", function()
-    chatBox.spriteSheets = {}
+    chatBox.images.emoteSheets = {}
     local files, _ = file.Find( "materials/spritesheets/*.vmt", "GAME" )
 
     for k, v in pairs( files ) do
@@ -78,52 +77,53 @@ hook.Add( "BC_initPanels", "BC_initImages", function()
         if found then
             local data = util.JSONToTable( file.Read( jsonName, "GAME" ) )
             data.path = "spritesheets/" .. v
-            table.insert( chatBox.spriteSheets, data )
-            MsgC( Color( 0, 255, 0 ), "[BetterChat] Added SpriteSheet \"" .. v .. "\".\n" )
+            table.insert( chatBox.images.emoteSheets, data )
+            MsgC( chatBox.defines.colors.green, "[BetterChat] Added SpriteSheet \"" .. v .. "\".\n" )
         else
-            MsgC( Color( 255, 100, 0 ), "[BetterChat] Found SpriteSheet \"" .. v .. "\" but no \"" .. name .. ".json\", ignoring.\n" )
+            MsgC( chatBox.defines.colors.orange, "[BetterChat] Found SpriteSheet \"" .. v .. "\" but no \"" .. name .. ".json\", ignoring.\n" )
         end
     end
-    chatBox.generateSpriteLookups()
+    chatBox.images.generateSpriteLookups()
 
     local g = chatBox.graphics
+    local d = g.derma
 
-    local imageBtn = vgui.Create( "DImageButton", g.chatFrame )
-    imageBtn:SetSize( 20, 20 )
-    imageBtn:SetMaterial( chatBox.materials.getMaterial( "icons/emojibutton.png" ) )
-    imageBtn:SetPos( g.size.x - 25, g.size.y - 25 )
-    imageBtn:SetIsMenu( true )
-    function imageBtn:DoClick()
-        chatBox.toggleEmojiMenu()
+    local emoteBtn = vgui.Create( "DImageButton", d.chatFrame )
+    emoteBtn:SetSize( 20, 20 )
+    emoteBtn:SetMaterial( chatBox.defines.materials.emoteButton )
+    emoteBtn:SetPos( g.size.x - 25, g.size.y - 25 )
+    emoteBtn:SetIsMenu( true )
+    function emoteBtn:DoClick()
+        chatBox.images.toggleEmoteMenu()
     end
-    local oldLayout = imageBtn.PerformLayout
-    function imageBtn:PerformLayout()
+    local oldLayout = emoteBtn.PerformLayout
+    function emoteBtn:PerformLayout()
         self:SetSize( 20, 20 )
         self:SetPos( g.size.x - 25, g.size.y - 25 )
         oldLayout( self )
     end
-    g.emojiButton = imageBtn
+    d.emoteButton = emoteBtn
 
 
     local mw, mh = 150, 150
-    local emojiMenu = vgui.Create( "DPanel", g.chatFrame )
-    emojiMenu:SetSize( mw, mh )
-    emojiMenu:MoveToFront()
-    emojiMenu:Hide()
-    emojiMenu:SetIsMenu( true )
-    function emojiMenu:GetDeleteSelf()
+    local emoteMenu = vgui.Create( "DPanel", d.chatFrame )
+    emoteMenu:SetSize( mw, mh )
+    emoteMenu:MoveToFront()
+    emoteMenu:Hide()
+    emoteMenu:SetIsMenu( true )
+    function emoteMenu:GetDeleteSelf()
         return false
     end
-    function emojiMenu:Paint( w, h ) 
-        surface.SetDrawColor( 190, 190, 190, 255 )
+    function emoteMenu:Paint( w, h ) 
+        surface.SetDrawColor( chatBox.defines.gray( 190 ) )
         surface.DrawRect( 0, 0, w, h )
     end
-    g.emojiMenu = emojiMenu
+    d.emoteMenu = emoteMenu
 
     local uPanel = vgui.Create( "DScrollPanel" )
     local aPanel = vgui.Create( "DScrollPanel" )
 
-    local ePSheet = vgui.Create( "DPropertySheet", emojiMenu )
+    local ePSheet = vgui.Create( "DPropertySheet", emoteMenu )
 
     local padding = 3
 
@@ -139,50 +139,50 @@ hook.Add( "BC_initPanels", "BC_initImages", function()
     cleanPanel( uPanel, mw, mh, padding )
     cleanPanel( aPanel, mw, mh, padding )
 
-    local usedEmotes, usage = chatBox.getUsedEmotes()
-    chatBox.addEmotesToPanel( uPanel, usedEmotes, usage )
+    local usedEmotes, usage = chatBox.images.getUsedEmotes()
+    chatBox.images.addEmotesToPanel( uPanel, usedEmotes, usage )
 
-    local allEmotes = chatBox.getAllEmotes()
-    chatBox.addEmotesToPanel( aPanel, allEmotes )
+    local allEmotes = chatBox.images.getAllEmotes()
+    chatBox.images.addEmotesToPanel( aPanel, allEmotes )
 
-    g.emojiPSheet = ePSheet
-    g.emojiUsedPanel = uPanel
-    g.emojiAllPanel = aPanel
+    d.emotePSheet = ePSheet
+    d.emoteUsedPanel = uPanel
+    d.emoteAllPanel = aPanel
 end )
 
-hook.Add( "BC_showChat", "BC_showEmojiButton", function() chatBox.graphics.emojiButton:Show() end )
-hook.Add( "BC_hideChat", "BC_hideEmojiButton", function() 
-    chatBox.graphics.emojiButton:Hide()
-    chatBox.graphics.emojiMenu:Hide()
+hook.Add( "BC_showChat", "BC_showEmoteButton", function() chatBox.graphics.derma.emoteButton:Show() end )
+hook.Add( "BC_hideChat", "BC_hideEmoteButton", function() 
+    chatBox.graphics.derma.emoteButton:Hide()
+    chatBox.graphics.derma.emoteMenu:Hide()
 end )
 
-hook.Add( "BC_keyCodeTyped", "BC_emojiShortCutHook", function( code, ctrl, shift )
+hook.Add( "BC_keyCodeTyped", "BC_emoteShortCutHook", function( code, ctrl, shift )
     if ctrl and code == KEY_E then
-        chatBox.toggleEmojiMenu()
-    elseif chatBox.graphics.emojiMenu:IsVisible() then
+        chatBox.images.toggleEmoteMenu()
+    elseif chatBox.graphics.derma.emoteMenu:IsVisible() then
         if code >= KEY_1 and code <= KEY_9 and ctrl then
             local idx = code - KEY_1 + 1
-            local p = chatBox.graphics.emojiPSheet:GetActiveTab():GetPanel()
-            local emoji = p.emojis[idx]
-            if not emoji then return true end
+            local p = chatBox.graphics.derma.emotePSheet:GetActiveTab():GetPanel()
+            local emote = p.emotes[idx]
+            if not emote then return true end
 
-            local entry = chatBox.graphics.textEntry
+            local entry = chatBox.graphics.derma.textEntry
             local txt = entry:GetText()
             local cPos = entry:GetCaretPos()
 
-            local newTxt = string.sub( txt, 0, cPos ) .. emoji .. string.sub( txt, cPos + 1 )
-            local newCPos = cPos + #emoji
+            local newTxt = string.sub( txt, 0, cPos ) .. emote .. string.sub( txt, cPos + 1 )
+            local newCPos = cPos + #emote
 
             entry:SetText( newTxt )
             entry:SetCaretPos( newCPos )
             return true
         elseif code == KEY_TAB and ctrl then
-            local psheet = chatBox.graphics.emojiPSheet
+            local psheet = chatBox.graphics.derma.emotePSheet
             local tabs = psheet:GetItems()
-            local emojiMode = psheet:GetActiveTab()
+            local emoteMode = psheet:GetActiveTab()
 
 
-            if tabs[1].Tab == emojiMode then
+            if tabs[1].Tab == emoteMode then
                 psheet:SetActiveTab( tabs[2].Tab )
             else
                 psheet:SetActiveTab( tabs[1].Tab )
@@ -192,20 +192,20 @@ hook.Add( "BC_keyCodeTyped", "BC_emojiShortCutHook", function( code, ctrl, shift
     end
 end )
 
-function chatBox.reloadUsedEmotesMenu()
-    local uPanel = chatBox.graphics.emojiUsedPanel
+function chatBox.images.reloadUsedEmotesMenu()
+    local uPanel = chatBox.graphics.derma.emoteUsedPanel
     uPanel:Clear()
-    local usedEmotes, usage = chatBox.getUsedEmotes()
-    chatBox.addEmotesToPanel( uPanel, usedEmotes, usage )
+    local usedEmotes, usage = chatBox.images.getUsedEmotes()
+    chatBox.images.addEmotesToPanel( uPanel, usedEmotes, usage )
 end
 
-function chatBox.getUsedEmotes()
+function chatBox.images.getUsedEmotes()
     chatBox.autoComplete.emoteUsage = chatBox.autoComplete.emoteUsage or {}
     local totalUsage = {}
     for str, val in pairs( chatBox.autoComplete.emoteUsage ) do
         if val == 0 then continue end
 
-        local d = chatBox.spriteLookup.lookup[str]
+        local d = chatBox.images.emoteLookup.lookup[str]
         if not d then continue end
 
         local name = d.sheet.sprites[d.idx].name
@@ -220,9 +220,9 @@ function chatBox.getUsedEmotes()
     return out, totalUsage
 end
 
-function chatBox.getAllEmotes()
+function chatBox.images.getAllEmotes()
     local out = {}
-    for k, sheet in pairs( chatBox.spriteSheets ) do
+    for k, sheet in pairs( chatBox.images.emoteSheets ) do
         for k1, sprite in pairs( sheet.sprites ) do
             table.insert( out, sprite.name )
         end
@@ -231,16 +231,16 @@ function chatBox.getAllEmotes()
     return out
 end
 
-function chatBox.addEmotesToPanel( panel, data, usage )
+function chatBox.images.addEmotesToPanel( panel, data, usage )
     local gw = 6
     local gridSize = panel:GetWide() / gw
     local padding = ( ( gridSize ) - 20 ) / 2
-    panel.emojis = {}
+    panel.emotes = {}
     for k = 1, #data do
         local str = data[k]
-        local sprite = chatBox.spriteLookup.lookup[":" .. str .. ":"]
+        local sprite = chatBox.images.emoteLookup.lookup[":" .. str .. ":"]
 
-        local g = chatBox.createImage( sprite )
+        local g = chatBox.images.createEmote( sprite )
         g:SetParent( panel )
 
         local x = ( k - 1 ) % gw
@@ -258,12 +258,12 @@ function chatBox.addEmotesToPanel( panel, data, usage )
 
         g.str = ":" .. str .. ":"
 
-        table.insert( panel.emojis, g.str )
+        table.insert( panel.emotes, g.str )
 
         g:SetCursor( "hand" )
         function g:OnMousePressed( t )
             if t == MOUSE_LEFT then
-                local entry = chatBox.graphics.textEntry
+                local entry = chatBox.graphics.derma.textEntry
                 local txt = entry:GetText()
                 local cPos = entry:GetCaretPos()
 
@@ -281,7 +281,7 @@ function chatBox.addEmotesToPanel( panel, data, usage )
     end
 end
 
-function chatBox.createImage( obj )
+function chatBox.images.createEmote( obj )
     local g = vgui.Create( "DRicherTextGraphic" )
     g:SetType( "image" )
     g:SetSize( 20, 20 )
@@ -291,34 +291,36 @@ function chatBox.createImage( obj )
     return g
 end
 
-function chatBox.addImage( richText, obj )
+function chatBox.images.addEmote( richText, obj )
     local im = obj.sheet.sprites[obj.idx]
     richText:AddImage( obj.sheet.path, obj.text, 20, 20, im.posX * obj.sheet.spriteWidth, im.posY * obj.sheet.spriteHeight, obj.sheet.spriteWidth, obj.sheet.spriteHeight )        
 end
 
-function chatBox.addGif( richText, obj )
-    richText:InsertClickableTextStart( "Link-" .. url )
-    richText:AddGif( obj.url, obj.text .. "\n", 100, 100 )
+function chatBox.images.addGif( richText, obj )
+    richText:InsertClickableTextStart( "Link-" .. obj.url )
+    local size = richText.fontHeight * 5
+    richText:AddGif( obj.url, obj.text .. "\n", size, size )
     richText:InsertClickableTextEnd()
 end
 
-function chatBox.toggleEmojiMenu()
+function chatBox.images.toggleEmoteMenu()
     local g = chatBox.graphics
+    local d = g.derma
 
-    local isOpen = g.emojiMenu:IsVisible()
+    local isOpen = d.emoteMenu:IsVisible()
     if isOpen then
-        g.emojiMenu:Hide()
+        d.emoteMenu:Hide()
     else
-        local x, y = g.frame:GetPos()
-        g.emojiMenu:SetPos( x + g.size.x, y + g.size.y - 150 )
-        g.emojiMenu:Show()
-        RegisterDermaMenuForClose( g.emojiMenu )
-        g.emojiMenu:MakePopup()
-        g.emojiMenu:SetKeyboardInputEnabled( false )
+        local x, y = d.frame:GetPos()
+        d.emoteMenu:SetPos( x + g.size.x, y + g.size.y - 150 )
+        d.emoteMenu:Show()
+        RegisterDermaMenuForClose( d.emoteMenu )
+        d.emoteMenu:MakePopup()
+        d.emoteMenu:SetKeyboardInputEnabled( false )
     end
 end
 
-function chatBox.generateSpriteLookups()
+function chatBox.images.generateSpriteLookups()
     local lookup = {}
     local nameList = {}
     local emotes = {}
@@ -327,7 +329,7 @@ function chatBox.generateSpriteLookups()
     chatBox.autoComplete.emoteUsage = chatBox.autoComplete.emoteUsage or {}
     local usage = chatBox.autoComplete.emoteUsage
 
-    for k, sheet in pairs( chatBox.spriteSheets ) do
+    for k, sheet in pairs( chatBox.images.emoteSheets ) do
         for i, sprite in pairs( sheet.sprites ) do
             local names = table.Copy( sprite.chatStrings )
             table.insert( names, ":" .. sprite.name .. ":" )
@@ -347,28 +349,29 @@ function chatBox.generateSpriteLookups()
         return #a > #b
     end )
 
-    chatBox.spriteLookup = { lookup = lookup, list = nameList, emotes = emotes } 
+    chatBox.images.emoteLookup = {
+        lookup = lookup,
+        list = nameList,
+        emotes = emotes
+    }
 end
 
-function chatBox.enableGiphy()
-    chatBox.giphyEnabled = true
+function chatBox.images.enableGiphy()
+    chatBox.images.giphyEnabled = true
     if chatBox.autoComplete and chatBox.autoComplete.gotCommands then
-        chatBox.autoComplete.cmds[chatBox.giphyCommand] = chatBox.autoComplete.extraCmds[chatBox.giphyCommand] or 0
+        chatBox.autoComplete.cmds[chatBox.defines.giphyCommand] = chatBox.autoComplete.extraCmds[chatBox.defines.giphyCommand] or 0
     end
 end
 
 net.Receive( "BC_sendGif", function( len, ply )
-    if not chatBox.enabled then return end
-    if not chatBox.getSetting( "showGifs" ) then return end
+    if not chatBox.base.enabled then return end
+    if not chatBox.settings.getValue( "showGifs" ) then return end
 
     local chanName = net.ReadString()
     local url = net.ReadString()
     local text = net.ReadString()
 
-    local channel = chatBox.getChannel( chanName )
-    if not channel then return end
-
-    chatBox.messageChannel( channel, {
+    chatBox.channels.message( chanName, {
         formatter = true,
         type = "gif",
         text = text,

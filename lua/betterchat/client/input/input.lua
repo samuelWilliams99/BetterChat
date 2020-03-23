@@ -1,32 +1,34 @@
+chatBox.input = {}
+local i = chatBox.input
 include( "betterchat/client/input/autocomplete.lua" )
 
 hook.Add( "BC_initPanels", "BC_initInput", function()
-    chatBox.history = {}
-    chatBox.historyIndex = 0
-    chatBox.historyInput = ""
+    i.history = {}
+    i.historyIndex = 0
+    i.historyInput = ""
 end )
 
 hook.Add( "BC_keyCodeTyped", "BC_inputHook", function( code, ctrl, shift, entry )
     if code == KEY_UP then
-        if chatBox.historyIndex == 0 then
-            chatBox.historyInput = entry:GetText()
+        if i.historyIndex == 0 then
+            i.historyInput = entry:GetText()
         end
-        chatBox.historyIndex = math.Min( chatBox.historyIndex + 1, #chatBox.history )
-        if chatBox.historyIndex ~= 0 then
-            entry:SetText( chatBox.history[( #chatBox.history + 1 ) - chatBox.historyIndex] )
+        i.historyIndex = math.Min( i.historyIndex + 1, #i.history )
+        if i.historyIndex ~= 0 then
+            entry:SetText( i.history[( #i.history + 1 ) - i.historyIndex] )
             entry:SetCaretPos( #entry:GetText() )
         end
         return true
     elseif code == KEY_DOWN then
-        if chatBox.historyIndex == 0 then
+        if i.historyIndex == 0 then
             return true
         end
-        chatBox.historyIndex = math.Max( chatBox.historyIndex - 1, 0 )
-        if chatBox.historyIndex ~= 0 then
-            entry:SetText( chatBox.history[( #chatBox.history + 1 ) - chatBox.historyIndex] )
+        i.historyIndex = math.Max( i.historyIndex - 1, 0 )
+        if i.historyIndex ~= 0 then
+            entry:SetText( i.history[( #i.history + 1 ) - i.historyIndex] )
             entry:SetCaretPos( #entry:GetText() )
         else
-            entry:SetText( chatBox.historyInput )
+            entry:SetText( i.historyInput )
             entry:SetCaretPos( #entry:GetText() )
         end
         return true
@@ -66,7 +68,7 @@ hook.Add( "BC_keyCodeTyped", "BC_inputHook", function( code, ctrl, shift, entry 
 end )
 
 hook.Add( "BC_messageCanSend", "BC_runConsoleCommand", function( channel, txt )
-    if chatBox.getSetting( "allowConsole" ) then
+    if chatBox.settings.getValue( "allowConsole" ) then
         if txt and txt[1] == "%" then
             local cmd = txt:sub( 2 )
             if not cmd or #cmd == 0 then return true end
@@ -74,7 +76,8 @@ hook.Add( "BC_messageCanSend", "BC_runConsoleCommand", function( channel, txt )
             return true
         end
     end
-    if chatBox.giphyEnabled and string.sub( txt, 1, 7 ) == "!giphy " then
+    local giphyCommand = chatBox.defines.giphyCommand
+    if chatBox.images.giphyEnabled and string.sub( txt, 1, #giphyCommand + 1 ) == giphyCommand .. " " then
         local str = string.sub( txt, 8 )
         net.Start( "BC_sendGif" )
         net.WriteString( str )

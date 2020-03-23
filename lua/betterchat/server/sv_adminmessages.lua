@@ -1,15 +1,17 @@
+chatBox.admin = {}
+
 net.Receive( "BC_AM", function( len, ply )
     local text = net.ReadString()
-    chatBox.sendAdmin( ply, text )
+    chatBox.admin.sendAdmin( ply, text )
 end )
 
-function chatBox.sendAdmin( ply, text )
-    chatBox.sendLogConsole( chatBox.channelTypes.ADMIN, "Admin", ply, ": ", text )
+function chatBox.admin.sendAdmin( ply, text )
+    chatBox.logs.sendLogConsole( "Admin", ply, ": ", text )
 
     local plys = {}
     for k, p in pairs( player.GetAll() ) do
-        if chatBox.getAllowed( p, "seeasay" ) then
-            if chatBox.chatBoxEnabled[p] then
+        if chatBox.settings.isAllowed( p, "seeasay" ) then
+            if chatBox.base.chatBoxEnabled[p] then
                 net.Start( "BC_AM" )
                 net.WriteEntity( ply )
                 net.WriteString( text )
@@ -20,11 +22,11 @@ function chatBox.sendAdmin( ply, text )
         end
     end
 
-    if not chatBox.getAllowed( ply, "seeasay" ) then
+    if not chatBox.settings.isAllowed( ply, "seeasay" ) then
         table.insert( plys, ply )
     end
 
     for k, v in pairs( plys ) do
-        chatBox.sendNormalClient( v, ply, " to admins: ", Color( 0, 255, 0 ), text )
+        chatBox.manager.sendNormalClient( v, ply, " to admins: ", chatBox.defines.colors.green, text )
     end
 end

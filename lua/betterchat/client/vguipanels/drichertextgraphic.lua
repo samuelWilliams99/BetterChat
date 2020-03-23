@@ -71,20 +71,20 @@ function RTG:UpdateGraphic()
         g.offset = self.offset
         g.useOffset = self.useOffset
 
-        g.Paint = function( im, w, h )
+        function g:Paint( w, h )
             
-            if ( !im.m_Material ) then return true end
+            if ( !self.m_Material ) then return true end
 
-            surface.SetMaterial( im.m_Material )
-            surface.SetDrawColor( im.m_Color.r, im.m_Color.g, im.m_Color.b, im.m_Color.a )
+            surface.SetMaterial( self.m_Material )
+            surface.SetDrawColor( self.m_Color.r, self.m_Color.g, self.m_Color.b, self.m_Color.a )
 
 
-            if not im.useOffset then
+            if not self.useOffset then
                 surface.DrawTexturedRect( 0, 0, w, h )
             else
-                local sx, sy = im.m_Material:Width(), im.m_Material:Height()
+                local sx, sy = self.m_Material:Width(), self.m_Material:Height()
 
-                local u0, u1, v0, v1 = im.offset.x / sx, im.offset.y / sy, ( im.offset.x + im.offset.w ) / sx, ( im.offset.y + im.offset.h ) / sy
+                local u0, u1, v0, v1 = self.offset.x / sx, self.offset.y / sy, ( self.offset.x + self.offset.w ) / sx, ( self.offset.y + self.offset.h ) / sy
                 
                 surface.DrawTexturedRectUV( 0, 0, w, h, u0, u1, v0, v1 )
             end

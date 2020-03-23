@@ -1,6 +1,6 @@
-chatBox.extraPlayerSettings = {}
+chatBox.sidePanel.players.extraSettings = {}
 
-function chatBox.addPlayerSetting( ply )
+function chatBox.sidePanel.players.addCustomSetting( ply )
     local sx, sy = 400, 300
     local frame = vgui.Create( "DFrame" )
     frame:SetSize( sx, sy )
@@ -16,7 +16,7 @@ function chatBox.addPlayerSetting( ply )
     nameLabel:SetText( "Action name:" )
     nameLabel:SetPos( 15, 38 )
     nameLabel:SetSize( 80, 20 )
-    nameLabel.Paint = function( self, w, h )
+    function nameLabel:Paint( w, h )
         local tw, th = self:GetTextSize()
         draw.DrawText( self:GetText(), self:GetFont(), w - tw, 0, self:GetTextColor() )
         return true
@@ -25,7 +25,7 @@ function chatBox.addPlayerSetting( ply )
     local name = vgui.Create( "DTextEntry", frame )
     name:SetPos( 80 + 15 + 15, 35 )
     name:SetSize( 120, 20 )
-    name.AllowInput = function( self, c )
+    function name:AllowInput( c )
         local txt = self:GetText() .. c
         surface.SetFont( self:GetFont() )
         local x, y = surface.GetTextSize( txt )
@@ -37,12 +37,12 @@ function chatBox.addPlayerSetting( ply )
     nameErrorLabel:SetPos( 15 + 230, 38 )
     nameErrorLabel:SetSize( 120, 20 )
     nameErrorLabel.errorOpacity = 0
-    nameErrorLabel.Paint = function( self, w, h )
-        local tw, th = self:GetTextSize()
-        draw.DrawText( self:GetText(), self:GetFont(), 0, 0, Color( 255, 0, 0, math.Clamp( self.errorOpacity, 0, 255 ) ) )
+    function nameErrorLabel:Paint( w, h )
+        local alpha = math.Clamp( self.errorOpacity, 0, 255 )
+        draw.DrawText( self:GetText(), self:GetFont(), 0, 0, ch.setA( chatBox.defines.colors.red, alpha ) )
         return true
     end
-    nameErrorLabel.Think = function( self )
+    function nameErrorLabel:Think()
         if self.errorOpacity > 0 then
             self.errorOpacity = self.errorOpacity - 3
         else 
@@ -55,7 +55,7 @@ function chatBox.addPlayerSetting( ply )
     commandLabel:SetText( "Command:" )
     commandLabel:SetPos( 15, 63 )
     commandLabel:SetSize( 80, 20 )
-    commandLabel.Paint = function( self, w, h )
+    function commandLabel:Paint( w, h )
         local tw, th = self:GetTextSize()
         draw.DrawText( self:GetText(), self:GetFont(), w - tw, 0, self:GetTextColor() )
         return true
@@ -89,7 +89,7 @@ function chatBox.addPlayerSetting( ply )
     playerTypeLabel:SetText( "Targets:" )
     playerTypeLabel:SetPos( 15, 131 )
     playerTypeLabel:SetSize( 80, 20 )
-    playerTypeLabel.Paint = function( self, w, h )
+    function playerTypeLabel:Paint( w, h )
         local tw, th = self:GetTextSize()
         draw.DrawText( self:GetText(), self:GetFont(), w - tw, 0, self:GetTextColor() )
         return true
@@ -109,43 +109,43 @@ function chatBox.addPlayerSetting( ply )
     playersList:SetMultiSelect( true )
     playersList:AddColumn( "Player" )
     for k, p in pairs( player.GetAll() ) do
-        local l = playersList:AddLine( p:GetName(), p:SteamID() )
-        if p == LocalPlayer() then l:SetSelected( true ) end
-        l.OnMousePressed = function( self, m )
-            if m == MOUSE_LEFT then
+        local line = playersList:AddLine( p:GetName(), p:SteamID() )
+        if p == LocalPlayer() then line:SetSelected( true ) end
+        function line:OnMousePressed( button )
+            if button == MOUSE_LEFT then
                 self:SetSelected( not self:IsSelected() ) --Fancy stuff to allow actual multi select (not requiring ctrl, or shift or whatever)
             end
         end
     end
+    function playersList:OnClickLine() end -- This function is required, but I don't want it to do anything, thus empty implementation
     playersList:SetVerticalScrollbarEnabled( true )
     playersList:SetPos( 80 + 15 + 15, 154 )
     playersList:SetSize( sx - 110 - 20, 90 )
-    playersList.OnClickLine = function() end 
     playersList:Hide()
 
     local ranksList = vgui.Create( "DListView", frame )
     ranksList:SetMultiSelect( true )
     ranksList:AddColumn( "Rank" )
     for k, t in pairs( team.GetAllTeams() ) do
-        local l = ranksList:AddLine( t.Name, t.Name )
-        if t.Name == team.GetName( LocalPlayer():Team() ) then l:SetSelected( true ) end
-        l.OnMousePressed = function( self, m )
-            if m == MOUSE_LEFT then
+        local line = ranksList:AddLine( t.Name, t.Name )
+        if t.Name == team.GetName( LocalPlayer():Team() ) then line:SetSelected( true ) end
+        function line:OnMousePressed( button )
+            if button == MOUSE_LEFT then
                 self:SetSelected( not self:IsSelected() )
             end
         end
     end
+    function ranksList:OnClickLine() end
     ranksList:SetVerticalScrollbarEnabled( true )
     ranksList:SetPos( 80 + 15 + 15, 154 )
     ranksList:SetSize( sx - 110 - 20, 90 )
-    ranksList.OnClickLine = function() end 
     ranksList:Hide()
 
     local noOptions = vgui.Create( "DPanel", frame )
     noOptions:SetPos( 80 + 15 + 15, 154 )
     noOptions:SetSize( sx - 110 - 20, 90 )
-    noOptions.Paint = function( self, w, h )
-        surface.SetDrawColor( Color( 200, 200, 200, 150 ) )
+    function noOptions:Paint( w, h )
+        surface.SetDrawColor( chatBox.defines.gray( 200, 150 ) )
         surface.DrawOutlinedRect( 0, 0, w, h )
     end
 
@@ -155,7 +155,7 @@ function chatBox.addPlayerSetting( ply )
     noOptionsLabel:Center()
 
     --Finish playerType
-    playerType.OnSelect = function( self, index, value )
+    function playerType:OnSelect( index, value )
         playersList:Hide()
         ranksList:Hide()
         noOptions:Hide()
@@ -177,7 +177,7 @@ function chatBox.addPlayerSetting( ply )
     confirmLabel:SetText( "Require Confirm:" )
     confirmLabel:SetPos( 10, 249 )
     confirmLabel:SetSize( 85, 20 )
-    confirmLabel.Paint = function( self, w, h )
+    function confirmLabel:Paint( w, h )
         local tw, th = self:GetTextSize()
         draw.DrawText( self:GetText(), self:GetFont(), w - tw, 0, self:GetTextColor() )
         return true
@@ -194,7 +194,7 @@ function chatBox.addPlayerSetting( ply )
     plyContextLabel:SetText( "Add to Player Context:" )
     plyContextLabel:SetPos( 230, 249 )
     plyContextLabel:SetSize( 120, 20 )
-    plyContextLabel.Paint = function( self, w, h )
+    function plyContextLabel:Paint( w, h )
         local tw, th = self:GetTextSize()
         draw.DrawText( self:GetText(), self:GetFont(), w - tw, 0, self:GetTextColor() )
         return true
@@ -211,7 +211,7 @@ function chatBox.addPlayerSetting( ply )
     cancelBtn:SetText( "Cancel" )
     cancelBtn:SetSize( 100, 20 )    
     cancelBtn:SetPos( 5, sy - 25 )
-    cancelBtn.DoClick = function()
+    function cancelBtn:DoClick()
         frame:Close()
     end
 
@@ -219,7 +219,7 @@ function chatBox.addPlayerSetting( ply )
     createBtn:SetText( "Create" )
     createBtn:SetSize( 100, 20 )    
     createBtn:SetPos( sx - 100 - 5, sy - 25 )
-    createBtn.DoClick = function()
+    function createBtn:DoClick()
         --first check name exists
         if string.Trim( name:GetText() ) == "" then
             nameErrorLabel.errorOpacity = 1000
@@ -228,7 +228,7 @@ function chatBox.addPlayerSetting( ply )
         end
 
         --then check for unique name
-        for k, v in pairs( chatBox.playerSettingsTemplate ) do
+        for k, v in pairs( chatBox.sidePanel.players.template ) do
             if v.name == name:GetText() then
                 nameErrorLabel.errorOpacity = 1000
                 nameErrorLabel:SetText( "Name already taken" )
@@ -247,7 +247,7 @@ function chatBox.addPlayerSetting( ply )
         for k = 1, #selected do
             selected[k] = selected[k]:GetColumnText( 2 )
         end
-        chatBox.createPlayerSetting( { 
+        chatBox.sidePanel.players.createCustomSetting( { 
             name = name:GetText(), 
             command = command:GetText(), 
             config = { 
@@ -264,15 +264,11 @@ function chatBox.addPlayerSetting( ply )
     end
 end
 
-function chatBox.createPlayerSetting( data )
+function chatBox.sidePanel.players.createCustomSetting( data )
     --Convert command
-    for k, v in pairs( chatBox.playerSettingsTemplate ) do
-        if v.name == data.name then
-            return
-        end
-    end
+    if table.hasMember( chatBox.sidePanel.players.template, "name", data.name ) then return end
 
-    table.insert( chatBox.extraPlayerSettings, data )
+    table.insert( chatBox.sidePanel.players.extraSettings, data )
     local cmd = data.command
 
     setting = {}
@@ -288,7 +284,7 @@ function chatBox.createPlayerSetting( data )
     setting.customCommand = data.command
     setting.addToPlayerContext = data.addToPlayerContext
 
-    setting.onClick = function( d, setting )
+    function setting.onClick( d, setting )
         local ply = d.ply
         local cmdPlyExplode = string.Explode( "[$name]", setting.customCommand )
         local str = ""
@@ -321,29 +317,29 @@ function chatBox.createPlayerSetting( data )
         LocalPlayer():ConCommand( str )
     end
 
-    setting.onRightClick = function( ply, setting )
+    function setting.onRightClick( ply, setting )
         local m = DermaMenu()
         m:AddOption( "Remove", function()
-            table.RemoveByValue( chatBox.playerSettingsTemplate, setting )
-            for k, v in pairs( chatBox.extraPlayerSettings ) do
+            table.RemoveByValue( chatBox.sidePanel.players.template, setting )
+            for k, v in pairs( chatBox.sidePanel.players.extraSettings ) do
                 if v.name == setting.name then
-                    table.remove( chatBox.extraPlayerSettings, k )
+                    table.remove( chatBox.sidePanel.players.extraSettings, k )
                     break
                 end
             end
 
-            local openPlyId = chatBox.sidePanels["Player"].activePanel
+            local openPlyId = chatBox.sidePanel.panels["Player"].activePanel
             local openPly = player.GetBySteamID( openPlyId )
 
-            chatBox.removeAllPlayerPanels()
+            chatBox.sidePanel.players.removeAllEntries()
 
             if openPly then
-                chatBox.generatePlayerPanelEntry( openPly )
-                chatBox.showSidePanel( "Player", openPly:SteamID() )
+                chatBox.sidePanel.players.generateEntry( openPly )
+                chatBox.sidePanel.show( "Player", openPly:SteamID() )
             else
-                chatBox.closeSidePanel( "Player", true )
+                chatBox.sidePanel.close( "Player", true )
             end
-            chatBox.saveData()
+            chatBox.data.saveData()
         end )
         m:AddOption( setting.addToPlayerContext and "Remove from Player Context" or "Add to Player Context", function()
             setting.addToPlayerContext = not setting.addToPlayerContext
@@ -351,7 +347,7 @@ function chatBox.createPlayerSetting( data )
         m:Open()
     end
 
-    setting.extraCanRun = function( ply, setting )
+    function setting.extraCanRun( ply, setting )
         if setting.targetType == "Rank(s)" then
             return table.HasValue( setting.targets, team.GetName( ply:Team() ) )
         elseif setting.targetType == "Player(s)" then
@@ -360,15 +356,14 @@ function chatBox.createPlayerSetting( data )
         return true
     end
 
-    table.insert( chatBox.playerSettingsTemplate, 1, setting )
+    table.insert( chatBox.sidePanel.players.template, 1, setting )
 
-    chatBox.removeAllPlayerPanels()
+    chatBox.sidePanel.players.removeAllEntries()
 
     if data.call_ply then
-        chatBox.generatePlayerPanelEntry( data.call_ply )
-        chatBox.showSidePanel( "Player", data.call_ply:SteamID() )
+        chatBox.sidePanel.players.generateEntry( data.call_ply )
+        chatBox.sidePanel.show( "Player", data.call_ply:SteamID() )
     end
 
-    chatBox.saveData()
-
+    chatBox.data.saveData()
 end

@@ -4,8 +4,8 @@ timer.Create( "BC_delayOverload", 0, 1, function()
             ULib.tsayError( calling_ply, "You are muted, and therefore cannot speak! Use asay for admin chat if urgent.", true )
             return
         end
-        chatBox.sendPrivate( target_ply, calling_ply, calling_ply, message, true )
-        chatBox.sendPrivate( calling_ply, calling_ply, target_ply, message )
+        chatBox.private.sendPrivate( target_ply, calling_ply, calling_ply, message, true )
+        chatBox.private.sendPrivate( calling_ply, calling_ply, target_ply, message )
     end
     local psay = ulx.command( "Chat", "ulx psay", ulx.psay, "!p", true )
     psay:addParam{ type = ULib.cmds.PlayerArg, target = "!^", ULib.cmds.ignoreCanTarget }
@@ -14,7 +14,7 @@ timer.Create( "BC_delayOverload", 0, 1, function()
     psay:help( "Send a private message to target." )
 
     function ulx.asay( calling_ply, message )
-        chatBox.sendAdmin( calling_ply, message )
+        chatBox.admin.sendAdmin( calling_ply, message )
     end
     local asay = ulx.command( CATEGORY_NAME, "ulx asay", ulx.asay, "@", true, true )
     asay:addParam{ type = ULib.cmds.StringArg, hint = "message", ULib.cmds.takeRestOfLine }

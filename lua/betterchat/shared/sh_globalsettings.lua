@@ -1,4 +1,5 @@
-chatBox.globalSettingsTemplate = { 
+chatBox.settings = {}
+chatBox.settings.clientTemplate = { 
     { 
         name = "Chat Fade time", 
         value = "fadeTime", 
@@ -136,7 +137,7 @@ chatBox.globalSettingsTemplate = {
     }
 }
 
-chatBox.serverSettings = { 
+chatBox.settings.serverTemplate = { 
     { 
         name = "Replace Team chat", 
         value = "replaceTeam", 
@@ -164,11 +165,11 @@ chatBox.serverSettings = {
         extra = "Giphy API key needed for !giphy", 
         default = "", 
         onChange = function( self, old, new )
-            chatBox.getGiphyURL( "thing", function( success, data )
+            chatBox.giphy.getGiphyURL( "thing", function( success, data )
                 if success then
                     print( "[BetterChat] Giphy key test successful, giphy command enabled." )
                     chatBox.giphy.enabled = true
-                    ULib.clientRPC( chatBox.getEnabledPlayers(), "chatBox.enableGiphy" )
+                    ULib.clientRPC( chatBox.base.getEnabledPlayers(), "chatBox.images.enableGiphy" )
                 else
                     print( "[BetterChat] No valid Giphy API key found in bc_server_giphykey, giphy command disabled. Generate an app key from https://developers.giphy.com/ to use this feature." )
                 end
@@ -184,7 +185,7 @@ chatBox.serverSettings = {
     }, 
 }
 
-chatBox.ulxPerms = { 
+chatBox.settings.ulxPermissions = { 
     { 
         value = "chatlogs", 
         defaultAccess = ULib.ACCESS_SUPERADMIN, 
@@ -228,12 +229,12 @@ chatBox.ulxPerms = {
 }
 
 if SERVER then
-    for _, perm in pairs( chatBox.ulxPerms ) do
+    for _, perm in pairs( chatBox.settings.ulxPermissions ) do
         ULib.ucl.registerAccess( "ulx bc_" .. perm.value, perm.defaultAccess, perm.extra, "BetterChat" )    
     end
 end
 
-function chatBox.getAllowed( ply, perm )
+function chatBox.settings.isAllowed( ply, perm )
     if not perm then
         perm = ply
         ply = LocalPlayer()
@@ -247,7 +248,7 @@ end
 
 if CLIENT then
     hook.Add( "BC_initPanels", "BC_initClientConvars", function()
-        for k, setting in pairs( chatBox.globalSettingsTemplate ) do
+        for k, setting in pairs( chatBox.settings.clientTemplate ) do
             local val = "bc_" .. setting.value
 
             if setting.type == "button" then continue end
@@ -278,7 +279,7 @@ if CLIENT then
     hook.Add( "PopulateToolMenu", "BC_globalSettingsTool", function()
         spawnmenu.AddToolMenuOption( "Options", "Better Chat", "bc_settings", "Global Settings", "", "", function( panel )
             panel:ClearControls()
-            for k, setting in pairs( chatBox.globalSettingsTemplate ) do
+            for k, setting in pairs( chatBox.settings.clientTemplate ) do
                 local val = "bc_" .. setting.value
                 
                 local c
@@ -302,10 +303,10 @@ if CLIENT then
                         function c:Think()
                             if CurTime() - self.lastClick < 2 then
                                 self:SetText( "CONFIRM" )
-                                self:SetTextColor( Color( 255, 0, 0 ) )
+                                self:SetTextColor( chatBox.defines.colors.red )
                             else
                                 self:SetText( self.setting.name )
-                                self:SetTextColor( Color( 0, 0, 0 ) )
+                                self:SetTextColor( chatBox.defines.colors.black )
                             end
                         end
                     end
@@ -320,8 +321,8 @@ if CLIENT then
 
 end
 
-function chatBox.getSetting( name, isServer )
-    local setting = chatBox.getSettingObject( name, isServer )
+function chatBox.settings.getValue( name, isServer )
+    local setting = chatBox.settings.getObject( name, isServer )
     if not setting then return end
 
     local var = GetConVar( "bc_" .. ( isServer and "server_" or "" ) .. name )
@@ -335,12 +336,12 @@ function chatBox.getSetting( name, isServer )
     end
 end
 
-function chatBox.getServerSetting( name ) 
-    return chatBox.getSetting( name, true )
+function chatBox.settings.getServerValue( name ) 
+    return chatBox.settings.getValue( name, true )
 end
 
-function chatBox.getSettingObject( name, isServer ) 
-    for k, v in pairs( isServer and chatBox.serverSettings or chatBox.globalSettingsTemplate ) do
+function chatBox.settings.getObject( name, isServer ) 
+    for k, v in pairs( isServer and chatBox.settings.serverTemplate or chatBox.settings.clientTemplate ) do
         if v.value == name then
             return v
         end
@@ -348,7 +349,7 @@ function chatBox.getSettingObject( name, isServer )
 end
 
 hook.Add( "BC_sharedInit", "BC_initServerConvars", function()
-    for k, v in pairs( chatBox.globalSettingsTemplate ) do
+    for k, v in pairs( chatBox.settings.clientTemplate ) do
         if v.type == "button" or ConVarExists( "bc_" .. v.value .. "_default" ) then continue end
         
         local def = v.default
@@ -356,7 +357,7 @@ hook.Add( "BC_sharedInit", "BC_initServerConvars", function()
         CreateConVar( "bc_" .. v.value .. "_default", def, FCVAR_REPLICATED + FCVAR_ARCHIVE + FCVAR_PROTECTED )
     end
 
-    for k, v in pairs( chatBox.serverSettings ) do
+    for k, v in pairs( chatBox.settings.serverTemplate ) do
         local def = v.default
         if type( def ) == "boolean" then def = def and 1 or 0 end
         local cvar = CreateConVar( "bc_server_" .. v.value, def, FCVAR_REPLICATED + FCVAR_ARCHIVE + FCVAR_PROTECTED )

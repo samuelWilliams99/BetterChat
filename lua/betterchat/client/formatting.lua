@@ -1,7 +1,7 @@
 chatBox.formatting = {}
 local f = chatBox.formatting
 
-function chatBox.formatMessage( ply, text, dead, defaultColor, dontRecolorColon, data )
+function f.formatMessage( ply, text, dead, defaultColor, dontRecolorColon, data )
 
     local text = table.concat( string.Explode( "\t[\t]+", text, true ), "\t" )
 
@@ -11,7 +11,7 @@ function chatBox.formatMessage( ply, text, dead, defaultColor, dontRecolorColon,
 
     local preTab, lastCol = hook.Run( "BC_getPreTab", unpack( data ) )
     if preTab then
-        table.Add( preTab, chatBox.formatText( text, lastCol, ply ) )
+        table.Add( preTab, f.formatText( text, lastCol, ply ) )
         tab = preTab
         if data[3] then -- Teamchat
             table.insert( preTab, 1, { controller = true, type = "noPrefix" } )
@@ -35,20 +35,20 @@ function chatBox.formatMessage( ply, text, dead, defaultColor, dontRecolorColon,
         table.insert( tab, ": " )
         table.insert( tab, defaultColor )
 
-        local messageTab = chatBox.formatText( text, nil, ply )
+        local messageTab = f.formatText( text, nil, ply )
         table.Add( tab, messageTab )
     end
 
     return tab
 end
 
-function chatBox.formatText( text, defaultColor, ply )
+function f.formatText( text, defaultColor, ply )
     local tab = {}
 
     defaultColor = defaultColor or chatBox.defines.colors.white
 
     -- Make ulx commands grey
-    if text[1] == "!" and text[2] ~= "!" and chatBox.getSetting( "colorCmds" ) then
+    if text[1] == "!" and text[2] ~= "!" and chatBox.settings.getValue( "colorCmds" ) then
         local s, e = string.find( text, " ", nil, true )
         if not e then e = #text + 1 end
         if e ~= 2 then
@@ -64,7 +64,7 @@ function chatBox.formatText( text, defaultColor, ply )
     tab = f.formatCustomColor( tab, defaultColor, ply )
 
     -- format links
-    if chatBox.getSetting( "clickableLinks" ) then
+    if chatBox.settings.getValue( "clickableLinks" ) then
         tab = f.formatLinks( tab )
     end
 
@@ -77,13 +77,13 @@ end
 
 function f.formatCustomColor( tab, currentColor, ply )
     local out = {}
-    local canUse = chatBox.getAllowed( ply, "bc_color" )
+    local canUse = chatBox.settings.isAllowed( ply, "bc_color" )
     for k, v in ipairs( tab ) do
         if type( v ) == "table" and v.defaultColor then
             table.insert( out, currentColor )
         elseif type( v ) == "string" and canUse then
             local ret
-            ret, currentColor = f.formatCustomColorSingle( v )
+            ret, currentColor = f.formatCustomColorSingle( v, currentColor )
             table.Add( out, ret )
         else
             table.insert( out, v )
@@ -108,7 +108,7 @@ local function firstMatch( text, ... )
     return firstIdx, table.remove( out, 1 ), table.remove( out, 1 ), out
 end
 
-function f.formatCustomColorSingle( text )
+function f.formatCustomColorSingle( text, currentColor )
     local out = {}
     while true do
         local i, s, e, data = firstMatch( text, "%[#(%x%x)(%x%x)(%x%x)%]", "%[#%]", "%[@([^%]]+)%]" )
@@ -152,7 +152,7 @@ function f.formatEmotes( tab )
     local loopCounter = 1
     -- i hate this whole section, surely can be written better
     -- cleaned up a bit, still needs rewriting, cba
-    if not chatBox.spriteLookup then
+    if not chatBox.images.emoteLookup then
         return tab
     end
     
@@ -175,8 +175,8 @@ function f.formatEmotes( tab )
             local found = true
             while found do
                 found = false
-                for l = 1, #chatBox.spriteLookup.list do
-                    local str = chatBox.spriteLookup.list[l]
+                for l = 1, #chatBox.images.emoteLookup.list do
+                    local str = chatBox.images.emoteLookup.list[l]
 
                     local s, e = string.find( inpStr, str, 1, true )
                     if not s then continue end
@@ -184,7 +184,7 @@ function f.formatEmotes( tab )
                     local isShort = str[1] ~= ":" or str[#str] ~= ":"
 
                     if isShort then
-                        if not chatBox.getSetting( "convertEmotes" ) then continue end
+                        if not chatBox.settings.getValue( "convertEmotes" ) then continue end
                         if s > 1 then
                             if s > 2 then 
                                 if inpStr[s - 1] ~= " " then
@@ -208,7 +208,7 @@ function f.formatEmotes( tab )
                         table.insert( newTab, { formatter = true, type = "text", text = string.sub( inpStr, s, e ) } )
                     else
                         table.insert( newTab, string.sub( inpStr, 1, s - 1 ) )
-                        local data = chatBox.spriteLookup.lookup[str]
+                        local data = chatBox.images.emoteLookup.lookup[str]
                         table.insert( newTab, { formatter = true, type = "image", sheet = data.sheet, idx = data.idx, text = str } )
                     end
                     inpStr = string.sub( inpStr, e + 1, #inpStr )
@@ -247,10 +247,10 @@ end
 
 local function getPlyModifiers( ply )
     local out = {}
-    out.italic = chatBox.getAllowed( ply, "bc_italics" )
-    out.bold = chatBox.getAllowed( ply, "bc_bold" )
-    out.strike = chatBox.getAllowed( ply, "bc_strike" )
-    out.underline = chatBox.getAllowed( ply, "bc_underline" )
+    out.italic = chatBox.settings.isAllowed( ply, "bc_italics" )
+    out.bold = chatBox.settings.isAllowed( ply, "bc_bold" )
+    out.strike = chatBox.settings.isAllowed( ply, "bc_strike" )
+    out.underline = chatBox.settings.isAllowed( ply, "bc_underline" )
     return out
 end
 
@@ -369,7 +369,7 @@ local function getSpecialWord( text, start )
             name = v
         end
     end
-    if chatBox.getSetting( "formatColors" ) then
+    if chatBox.settings.getValue( "formatColors" ) then
         for k, v in pairs( chatBox.defines.colors ) do
             k = chatHelper.camelToSpace( k )
             s, e = string.find( string.lower( text ), string.lower( k ), start, true )
@@ -408,7 +408,7 @@ function f.formatSpecialWords( text, tab )
                 if text[e + 1] ~= "s" and text[s - 1] ~= "\"" and text[e + 1] ~= ":" then
                     s, e, v, n = getSpecialWord( text, e + 1 )
                     continue
-                elseif e < #text - 1 and chatBox.isLetter( text[e + 2] ) then
+                elseif e < #text - 1 and chatBox.util.isLetter( text[e + 2] ) then
                     s, e, v, n = getSpecialWord( text, e + 1 )
                     continue
                 end
@@ -440,7 +440,7 @@ function f.formatLinks( tab )
     local newTab = {}
     for k, v in pairs( tab ) do
         if type( v ) == "string" then
-            local tab = chatBox.convertLinks( v )
+            local tab = f.convertLinks( v )
             table.Add( newTab, tab )
         else
             table.insert( newTab, v )
@@ -449,19 +449,25 @@ function f.formatLinks( tab )
     return newTab
 end
 
-function chatBox.convertLinks( v )
+function f.convertLinks( v )
     if type( v ) ~= "string" then return { v } end
     local tab = {}
     local lStart, lEnd, url = 0, 0, ""
     while true do
-        lStart, lEnd, url = chatBox.getNextUrl( v )
+        lStart, lEnd, url = chatBox.util.getNextUrl( v )
         if not lStart then break end
         local preText = string.sub( v, 0, lStart - 1 )
         local postText = string.sub( v, lEnd + 1 )
         if #preText > 0 then
             table.insert( tab, preText )
         end
-        table.insert( tab, { formatter = true, type = "clickable", signal = "Link-" .. url, text = url, color = chatBox.defines.theme.links } )
+        table.insert( tab, {
+            formatter = true,
+            type = "clickable",
+            signal = "Link-" .. url,
+            text = url,
+            color = chatBox.defines.theme.links
+        } )
         v = postText
     end
     if #v > 0 then
@@ -470,7 +476,7 @@ function chatBox.convertLinks( v )
     return tab
 end
 
-function chatBox.defaultFormatMessage( ply, text, teamChat, dead, col1, col2, data )
+function f.defaultFormatMessage( ply, text, teamChat, dead, col1, col2, data )
     local tab, madeChange = hook.Run( "BC_getDefaultTab", unpack( data ) )
     if tab and madeChange then
         return tab
@@ -511,14 +517,14 @@ net.Receive( "BC_sayOverload", function()
     local isDead = net.ReadBool()
     local msg = net.ReadString()
     if not hook.Run( "OnPlayerChat", ply, msg, isTeam, isDead ) then return end
-    if not chatBox.enabled then
-        chat.AddText( unpack( chatBox.defaultFormatMessage( ply, msg, isTeam, isDead ) ) )
+    if not chatBox.base.enabled then
+        chat.AddText( unpack( f.defaultFormatMessage( ply, msg, isTeam, isDead ) ) )
     end
 end )
 
-chatBox.onPlayerSayHook = function( ... ) -- pre, col1 and col2 are supplied by DarkRP
+function f.onPlayerSayHook( ... )
     for priority = -2, 2 do
-        for k, v in pairs( chatBox.hookOverloads.OnPlayerChat ) do
+        for k, v in pairs( chatBox.overload.hooks.OnPlayerChat ) do
             if type( v ) == "function" then
                 v = { 
                     [0] = { fn = v }
@@ -535,34 +541,40 @@ chatBox.onPlayerSayHook = function( ... ) -- pre, col1 and col2 are supplied by 
         end
     end
 
-    ply, text, teamChat, dead, pre, col1, col2 = ...
+    ply, text, teamChat, dead, pre, col1, col2 = ... -- pre, col1 and col2 are supplied by DarkRP
 
-    local maxLen = chatBox.getServerSetting( "maxLength" )
+    local maxLen = chatBox.settings.getServerValue( "maxLength" )
     if #text > maxLen then
         text = string.sub( text, 1, maxLen )
     end
 
     local plyValid = ply and ply:IsValid()
-    if plyValid and chatBox.playerSettings[ply:SteamID()] and chatBox.playerSettings[ply:SteamID()].ignore ~= 0 then return true end
+    if plyValid and chatBox.sidePanel.players.settings[ply:SteamID()] and chatBox.sidePanel.players.settings[ply:SteamID()].ignore ~= 0 then return true end
 
     local tab
     if pre then
-        tab = chatBox.formatMessage( ply, text, false, col2, true, { ... } )
+        tab = f.formatMessage( ply, text, false, col2, true, { ... } )
         tab[2] = { formatter = true, type = "escape" }
-        tab[3] = { formatter = true, type = ( plyValid and "clickable" or "text" ), signal = "Player-" .. ( plyValid and ply:SteamID() or "" ), text = pre, color = col1 }
+        tab[3] = {
+            formatter = true,
+            type = ( plyValid and "clickable" or "text" ),
+            signal = "Player-" .. ( plyValid and ply:SteamID() or "" ),
+            text = pre,
+            color = col1
+        }
     else
-        tab = chatBox.formatMessage( ply, text, dead )
+        tab = f.formatMessage( ply, text, dead )
     end
 
-    chatBox.messageChannel( { ( teamChat and not DarkRP ) and "Team" or "Players" }, unpack( tab ) )
+    chatBox.channels.message( { ( teamChat and not DarkRP ) and "Team" or "Players" }, unpack( tab ) )
 
-    if chatBox.overloadedFuncs.oldAddText then
-        chatBox.overloadedFuncs.oldAddText( unpack( chatBox.defaultFormatMessage( pre or ply, text, teamChat, pre and false or dead, col1, col2, { ... } ) ) ) --Keep old chat up to date
+    if chatBox.overload.old.AddText then
+        chatBox.overload.old.AddText( unpack( f.defaultFormatMessage( pre or ply, text, teamChat, pre and false or dead, col1, col2, { ... } ) ) ) --Keep old chat up to date
     end
     return true
 end
 
-function chatBox.print( ... )
+function f.print( ... )
     local data = { ... }
     local col = chatBox.defines.colors.white
     for k, v in pairs( data ) do
@@ -579,7 +591,7 @@ function chatBox.print( ... )
                 end
             end
             if not isPly then
-                local tab = chatBox.convertLinks( v )
+                local tab = f.convertLinks( v )
                 if #tab ~= 1 or tab[1] ~= v then 
                     table.remove( data, k )
                     for l = #tab, 1, -1 do
@@ -589,31 +601,31 @@ function chatBox.print( ... )
             end
         end
     end
-    if not chatBox.enabled then return end
-    for k, v in pairs( chatBox.channels ) do
+    if not chatBox.base.enabled then return end
+    for k, v in pairs( chatBox.channels.channels or {} ) do
         if v.doPrints and not v.replicateAll then
-            chatBox.messageChannelDirect( v.name, unpack( data ) )
+            chatBox.channels.messageDirect( v.name, unpack( data ) )
         end
     end
 end
 
-function chatBox.triggerTick()
-    if not chatBox.getSetting( "doTick" ) then return end
+function f.triggerTick()
+    if not chatBox.settings.getValue( "doTick" ) then return end
     if timer.Exists( "BC_triggerTick" ) then timer.Destroy( "BC_triggerTick" ) end
     timer.Create( "BC_triggerTick", 0.05, 1, function()
         chat.PlaySound()
     end )
 end
 
-function chatBox.triggerPop()
-    if not chatBox.getSetting( "doPop" ) then return end
+function f.triggerPop()
+    if not chatBox.settings.getValue( "doPop" ) then return end
     if timer.Exists( "BC_triggerTick" ) then timer.Destroy( "BC_triggerTick" ) end
     if timer.Exists( "BC_triggerPop" ) then timer.Destroy( "BC_triggerPop" ) end
     timer.Create( "BC_triggerPop", 0.05, 1, function()
-        chatBox.playPop()
+        f.playPop()
     end )
 end
 
-function chatBox.playPop()
+function f.playPop()
     surface.PlaySound( "garrysmod/balloon_pop_cute.wav" )
 end

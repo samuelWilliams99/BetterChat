@@ -14,50 +14,51 @@ chatBox.admin.defaultChannel = {
         table.insert( tab, idx + 1, "(ADMIN) " )
     end, 
     openOnStart = function()
-        return chatBox.allowedAdmin()
+        return chatBox.admin.allowed()
     end, 
     runCommandSeparately = true, 
     hideChatText = true, 
     textEntryColor = chatBox.defines.theme.adminTextEntry, 
+    position = 6,
 }
 chatBox.admin.buttonEnabled = false
 
-function chatBox.addAdminButton()
+function chatBox.admin.addButton()
     chatBox.admin.buttonEnabled = true
 end
 
-function chatBox.removeAdminButton()
+function chatBox.admin.removeButton()
     chatBox.admin.buttonEnabled = false
 end
 
 hook.Add( "BC_makeChannelButtons", "BC_makeAdminButton", function( menu )
     if not chatBox.admin.buttonEnabled then return end
     menu:AddOption( "Admin", function()
-        local chan = chatBox.getChannel( "Admin" )
+        local chan = chatBox.channels.getChannel( "Admin" )
         if not chan then return end
 
-        if not chatBox.isChannelOpen( chan ) and chatBox.allowedAdmin() then
-            chatBox.addChannel( chan )
+        if not chatBox.channels.isOpen( chan ) and chatBox.admin.allowed() then
+            chatBox.channels.add( chan )
         end
-        chatBox.focusChannel( chan )
+        chatBox.channels.focus( chan )
     end )
 end )
 
-function chatBox.allowedAdmin()
-    return chatBox.getAllowed( "seeasay" )
+function chatBox.admin.allowed()
+    return chatBox.settings.isAllowed( "seeasay" )
 end
 
 net.Receive( "BC_AM", function()
     local ply = net.ReadEntity()
     local text = net.ReadString()
-    local chan = chatBox.getChannel( "Admin" )
+    local chan = chatBox.channels.getChannel( "Admin" )
 
     if not chan then return end
 
     if not chan.openOnMessage then return end
 
-    if not chatBox.isChannelOpen( chan ) and chatBox.allowedAdmin() then
-        chatBox.addChannel( chan )
+    if not chatBox.channels.isOpen( chan ) and chatBox.admin.allowed() then
+        chatBox.channels.add( chan )
     end
 
     local isAlive, isAdmin = true, true
@@ -66,15 +67,15 @@ net.Receive( "BC_AM", function()
         isAdmin = ply:IsAdmin()
     end
 
-    local tab = chatBox.formatMessage( ply, text, not isAlive, isAdmin and chatBox.defines.colors.white or chatBox.defines.theme.nonAdminText )
-    chatBox.messageChannel( { chan.name, "MsgC" }, unpack( tab ) )
+    local tab = chatBox.formatting.formatMessage( ply, text, not isAlive, isAdmin and chatBox.defines.colors.white or chatBox.defines.theme.nonAdminText )
+    chatBox.channels.message( { chan.name, "MsgC" }, unpack( tab ) )
 end )
 
-function chatBox.addAdminChannel()
-    local channel = chatBox.getChannel( "Admin" )
+function chatBox.admin.addChannel()
+    local channel = chatBox.channels.getChannel( "Admin" )
     if not channel then
         channel = table.Copy( chatBox.admin.defaultChannel )
-        table.insert( chatBox.channels, channel )
+        table.insert( chatBox.channels.channels, channel )
     end
     if channel.needsData then
         for k, v in pairs( chatBox.admin.defaultChannel ) do
@@ -84,36 +85,36 @@ function chatBox.addAdminChannel()
         end
         channel.needsData = nil
     end
-    chatBox.applyDefaults( channel )
+    chatBox.sidePanel.channels.applyDefaults( channel )
     if not channel.dataChanged then channel.dataChanged = {} end
     return channel
 end
 
-hook.Add( "BC_preInitPanels", "BC_initAddAdminChannel", function()
-    chatBox.addAdminChannel()
+hook.Add( "BC_initPanels", "BC_initAddAdminChannel", function()
+    chatBox.admin.addChannel()
 end )
 
 hook.Add( "BC_postInitPanels", "BC_adminAddButton", function()
-    if chatBox.allowedAdmin() then
-        chatBox.addAdminButton()
+    if chatBox.admin.allowed() then
+        chatBox.admin.addButton()
     end
 end )
 
 hook.Add( "BC_userAccessChange", "BC_adminChannelCheck", function()
-    local adminChannel = chatBox.getChannel( "Admin" )
-    if chatBox.allowedAdmin() then
+    local adminChannel = chatBox.channels.getChannel( "Admin" )
+    if chatBox.admin.allowed() then
         if not adminChannel then
-            adminChannel = chatBox.addAdminChannel()
+            adminChannel = chatBox.admin.addChannel()
         end
-        if not chatBox.isChannelOpen( adminChannel ) then
-            chatBox.addChannel( adminChannel )
+        if not chatBox.channels.isOpen( adminChannel ) then
+            chatBox.channels.add( adminChannel )
         end
-        chatBox.addAdminButton()
+        chatBox.admin.addButton()
     else
-        if adminChannel and chatBox.isChannelOpen( adminChannel ) then
-            chatBox.removeChannel( adminChannel ) -- closes
+        if adminChannel and chatBox.channels.isOpen( adminChannel ) then
+            chatBox.channels.remove( adminChannel ) -- closes
         end
-        chatBox.removeAdminButton()
+        chatBox.admin.removeButton()
     end
 end )
 
@@ -124,7 +125,7 @@ hook.Add( "PostGamemodeLoaded", "BC_RPAdminOverload", function()
             local ply = net.ReadEntity()
             local text = net.ReadString()
             
-            if not chatBox.enabled then
+            if not chatBox.base.enabled then
 
                 local Team = ply:IsPlayer() and ply:Team() or 1
                 local Nick = ply:IsPlayer() and ply:Nick() or "Console"
@@ -132,14 +133,14 @@ hook.Add( "PostGamemodeLoaded", "BC_RPAdminOverload", function()
 
                 chat.AddNonParsedText( chatBox.defines.colors.red, prefix, team.GetColor( Team ), Nick .. ": ", chatBox.defines.colors.white, text )
             else
-                local chan = chatBox.getChannel( "Admin" )
+                local chan = chatBox.channels.getChannel( "Admin" )
 
-                local tab = chatBox.formatMessage( ply, text, not ply:Alive(), ply:IsAdmin() and chatBox.defines.colors.white or chatBox.defines.theme.admin )
-                chatBox.messageChannel( { chan.name, "MsgC" }, unpack( tab ) )
+                local tab = chatBox.formatting.formatMessage( ply, text, not ply:Alive(), ply:IsAdmin() and chatBox.defines.colors.white or chatBox.defines.theme.admin )
+                chatBox.channels.message( { chan.name, "MsgC" }, unpack( tab ) )
             end
         end )
         DarkRP.addChatReceiver( "/adminhelp", "talk in Admin", function( ply, text )
-            return chatBox.allowedAdmin()
+            return chatBox.admin.allowed()
         end )
     end
 end )
