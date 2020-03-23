@@ -1,6 +1,6 @@
-chatBox.sidePanel.players.extraSettings = {}
+bc.sidePanel.players.extraSettings = {}
 
-function chatBox.sidePanel.players.addCustomSetting( ply )
+function bc.sidePanel.players.addCustomSetting( ply )
     local sx, sy = 400, 300
     local frame = vgui.Create( "DFrame" )
     frame:SetSize( sx, sy )
@@ -39,7 +39,7 @@ function chatBox.sidePanel.players.addCustomSetting( ply )
     nameErrorLabel.errorOpacity = 0
     function nameErrorLabel:Paint( w, h )
         local alpha = math.Clamp( self.errorOpacity, 0, 255 )
-        draw.DrawText( self:GetText(), self:GetFont(), 0, 0, ch.setA( chatBox.defines.colors.red, alpha ) )
+        draw.DrawText( self:GetText(), self:GetFont(), 0, 0, ch.setA( bc.defines.colors.red, alpha ) )
         return true
     end
     function nameErrorLabel:Think()
@@ -145,7 +145,7 @@ function chatBox.sidePanel.players.addCustomSetting( ply )
     noOptions:SetPos( 80 + 15 + 15, 154 )
     noOptions:SetSize( sx - 110 - 20, 90 )
     function noOptions:Paint( w, h )
-        surface.SetDrawColor( chatBox.defines.gray( 200, 150 ) )
+        surface.SetDrawColor( bc.defines.gray( 200, 150 ) )
         surface.DrawOutlinedRect( 0, 0, w, h )
     end
 
@@ -228,7 +228,7 @@ function chatBox.sidePanel.players.addCustomSetting( ply )
         end
 
         --then check for unique name
-        for k, v in pairs( chatBox.sidePanel.players.template ) do
+        for k, v in pairs( bc.sidePanel.players.template ) do
             if v.name == name:GetText() then
                 nameErrorLabel.errorOpacity = 1000
                 nameErrorLabel:SetText( "Name already taken" )
@@ -247,7 +247,7 @@ function chatBox.sidePanel.players.addCustomSetting( ply )
         for k = 1, #selected do
             selected[k] = selected[k]:GetColumnText( 2 )
         end
-        chatBox.sidePanel.players.createCustomSetting( {
+        bc.sidePanel.players.createCustomSetting( {
             name = name:GetText(),
             command = command:GetText(),
             config = {
@@ -264,11 +264,11 @@ function chatBox.sidePanel.players.addCustomSetting( ply )
     end
 end
 
-function chatBox.sidePanel.players.createCustomSetting( data )
+function bc.sidePanel.players.createCustomSetting( data )
     --Convert command
-    if table.hasMember( chatBox.sidePanel.players.template, "name", data.name ) then return end
+    if table.hasMember( bc.sidePanel.players.template, "name", data.name ) then return end
 
-    table.insert( chatBox.sidePanel.players.extraSettings, data )
+    table.insert( bc.sidePanel.players.extraSettings, data )
     local cmd = data.command
 
     setting = {}
@@ -320,26 +320,26 @@ function chatBox.sidePanel.players.createCustomSetting( data )
     function setting.onRightClick( ply, setting )
         local m = DermaMenu()
         m:AddOption( "Remove", function()
-            table.RemoveByValue( chatBox.sidePanel.players.template, setting )
-            for k, v in pairs( chatBox.sidePanel.players.extraSettings ) do
+            table.RemoveByValue( bc.sidePanel.players.template, setting )
+            for k, v in pairs( bc.sidePanel.players.extraSettings ) do
                 if v.name == setting.name then
-                    table.remove( chatBox.sidePanel.players.extraSettings, k )
+                    table.remove( bc.sidePanel.players.extraSettings, k )
                     break
                 end
             end
 
-            local openPlyId = chatBox.sidePanel.panels["Player"].activePanel
+            local openPlyId = bc.sidePanel.panels["Player"].activePanel
             local openPly = player.GetBySteamID( openPlyId )
 
-            chatBox.sidePanel.players.removeAllEntries()
+            bc.sidePanel.players.removeAllEntries()
 
             if openPly then
-                chatBox.sidePanel.players.generateEntry( openPly )
-                chatBox.sidePanel.show( "Player", openPly:SteamID() )
+                bc.sidePanel.players.generateEntry( openPly )
+                bc.sidePanel.show( "Player", openPly:SteamID() )
             else
-                chatBox.sidePanel.close( "Player", true )
+                bc.sidePanel.close( "Player", true )
             end
-            chatBox.data.saveData()
+            bc.data.saveData()
         end )
         m:AddOption( setting.addToPlayerContext and "Remove from Player Context" or "Add to Player Context", function()
             setting.addToPlayerContext = not setting.addToPlayerContext
@@ -356,14 +356,14 @@ function chatBox.sidePanel.players.createCustomSetting( data )
         return true
     end
 
-    table.insert( chatBox.sidePanel.players.template, 1, setting )
+    table.insert( bc.sidePanel.players.template, 1, setting )
 
-    chatBox.sidePanel.players.removeAllEntries()
+    bc.sidePanel.players.removeAllEntries()
 
     if data.call_ply then
-        chatBox.sidePanel.players.generateEntry( data.call_ply )
-        chatBox.sidePanel.show( "Player", data.call_ply:SteamID() )
+        bc.sidePanel.players.generateEntry( data.call_ply )
+        bc.sidePanel.show( "Player", data.call_ply:SteamID() )
     end
 
-    chatBox.data.saveData()
+    bc.data.saveData()
 end

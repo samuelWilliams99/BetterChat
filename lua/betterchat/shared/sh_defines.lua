@@ -1,6 +1,6 @@
-chatBox.defines = {}
+bc.defines = {}
 
-chatBox.defines.colors = {
+bc.defines.colors = {
     black = Color( 0, 0, 0 ),
     white = Color( 255, 255, 255 ),
     red = Color( 255, 0, 0 ),
@@ -54,20 +54,20 @@ chatBox.defines.colors = {
 }
 
 
-local colors = chatBox.defines.colors
+local colors = bc.defines.colors
 
-function chatBox.defines.gray( x, a )
+function bc.defines.gray( x, a )
     if not colors["grey" .. x] then
         colors["grey" .. x] = Color( x, x, x, a or 255 )
     end
     return colors["grey" .. x]
 end
 
-chatBox.defines.theme = {
-    foreground = chatBox.defines.gray( 150, 50 ),
-    foregroundLight = chatBox.defines.gray( 205, 60 ),
-    background = chatBox.defines.gray( 30, 200 ),
-    buttonTextFocused = chatBox.defines.gray( 220 ),
+bc.defines.theme = {
+    foreground = bc.defines.gray( 150, 50 ),
+    foregroundLight = bc.defines.gray( 205, 60 ),
+    background = bc.defines.gray( 30, 200 ),
+    buttonTextFocused = bc.defines.gray( 220 ),
     emoteAccent = Color( 65, 105, 225 ),
     dead = colors.red,
 
@@ -80,23 +80,23 @@ chatBox.defines.theme = {
 
     betterChat = colors.yellow,
     channels = colors.yellow,
-    channelCog = chatBox.defines.gray( 50, 150 ),
-    channelCogFocused = chatBox.defines.gray( 30, 230 ),
+    channelCog = bc.defines.gray( 50, 150 ),
+    channelCogFocused = bc.defines.gray( 30, 230 ),
 
     group = colors.cyan,
-    groupMembers = chatBox.defines.gray( 255 ),
-    groupMembersFocused = chatBox.defines.gray( 230 ),
+    groupMembers = bc.defines.gray( 255 ),
+    groupMembersFocused = bc.defines.gray( 230 ),
     groupTextEntry = Color( 100, 200, 200 ),
 
     logs = Color( 138, 43, 226 ),
     logsPrefix = colors.teamGreen,
 
-    sidePanelAccent = chatBox.defines.gray( 180, 200 ),
-    sidePanelForeground = chatBox.defines.gray( 80, 200 ),
+    sidePanelAccent = bc.defines.gray( 180, 200 ),
+    sidePanelForeground = bc.defines.gray( 80, 200 ),
     sidePanelCheckBox = colors.cyan,
 
     links = Color( 180, 200, 255 ),
-    commands = chatBox.defines.gray( 190 ),
+    commands = bc.defines.gray( 190 ),
     inputText = colors.white,
     inputSuggestionText = colors.gray,
 
@@ -105,7 +105,9 @@ chatBox.defines.theme = {
     server = colors.printBlue,
 }
 
-chatBox.defines.materials = {
+colors.betterchat = bc.defines.theme.betterChat
+
+bc.defines.materials = {
     cog = Material( "icons/cog.png" ),
     groupBW = Material( "icons/groupBW.png" ),
     group = Material( "icon16/group.png" ),
@@ -114,9 +116,9 @@ chatBox.defines.materials = {
     gradientUp = Material( "vgui/gradient-u" ),
 }
 
-chatBox.defines.consolePlayer = { isConsole = true }
+bc.defines.consolePlayer = { isConsole = true }
 
-chatBox.defines.channelTypes = {
+bc.defines.channelTypes = {
     GLOBAL = 1,
     TEAM = 2,
     PRIVATE = 3,
@@ -124,9 +126,9 @@ chatBox.defines.channelTypes = {
     GROUP = 5
 }
 
-chatBox.defines.giphyCommand = "!giphy"
+bc.defines.giphyCommand = "!giphy"
 
-chatBox.defines.networkStrings = {
+bc.defines.networkStrings = {
     "BC_chatOpenState", "BC_sendPlayerState", "BC_playerReady", "BC_disable", -- Chat states
     "BC_PM", "BC_AM", "BC_GM", "BC_TM", "BC_LM", -- Messages (Private, Admin, Group, Team)
     "BC_sendULXCommands", "BC_userRankChange", -- Ulx

@@ -1,4 +1,4 @@
-chatBox.data = {}
+bc.data = {}
 
 local function saveFromTemplate( src, data, template )
     for k, v in pairs( template ) do
@@ -24,63 +24,63 @@ local function loadFromTemplate( data, dest, template )
     end
 end
 
-function chatBox.data.saveData()
+function bc.data.saveData()
     local data = {}
     data.channelSettings = {}
     data.playerSettings = {}
-    data.extraPlayerSettings = chatBox.sidePanel.players.extraSettings
-    data.enabled = chatBox.base.enabled
-    data.size = chatBox.graphics.size
-    if chatBox.graphics.derma.frame and IsValid( chatBox.graphics.derma.frame ) then
-        local x, y = chatBox.graphics.derma.frame:GetPos()
+    data.extraPlayerSettings = bc.sidePanel.players.extraSettings
+    data.enabled = bc.base.enabled
+    data.size = bc.graphics.size
+    if bc.graphics.derma.frame and IsValid( bc.graphics.derma.frame ) then
+        local x, y = bc.graphics.derma.frame:GetPos()
         data.pos = { x = x, y = y }
     end
 
-    for k, v in pairs( chatBox.channels.channels ) do
+    for k, v in pairs( bc.channels.channels ) do
         data.channelSettings[v.name] = {}
-        saveFromTemplate( v, data.channelSettings[v.name], chatBox.sidePanel.channels.template )
+        saveFromTemplate( v, data.channelSettings[v.name], bc.sidePanel.channels.template )
     end
 
-    for k, v in pairs( chatBox.sidePanel.players.settings ) do
+    for k, v in pairs( bc.sidePanel.players.settings ) do
         if not k or k == "NULL" then continue end --Dont save bots
         data.playerSettings[k] = {}
-        saveFromTemplate( v, data.playerSettings[k], chatBox.sidePanel.players.template )
+        saveFromTemplate( v, data.playerSettings[k], bc.sidePanel.players.template )
     end
 
-    if chatBox.autoComplete then
-        local cmdUsage = table.filter( chatBox.autoComplete.cmds, function( x ) return x > 0 end )
-        data.cmdUsage = table.Merge( table.Copy( chatBox.autoComplete.extraCmds or {} ), cmdUsage )
-        data.emoteUsage = table.filter( chatBox.autoComplete.emoteUsage, function( x ) return x > 0 end )
+    if bc.autoComplete then
+        local cmdUsage = table.filter( bc.autoComplete.cmds, function( x ) return x > 0 end )
+        data.cmdUsage = table.Merge( table.Copy( bc.autoComplete.extraCmds or {} ), cmdUsage )
+        data.emoteUsage = table.filter( bc.autoComplete.emoteUsage, function( x ) return x > 0 end )
     end
 
     file.Write( "bc_data_cl.txt", util.TableToJSON( data ) )
 end
 
-function chatBox.data.loadData()
+function bc.data.loadData()
     if not file.Exists( "bc_data_cl.txt", "DATA" ) then return end
 
     local data = util.JSONToTable( file.Read( "bc_data_cl.txt" ) )
     if not data then return end
 
     if data.pos then
-        chatBox.graphics.derma.frame:SetPos( data.pos.x, data.pos.y )
+        bc.graphics.derma.frame:SetPos( data.pos.x, data.pos.y )
     end
 
     if data.size then
-        chatBox.sizeMove.resize( data.size.x, data.size.y, true )
+        bc.sizeMove.resize( data.size.x, data.size.y, true )
     end
 
     if data.extraPlayerSettings then
         for k, v in pairs( data.extraPlayerSettings ) do
-            chatBox.sidePanel.players.createCustomSetting( v )
+            bc.sidePanel.players.createCustomSetting( v )
         end
     end
 
-    for k, v in pairs( chatBox.channels.channels ) do --load over already open channels
+    for k, v in pairs( bc.channels.channels ) do --load over already open channels
         v.dataChanged = {}
         if data.channelSettings and data.channelSettings[v.name] then
-            loadFromTemplate( data.channelSettings[v.name], v, chatBox.sidePanel.channels.template )
-            for k1, setting in pairs( chatBox.sidePanel.channels.template ) do
+            loadFromTemplate( data.channelSettings[v.name], v, bc.sidePanel.channels.template )
+            for k1, setting in pairs( bc.sidePanel.channels.template ) do
                 if setting.onChange then setting.onChange( v ) end
             end
             data.channelSettings[v.name] = nil
@@ -93,49 +93,49 @@ function chatBox.data.loadData()
             channel.name = k
             channel.needsData = true
             channel.dataChanged = {}
-            loadFromTemplate( v, channel, chatBox.sidePanel.channels.template )
-            table.insert( chatBox.channels.channels, channel )
+            loadFromTemplate( v, channel, bc.sidePanel.channels.template )
+            table.insert( bc.channels.channels, channel )
         end
     end
 
     if data.playerSettings then
         for k, v in pairs( data.playerSettings ) do
-            if not chatBox.sidePanel.players.settings[k] then
-                chatBox.sidePanel.players.settings[k] = {}
-                chatBox.sidePanel.players.settings[k].needsData = true
+            if not bc.sidePanel.players.settings[k] then
+                bc.sidePanel.players.settings[k] = {}
+                bc.sidePanel.players.settings[k].needsData = true
             end
-            chatBox.sidePanel.players.settings[k].dataChanged = {}
-            loadFromTemplate( v, chatBox.sidePanel.players.settings[k], chatBox.sidePanel.players.template )
+            bc.sidePanel.players.settings[k].dataChanged = {}
+            loadFromTemplate( v, bc.sidePanel.players.settings[k], bc.sidePanel.players.template )
         end
     end
 
-    if not chatBox.autoComplete then chatBox.autoComplete = { cmds = {}, emoteUsage = {} } end
-    if not chatBox.autoComplete.cmds then chatBox.autoComplete.cmds = {} end
-    if not chatBox.autoComplete.emoteUsage then chatBox.autoComplete.emoteUsage = {} end
+    if not bc.autoComplete then bc.autoComplete = { cmds = {}, emoteUsage = {} } end
+    if not bc.autoComplete.cmds then bc.autoComplete.cmds = {} end
+    if not bc.autoComplete.emoteUsage then bc.autoComplete.emoteUsage = {} end
 
     if data.cmdUsage then
         for k, v in pairs( data.cmdUsage ) do
-            chatBox.autoComplete.cmds[k] = v
+            bc.autoComplete.cmds[k] = v
         end
     end
 
     if data.emoteUsage then
-        table.Merge( chatBox.autoComplete.emoteUsage, data.emoteUsage )
-        chatBox.images.reloadUsedEmotesMenu()
+        table.Merge( bc.autoComplete.emoteUsage, data.emoteUsage )
+        bc.images.reloadUsedEmotesMenu()
     end
 end
 
-function chatBox.data.loadEnabled()
+function bc.data.loadEnabled()
     if not file.Exists( "bc_data_cl.txt", "DATA" ) then return end
     local data = util.JSONToTable( file.Read( "bc_data_cl.txt" ) )
     if not data then
-        chatBox.base.enabled = true
+        bc.base.enabled = true
     else
-        chatBox.base.enabled = data.enabled == nil or data.enabled
+        bc.base.enabled = data.enabled == nil or data.enabled
     end
 end
 
-function chatBox.data.saveEnabled()
+function bc.data.saveEnabled()
     if not file.Exists( "bc_data_cl.txt", "DATA" ) then return end
     local data = util.JSONToTable( file.Read( "bc_data_cl.txt" ) )
     if not data then data = {} end
@@ -143,6 +143,6 @@ function chatBox.data.saveEnabled()
     file.Write( "bc_data_cl.txt", util.TableToJSON( data ) )
 end
 
-function chatBox.data.deleteSaveData()
-    file.Write( "bc_data_cl.txt", util.TableToJSON( { enabled = chatBox.base.enabled } ) )
+function bc.data.deleteSaveData()
+    file.Write( "bc_data_cl.txt", util.TableToJSON( { enabled = bc.base.enabled } ) )
 end

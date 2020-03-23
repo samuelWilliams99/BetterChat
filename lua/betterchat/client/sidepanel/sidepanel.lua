@@ -1,12 +1,12 @@
-chatBox.sidePanel = {}
+bc.sidePanel = {}
 include( "betterchat/client/sidepanel/panels/channels.lua" )
 include( "betterchat/client/sidepanel/panels/players.lua" )
 include( "betterchat/client/sidepanel/panels/members.lua" )
 
-chatBox.sidePanel.defaultWidth = 110
-chatBox.sidePanel.totalWidth = 0
+bc.sidePanel.defaultWidth = 110
+bc.sidePanel.totalWidth = 0
 
-chatBox.sidePanel.renderSettingFuncs = {
+bc.sidePanel.renderSettingFuncs = {
     blank = function( sPanel, panel, data, y, w, h, setting )
         return 0
     end
@@ -19,7 +19,7 @@ include( "betterchat/client/sidepanel/types/options.lua" )
 include( "betterchat/client/sidepanel/types/button.lua" )
 include( "betterchat/client/sidepanel/types/color.lua" )
 
-function chatBox.sidePanel.renderSetting( sPanel, data, setting, k )
+function bc.sidePanel.renderSetting( sPanel, data, setting, k )
     local panel = sPanel:GetCanvas()
     local w, h = sPanel:GetSize()
     local y = k * 20 + 12
@@ -46,7 +46,7 @@ function chatBox.sidePanel.renderSetting( sPanel, data, setting, k )
 
     if not data.dataChanged then data.dataChanged = {} end
 
-    local elemWidth = chatBox.sidePanel.renderSettingFuncs[setting.type]( sPanel, panel, data, y, w - 32, h, setting ) or 0
+    local elemWidth = bc.sidePanel.renderSettingFuncs[setting.type]( sPanel, panel, data, y, w - 32, h, setting ) or 0
 
     if not noName then
         local line = vgui.Create( "DShape", panel )
@@ -54,34 +54,34 @@ function chatBox.sidePanel.renderSetting( sPanel, data, setting, k )
         local lw, lh = label:GetSize()
         line:SetPos( 15 + lw, y + 7 )
         line:SetSize( w - 32 - 15 - lw - 5 - elemWidth, 1 )
-        line:SetColor( chatBox.defines.theme.sidePanelAccent )
+        line:SetColor( bc.defines.theme.sidePanelAccent )
     end
 end
 
 hook.Add( "BC_preInitPanels", "BC_initSidePanels", function()
-    chatBox.sidePanel.panels = {}
-    chatBox.sidePanel.idCounter = 0
+    bc.sidePanel.panels = {}
+    bc.sidePanel.idCounter = 0
 end )
 
 hook.Add( "BC_keyCodeTyped", "BC_sidePanelShortCutHook", function( code, ctrl, shift )
     if code == KEY_S then
         if ctrl then
             if shift then
-                local s = chatBox.sidePanel.panels["Player"]
-                if not chatBox.sidePanel.childExists( "Player", LocalPlayer():SteamID() ) then
-                    chatBox.sidePanel.players.generateEntry( LocalPlayer() )
+                local s = bc.sidePanel.panels["Player"]
+                if not bc.sidePanel.childExists( "Player", LocalPlayer():SteamID() ) then
+                    bc.sidePanel.players.generateEntry( LocalPlayer() )
                 end
                 if s.isOpen then
-                    chatBox.sidePanel.close( s.name )
+                    bc.sidePanel.close( s.name )
                 else
-                    chatBox.sidePanel.open( s.name, LocalPlayer():SteamID() )
+                    bc.sidePanel.open( s.name, LocalPlayer():SteamID() )
                 end
             else
-                local s = chatBox.sidePanel.panels["Channel Settings"]
+                local s = bc.sidePanel.panels["Channel Settings"]
                 if s.isOpen then
-                    chatBox.sidePanel.close( s.name )
+                    bc.sidePanel.close( s.name )
                 else
-                    chatBox.sidePanel.open( s.name, chatBox.channels.getActiveChannel().name )
+                    bc.sidePanel.open( s.name, bc.channels.getActiveChannel().name )
                 end
             end
             return true
@@ -89,23 +89,23 @@ hook.Add( "BC_keyCodeTyped", "BC_sidePanelShortCutHook", function( code, ctrl, s
     end
 end )
 
-function chatBox.sidePanel.create( name, width, data )
-    local size = { x = width, y = chatBox.graphics.size.y - 33 }
-    chatBox.sidePanel.idCounter = chatBox.sidePanel.idCounter + 1
-    local _, h = chatBox.graphics.derma.frame:GetSize()
-    chatBox.sidePanel.totalWidth = chatBox.sidePanel.totalWidth + size.x + 2
-    chatBox.graphics.derma.frame:SetSize( chatBox.graphics.size.x + chatBox.sidePanel.totalWidth, h )
+function bc.sidePanel.create( name, width, data )
+    local size = { x = width, y = bc.graphics.size.y - 33 }
+    bc.sidePanel.idCounter = bc.sidePanel.idCounter + 1
+    local _, h = bc.graphics.derma.frame:GetSize()
+    bc.sidePanel.totalWidth = bc.sidePanel.totalWidth + size.x + 2
+    bc.graphics.derma.frame:SetSize( bc.graphics.size.x + bc.sidePanel.totalWidth, h )
 
-    local icon = data.icon or chatBox.defines.materials.cog
+    local icon = data.icon or bc.defines.materials.cog
     local rot = data.rotate
-    local col = data.col or chatBox.defines.colors.white
+    local col = data.col or bc.defines.colors.white
     local border = data.border or 0
 
-    chatBox.sidePanel.panels[name] = {}
-    local s = chatBox.sidePanel.panels[name]
+    bc.sidePanel.panels[name] = {}
+    local s = bc.sidePanel.panels[name]
     s.graphics = {}
     local g = s.graphics
-    s.idx = chatBox.sidePanel.idCounter
+    s.idx = bc.sidePanel.idCounter
 
     s.isOpen = false
     s.animState = 1
@@ -114,9 +114,9 @@ function chatBox.sidePanel.create( name, width, data )
     s.name = name
     g.panels = {}
 
-    g.pane = vgui.Create( "DFrame", chatBox.graphics.derma.frame )
+    g.pane = vgui.Create( "DFrame", bc.graphics.derma.frame )
     g.pane:SetName( "BC_settingsPane" )
-    g.pane:SetPos( chatBox.graphics.size.x, 0 )
+    g.pane:SetPos( bc.graphics.size.x, 0 )
     g.pane:SetSize( s.size.x, s.size.y )
     g.pane:SetTitle( "" )
     g.pane:ShowCloseButton( false )
@@ -128,7 +128,7 @@ function chatBox.sidePanel.create( name, width, data )
 
     local pOldLayout = g.pane.PerformLayout
     function g.pane:PerformLayout()
-        s.size.y = chatBox.graphics.size.y - 33
+        s.size.y = bc.graphics.size.y - 33
         self:SetSize( s.size.x, s.size.y )
         pOldLayout( self )
     end
@@ -137,11 +137,11 @@ function chatBox.sidePanel.create( name, width, data )
     g.pane:SetMouseInputEnabled( true )
 
     function g.pane:Think()
-        local s = chatBox.sidePanel.panels[self.name]
+        local s = bc.sidePanel.panels[self.name]
         local g = s.graphics
 
-        local xSum = chatBox.graphics.size.x
-        for k, v in pairs( chatBox.sidePanel.panels ) do
+        local xSum = bc.graphics.size.x
+        for k, v in pairs( bc.sidePanel.panels ) do
             if v.idx < s.idx and v.animState > 0 then
                 xSum = xSum + ( v.animState * v.size.x ) + 2
             end
@@ -160,7 +160,7 @@ function chatBox.sidePanel.create( name, width, data )
             g.frame:SetPos( px, py )
         end
 
-        if not chatBox.base.isOpen then
+        if not bc.base.isOpen then
             s.isOpen = false
         end
 
@@ -176,20 +176,20 @@ function chatBox.sidePanel.create( name, width, data )
         end
     end
     function g.pane:Paint( w, h )
-        local s = chatBox.sidePanel.panels[self.name]
+        local s = bc.sidePanel.panels[self.name]
         local g = s.graphics
 
-        chatBox.util.blur( self, 10, 20, 255, w * s.animState, h )
+        bc.util.blur( self, 10, 20, 255, w * s.animState, h )
         local x = w * s.animState - w
-        draw.RoundedBox( 0, x, 0, w, h, chatBox.defines.theme.background )
-        draw.RoundedBox( 0, x + 4, 27, w - 8 - 23, h - 4 - 27, chatBox.defines.theme.foreground )
-        draw.RoundedBox( 0, x + 4 + w - 8 - 20, 27, 20, h - 4 - 27, chatBox.defines.theme.foreground )
+        draw.RoundedBox( 0, x, 0, w, h, bc.defines.theme.background )
+        draw.RoundedBox( 0, x + 4, 27, w - 8 - 23, h - 4 - 27, bc.defines.theme.foreground )
+        draw.RoundedBox( 0, x + 4 + w - 8 - 20, 27, 20, h - 4 - 27, bc.defines.theme.foreground )
 
-        draw.RoundedBox( 0, x + 4, 4, 21, 21, chatBox.defines.theme.foreground )
-        surface.SetFont( chatBox.graphics.font )
+        draw.RoundedBox( 0, x + 4, 4, 21, 21, bc.defines.theme.foreground )
+        surface.SetFont( bc.graphics.font )
         local tw, th = surface.GetTextSize( self.name )
-        draw.RoundedBox( 0, x + 4 + 23, 4, tw + 8, 21, chatBox.defines.theme.foreground )
-        draw.DrawText( self.name, chatBox.graphics.font, x + 8 + 23, 4 + ( 21 - th ) / 2, chatBox.defines.colors.white )
+        draw.RoundedBox( 0, x + 4 + 23, 4, tw + 8, 21, bc.defines.theme.foreground )
+        draw.DrawText( self.name, bc.graphics.font, x + 8 + 23, 4 + ( 21 - th ) / 2, bc.defines.colors.white )
 
         surface.SetDrawColor( col )
         surface.SetMaterial( icon )
@@ -221,10 +221,10 @@ function chatBox.sidePanel.create( name, width, data )
     btn:SetSize( 20, 20 )
     btn:SetText( "" )
     function btn:DoClick()
-        chatBox.sidePanel.close( self.name )
+        bc.sidePanel.close( self.name )
     end
     function btn:Paint( w, h )
-        draw.RoundedBox( 0, 0, 0, w, h, chatBox.defines.theme.foreground )
+        draw.RoundedBox( 0, 0, 0, w, h, bc.defines.theme.foreground )
         local cross1 = {
             { x = 2, y = 5 },
             { x = 5, y = 2 },
@@ -238,15 +238,15 @@ function chatBox.sidePanel.create( name, width, data )
             { x = 5, y = 18 },
         }
 
-        surface.SetDrawColor( chatBox.defines.theme.sidePanelAccent )
+        surface.SetDrawColor( bc.defines.theme.sidePanelAccent )
         draw.NoTexture()
         surface.DrawPoly( cross1 )
         surface.DrawPoly( cross2 )
     end
 end
 
-function chatBox.sidePanel.createChild( pName, name )
-    local s = chatBox.sidePanel.panels[pName]
+function bc.sidePanel.createChild( pName, name )
+    local s = bc.sidePanel.panels[pName]
     local g = s.graphics
     local p = vgui.Create( "DNiceScrollPanel", g.frame )
     p.graphics = g
@@ -267,8 +267,8 @@ function chatBox.sidePanel.createChild( pName, name )
     return p
 end
 
-function chatBox.sidePanel.getChild( pName, name )
-    local s = chatBox.sidePanel.panels[pName]
+function bc.sidePanel.getChild( pName, name )
+    local s = bc.sidePanel.panels[pName]
     local g = s.graphics
     for k, v in pairs( g.panels ) do
         if v.Name == name then
@@ -279,11 +279,11 @@ function chatBox.sidePanel.getChild( pName, name )
 end
 
 
-function chatBox.sidePanel.removeChild( pName, name, dontClose )
-    local s = chatBox.sidePanel.panels[pName]
+function bc.sidePanel.removeChild( pName, name, dontClose )
+    local s = bc.sidePanel.panels[pName]
     local g = s.graphics
     if s.activePanel == name and not dontClose then
-        chatBox.sidePanel.close( pName, true )
+        bc.sidePanel.close( pName, true )
     end
     local success = false
     for k, p in pairs( g.panels ) do
@@ -297,8 +297,8 @@ function chatBox.sidePanel.removeChild( pName, name, dontClose )
     return success
 end
 
-function chatBox.sidePanel.show( pName, name )
-    local s = chatBox.sidePanel.panels[pName]
+function bc.sidePanel.show( pName, name )
+    local s = bc.sidePanel.panels[pName]
     s.activePanel = name
     local g = s.graphics
     if not name then name = g.panels[1].Name end
@@ -311,19 +311,19 @@ function chatBox.sidePanel.show( pName, name )
     end
 end
 
-function chatBox.sidePanel.childExists( pName, name )
-    return asBool( chatBox.sidePanel.getChild( pName, name ) )
+function bc.sidePanel.childExists( pName, name )
+    return asBool( bc.sidePanel.getChild( pName, name ) )
 end
 
-function chatBox.sidePanel.open( pName, name )
-    chatBox.sidePanel.show( pName, name )
-    chatBox.sidePanel.panels[pName].isOpen = true
+function bc.sidePanel.open( pName, name )
+    bc.sidePanel.show( pName, name )
+    bc.sidePanel.panels[pName].isOpen = true
 end
 
-function chatBox.sidePanel.close( pName, noAnim )
-    chatBox.graphics.derma.textEntry:RequestFocus()
-    chatBox.sidePanel.panels[pName].isOpen = false
+function bc.sidePanel.close( pName, noAnim )
+    bc.graphics.derma.textEntry:RequestFocus()
+    bc.sidePanel.panels[pName].isOpen = false
     if noAnim then
-        chatBox.sidePanel.panels[pName].animState = 0
+        bc.sidePanel.panels[pName].animState = 0
     end
 end

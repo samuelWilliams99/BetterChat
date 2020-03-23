@@ -1,12 +1,12 @@
-chatBox.overload = {}
+bc.overload = {}
 
-function chatBox.overload.overload()
-    if chatBox.overload.overloaded then return end
-    chatBox.overload.old = {}
-    local o = chatBox.overload.old
+function bc.overload.overload()
+    if bc.overload.overloaded then return end
+    bc.overload.old = {}
+    local o = bc.overload.old
     o.AddText = chat.AddText
     function chat.AddText( ... )
-        chatBox.formatting.print( ... )
+        bc.formatting.print( ... )
         -- Call the original function (replace some stuff)
         local data = { ... }
         for k, v in pairs( data ) do
@@ -19,19 +19,19 @@ function chatBox.overload.overload()
 
     o.GetChatBoxPos = chat.GetChatBoxPos
     function chat.GetChatBoxPos()
-        return chatBox.graphics.derma.frame:GetPos()
+        return bc.graphics.derma.frame:GetPos()
     end
 
     o.GetChatBoxSize = chat.GetChatBoxSize
     function chat.GetChatBoxSize()
-        local xSum = chatBox.graphics.size.x
-        for k, v in pairs( chatBox.sidePanel.panels ) do
+        local xSum = bc.graphics.size.x
+        for k, v in pairs( bc.sidePanel.panels ) do
             if v.animState > 0 then
                 xSum = xSum + ( v.animState * v.size.x ) + 2
             end
         end
 
-        return xSum, chatBox.graphics.size.y
+        return xSum, bc.graphics.size.y
     end
 
     o.Open = chat.Open
@@ -39,7 +39,7 @@ function chatBox.overload.overload()
         local chan
         if mode == 1 then
             if DarkRP then
-                if chatBox.settings.getServerValue( "replaceTeam" ) then
+                if bc.settings.getServerValue( "replaceTeam" ) then
                     local t = chatHelper.teamName( LocalPlayer() )
                     chan = "TeamOverload-" .. t
                 else
@@ -49,40 +49,40 @@ function chatBox.overload.overload()
                 chan = "Team"
             end
         end
-        chatBox.base.openChatBox( chan )
+        bc.base.openChatBox( chan )
     end
 
     o.Close = chat.Close
-    chat.Close = chatBox.base.closeChatBox
+    chat.Close = bc.base.closeChatBox
 
     o.plyMeta = FindMetaTable( "Player" )
     o.plyChatPrint = o.plyMeta.ChatPrint
     function o.plyMeta:ChatPrint( str )
-        chatBox.formatting.print( printBlue, str )
+        bc.formatting.print( printBlue, str )
 
         o.plyChatPrint( self, str )
     end
 
     o.plyIsTyping = o.plyMeta.IsTyping
     function o.plyMeta:IsTyping()
-        return chatBox.base.playersOpen[self]
+        return bc.base.playersOpen[self]
     end
 
     o.hookAdd = hook.Add
-    chatBox.overload.hooks = { OnPlayerChat = table.Copy( hook.GetULibTable().OnPlayerChat or {} ) }
+    bc.overload.hooks = { OnPlayerChat = table.Copy( hook.GetULibTable().OnPlayerChat or {} ) }
     for k, v in pairs( hook.GetTable().OnPlayerChat or {} ) do
         hook.Remove( "OnPlayerChat", k )
     end
     hook.Add( "OnPlayerChat", "BC_chatHook", function( ... )
-        if chatBox.formatting.onPlayerSayHook then
-            return chatBox.formatting.onPlayerSayHook( ... )
+        if bc.formatting.onPlayerSayHook then
+            return bc.formatting.onPlayerSayHook( ... )
         end
     end )
 
     -- DLib loves complaining about this, no other way to do it though
     rawset( hook, "Add", function( event, id, func, ... )
         if event == "OnPlayerChat" then
-            chatBox.overload.hooks.OnPlayerChat[id] = func
+            bc.overload.hooks.OnPlayerChat[id] = func
         else
             o.hookAdd( event, id, func, ... )
         end
@@ -91,7 +91,7 @@ function chatBox.overload.overload()
     o.hookRemove = hook.Remove
     rawset( hook, "Remove", function( event, id )
         if event == "OnPlayerChat" then
-            chatBox.overload.hooks.OnPlayerChat[id] = nil
+            bc.overload.hooks.OnPlayerChat[id] = nil
         else
             o.hookRemove( event, id )
         end
@@ -99,12 +99,12 @@ function chatBox.overload.overload()
 
     hook.Run( "BC_overload" )
 
-    chatBox.overload.overloaded = true
+    bc.overload.overloaded = true
 end
 
-function chatBox.overload.undo()
-    if not chatBox.overload.overloaded then return end
-    local o = chatBox.overload.old
+function bc.overload.undo()
+    if not bc.overload.overloaded then return end
+    local o = bc.overload.old
     chat.AddText = o.AddText
     chat.GetChatBoxSize = o.GetChatBoxSize
     chat.GetChatBoxPos = o.GetChatBoxPos
@@ -114,18 +114,18 @@ function chatBox.overload.undo()
     rawset( hook, "Add", o.hookAdd )
     rawset( hook, "Remove", o.hookRemove )
     hook.Remove( "OnPlayerChat", "BC_chatHook" )
-    for id, data in pairs( chatBox.overload.hooks.OnPlayerChat ) do
+    for id, data in pairs( bc.overload.hooks.OnPlayerChat ) do
         if type( fn ) == "table" then -- Ulib hooks have priority, must maintain that
             for priority, d in pairs( fn ) do
                 hook.Add( "OnPlayerChat", id, d.fn, priority )
             end
         end
     end
-    hook.GetTable().OnPlayerChat = table.Copy( chatBox.overload.hooks.OnPlayerChat )
+    hook.GetTable().OnPlayerChat = table.Copy( bc.overload.hooks.OnPlayerChat )
 
     o.plyMeta.ChatPrint = o.plyChatPrint
     o.plyMeta.IsTyping = o.plyIsTyping
-    chatBox.overload.old = {}
+    bc.overload.old = {}
     hook.Run( "BC_overloadUndo" )
-    chatBox.overload.overloaded = false
+    bc.overload.overloaded = false
 end

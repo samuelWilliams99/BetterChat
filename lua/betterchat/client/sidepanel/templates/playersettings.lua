@@ -1,4 +1,4 @@
-chatBox.sidePanel.players.template = {
+bc.sidePanel.players.template = {
     {
         name = "Ignore",
         value = "ignore",
@@ -22,14 +22,14 @@ chatBox.sidePanel.players.template = {
         text = "Open channel",
         extra = "Open a private channel with this player",
         onClick = function( data )
-            channel = chatBox.private.createChannel( data.ply )
-            if not chatBox.channels.isOpen( channel ) then
-                chatBox.private.addChannel( channel )
+            channel = bc.private.createChannel( data.ply )
+            if not bc.channels.isOpen( channel ) then
+                bc.private.addChannel( channel )
             end
-            chatBox.channels.focus( channel.name )
+            bc.channels.focus( channel.name )
         end,
         extraCanRun = function( ply )
-            return chatBox.private.canMessage( ply )
+            return bc.private.canMessage( ply )
         end,
         disallowPlayerContext = true
     },
@@ -39,7 +39,7 @@ chatBox.sidePanel.players.template = {
         text = "Add",
         extra = "Add a custom console command for quick access on players",
         onClick = function( data )
-            chatBox.sidePanel.players.addCustomSetting( data.ply )
+            bc.sidePanel.players.addCustomSetting( data.ply )
         end,
         disallowPlayerContext = true
     },
@@ -146,12 +146,12 @@ chatBox.sidePanel.players.template = {
 }
 
 hook.Add( "BC_playerRightClick", "BC_addPlySettings", function( ply, menu )
-    for k, v in pairs( chatBox.sidePanel.players.template ) do
+    for k, v in pairs( bc.sidePanel.players.template ) do
         if v.addToPlayerContext and v.type == "button" then
 
-            if not chatBox.sidePanel.players.canAddSetting( ply, v ) then continue end
+            if not bc.sidePanel.players.canAddSetting( ply, v ) then continue end
 
-            local d = chatBox.sidePanel.players.settings[ply:SteamID()]
+            local d = bc.sidePanel.players.settings[ply:SteamID()]
             if not d then continue end
             local name = v.name
             if v.toggle then
@@ -164,8 +164,8 @@ hook.Add( "BC_playerRightClick", "BC_addPlySettings", function( ply, menu )
     end
 end )
 
-function chatBox.sidePanel.players.parse()
-    for k, v in pairs( chatBox.sidePanel.players.template ) do
+function bc.sidePanel.players.parse()
+    for k, v in pairs( bc.sidePanel.players.template ) do
         if v.type == "command" then
             v.type = "button"
             v.text = v.command

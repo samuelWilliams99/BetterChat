@@ -1,6 +1,6 @@
-function chatBox.sidePanel.renderSettingFuncs.options( sPanel, panel, data, y, w, h, setting )
+function bc.sidePanel.renderSettingFuncs.options( sPanel, panel, data, y, w, h, setting )
     if not setting.optionValues then setting.optionValues = setting.options end
-    local width = setting.overrideWidth or chatBox.sidePanel.defaultWidth
+    local width = setting.overrideWidth or bc.sidePanel.defaultWidth
     local comboBox = vgui.Create( "DComboBox", panel )
     comboBox:SetSortItems( false )
     comboBox:SetPos( w - width, y - 2 )
@@ -48,7 +48,7 @@ function chatBox.sidePanel.renderSettingFuncs.options( sPanel, panel, data, y, w
             self.Menu.paintSet = true
             local this = self
             function this.Menu:Paint( w, h )
-                if not chatBox.base.isOpen then
+                if not bc.base.isOpen then
                     self:GetParent():CloseMenu()
                 end
                 if ( !self:GetPaintBackground() ) then return end
@@ -65,7 +65,7 @@ function chatBox.sidePanel.renderSettingFuncs.options( sPanel, panel, data, y, w
 
         if changed then
             if setting.onChange then setting.onChange( data ) end
-            chatBox.data.saveData()
+            bc.data.saveData()
         end
     end
 

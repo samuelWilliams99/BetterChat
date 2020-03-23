@@ -1,5 +1,5 @@
 local function useOverload()
-    return chatBox.settings.getObject( "maxLength", true ).default ~= chatBox.settings.getServerValue( "maxLength" )
+    return bc.settings.getObject( "maxLength", true ).default ~= bc.settings.getServerValue( "maxLength" )
 end
 
 local function globalSend( self, txt )
@@ -26,7 +26,7 @@ local function teamSend( self, txt )
 end
 
 hook.Add( "BC_initPanels", "BC_initAddMainChannels", function()
-    table.insert( chatBox.channels.channels, {
+    table.insert( bc.channels.channels, {
         name = "All",
         icon = "world.png",
         send = globalSend,
@@ -42,7 +42,7 @@ hook.Add( "BC_initPanels", "BC_initAddMainChannels", function()
         relayAll = false,
         position = 1,
     } )
-    table.insert( chatBox.channels.channels, {
+    table.insert( bc.channels.channels, {
         name = "Players",
         icon = "group.png",
         send = globalSend,
@@ -53,23 +53,23 @@ hook.Add( "BC_initPanels", "BC_initAddMainChannels", function()
         position = 2,
     } )
     if not DarkRP then
-        table.insert( chatBox.channels.channels, {
+        table.insert( bc.channels.channels, {
             name = "Team",
             icon = "group.png",
             send = teamSend,
             onMessage = function()
-                chatBox.private.lastMessaged = nil
+                bc.private.lastMessaged = nil
             end,
             doPrints = true,
             addNewLines = true,
             disabledSettings = { "openKey" },
             allFunc = function( self, tab, idx )
-                table.insert( tab, idx, chatBox.defines.theme.team )
+                table.insert( tab, idx, bc.defines.theme.team )
                 table.insert( tab, idx + 1, "(TEAM) " )
             end,
             openOnStart = true,
             disallowClose = true,
-            textEntryColor = chatBox.defines.theme.teamTextEntry,
+            textEntryColor = bc.defines.theme.teamTextEntry,
             replicateAll = true,
             position = 3,
         } )

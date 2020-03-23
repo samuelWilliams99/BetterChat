@@ -1,8 +1,8 @@
-function chatBox.sidePanel.renderSettingFuncs.string( sPanel, panel, data, y, w, h, setting )
+function bc.sidePanel.renderSettingFuncs.string( sPanel, panel, data, y, w, h, setting )
     local textEntry = vgui.Create( "DTextEntry", panel )
     textEntry:SetName( "BC_settingsEntry" )
-    textEntry:SetPos( w - chatBox.sidePanel.defaultWidth, y - 1 )
-    textEntry:SetSize( chatBox.sidePanel.defaultWidth, 18 )
+    textEntry:SetPos( w - bc.sidePanel.defaultWidth, y - 1 )
+    textEntry:SetSize( bc.sidePanel.defaultWidth, 18 )
     textEntry:SetText( data[setting.value] )
     textEntry:SetTooltip( setting.extra )
     textEntry:SetUpdateOnType( false )
@@ -28,7 +28,7 @@ function chatBox.sidePanel.renderSettingFuncs.string( sPanel, panel, data, y, w,
             self.data[self.val] = val
         end
         if setting.onChange then setting.onChange( data ) end
-        chatBox.data.saveData()
+        bc.data.saveData()
     end
     function textEntry:OnLoseFocus() self:OnValueChange( self:GetText() ) end
     function textEntry:AllowInput( char )
@@ -47,5 +47,5 @@ function chatBox.sidePanel.renderSettingFuncs.string( sPanel, panel, data, y, w,
     end
 
 
-    return chatBox.sidePanel.defaultWidth
+    return bc.sidePanel.defaultWidth
 end

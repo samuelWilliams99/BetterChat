@@ -1,6 +1,6 @@
-function chatBox.sidePanel.renderSettingFuncs.button( sPanel, panel, data, y, w, h, setting )
+function bc.sidePanel.renderSettingFuncs.button( sPanel, panel, data, y, w, h, setting )
     local button = vgui.Create( "DButton", panel )
-    local width = setting.overrideWidth or chatBox.sidePanel.defaultWidth
+    local width = setting.overrideWidth or bc.sidePanel.defaultWidth
 
     local confirm = setting.requireConfirm
 
@@ -30,14 +30,14 @@ function chatBox.sidePanel.renderSettingFuncs.button( sPanel, panel, data, y, w,
     function button:Think()
         if self.confirm and CurTime() - self.lastClick < 2 then
             self:SetText( "CONFIRM" )
-            self:SetTextColor( chatBox.defines.colors.red )
+            self:SetTextColor( bc.defines.colors.red )
         else
             if self.setting.toggle then
                 self:SetText( self.data[self.setting.value] and self.setting.toggleText or self.setting.text )
             else
                 self:SetText( self.setting.text )
             end
-            self:SetTextColor( chatBox.defines.colors.black )
+            self:SetTextColor( bc.defines.colors.black )
         end
     end
 

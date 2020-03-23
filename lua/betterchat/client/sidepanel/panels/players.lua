@@ -1,42 +1,42 @@
-chatBox.sidePanel.players = {}
+bc.sidePanel.players = {}
 include( "betterchat/client/sidepanel/templates/playersettings.lua" )
 include( "betterchat/client/sidepanel/panels/players_add_option.lua" )
 
-chatBox.sidePanel.players.settings = {}
+bc.sidePanel.players.settings = {}
 
 net.Receive( "BC_sendPlayerState", function()
     local t = net.ReadString()
     local ply = net.ReadEntity()
     if not ply or not ply:IsValid() then return end
     local state = net.ReadBool()
-    if chatBox.sidePanel.players.settings and chatBox.sidePanel.players.settings[ply:SteamID()] then
-        chatBox.sidePanel.players.settings[ply:SteamID()][t] = state
+    if bc.sidePanel.players.settings and bc.sidePanel.players.settings[ply:SteamID()] then
+        bc.sidePanel.players.settings[ply:SteamID()][t] = state
     end
 end )
 
 hook.Add( "BC_initPanels", "BC_initSidePanelPlayers", function()
-    chatBox.sidePanel.create( "Player", 300, {
-        icon = chatBox.defines.materials.group,
+    bc.sidePanel.create( "Player", 300, {
+        icon = bc.defines.materials.group,
         border = 1
     } )
 end )
 
 net.Receive( "BC_userRankChange", function()
-    chatBox.base.closeChatBox()
-    chatBox.sidePanel.players.removeAllEntries()
+    bc.base.closeChatBox()
+    bc.sidePanel.players.removeAllEntries()
     hook.Run( "BC_userAccessChange" )
 end )
 
-function chatBox.sidePanel.players.generateEntry( ply )
+function bc.sidePanel.players.generateEntry( ply )
     if not ply then return end
-    if not chatBox.sidePanel.players.settings[ply:SteamID()] then
-        chatBox.sidePanel.players.settings[ply:SteamID()] = { needsData = true }
+    if not bc.sidePanel.players.settings[ply:SteamID()] then
+        bc.sidePanel.players.settings[ply:SteamID()] = { needsData = true }
     end
 
-    local plySettings = chatBox.sidePanel.players.settings[ply:SteamID()]
+    local plySettings = bc.sidePanel.players.settings[ply:SteamID()]
 
     if plySettings.needsData then
-        for idx, v in pairs( chatBox.sidePanel.players.template ) do
+        for idx, v in pairs( bc.sidePanel.players.template ) do
             if not v.value then continue end
             if plySettings[v.value] == nil then
                 plySettings[v.value] = v.default
@@ -47,7 +47,7 @@ function chatBox.sidePanel.players.generateEntry( ply )
 
     plySettings.ply = ply
 
-    local p = chatBox.sidePanel.createChild( "Player", ply:SteamID() )
+    local p = bc.sidePanel.createChild( "Player", ply:SteamID() )
     local w, h = p:GetSize()
     local avatar = vgui.Create( "AvatarImageCircle", p )
     avatar:SetSize( 64, 64 )
@@ -59,25 +59,25 @@ function chatBox.sidePanel.players.generateEntry( ply )
     vLine:SetType( "Rect" )
     vLine:SetSize( 1, 48 )
     vLine:SetPos( 76, 4 + 8 )
-    vLine:SetColor( chatBox.defines.theme.sidePanelAccent )
+    vLine:SetColor( bc.defines.theme.sidePanelAccent )
 
     local bg = vgui.Create( "DShape", p )
     bg:SetType( "Rect" )
     bg:SetSize( 130, 48 )
     bg:SetPos( 77, 4 + 8 )
     function bg:Paint( w, h )
-        surface.SetMaterial( chatBox.defines.materials.gradientLeft )
-        surface.SetDrawColor( chatBox.defines.theme.sidePanelForeground )
+        surface.SetMaterial( bc.defines.materials.gradientLeft )
+        surface.SetDrawColor( bc.defines.theme.sidePanelForeground )
         surface.DrawTexturedRect( 0, 0, w, h )
 
-        surface.SetDrawColor( chatBox.defines.theme.sidePanelAccent )
+        surface.SetDrawColor( bc.defines.theme.sidePanelAccent )
         surface.DrawTexturedRect( 0, h / 2, w, 1 )
     end
 
 
     local nameLabel = vgui.Create( "DComboBox", p )
-    nameLabel:SetFont( chatBox.graphics.font )
-    nameLabel:SetTextColor( chatBox.defines.colors.white )
+    nameLabel:SetFont( bc.graphics.font )
+    nameLabel:SetTextColor( bc.defines.colors.white )
     nameLabel:SetSize( w - 32 - 70, 20 )
     nameLabel:SetPos( 80, 14 )
     nameLabel.Paint = nil
@@ -114,18 +114,18 @@ function chatBox.sidePanel.players.generateEntry( ply )
         self:SetText( ply:GetName() )
         local p = data
         local id = p:SteamID()
-        if not chatBox.sidePanel.childExists( "Player", id ) then
-            chatBox.sidePanel.players.generateEntry( p )
+        if not bc.sidePanel.childExists( "Player", id ) then
+            bc.sidePanel.players.generateEntry( p )
         end
 
-        chatBox.sidePanel.open( "Player", id )
+        bc.sidePanel.open( "Player", id )
 
     end
 
 
     local rankLabel = vgui.Create( "DLabel", p )
     rankLabel:SetText( team.GetName( ply:Team() ) )
-    rankLabel:SetFont( chatBox.graphics.font )
+    rankLabel:SetFont( bc.graphics.font )
     rankLabel:SetColor( team.GetColor( ply:Team() ) )
     rankLabel:SetSize( w - 32 - 88, 20 )
     rankLabel:SetPos( 88, 38 )
@@ -156,29 +156,29 @@ function chatBox.sidePanel.players.generateEntry( ply )
     hLine:SetSize( w - 32 - 2, 7 )
     hLine:SetPos( 4, 4 + 64 + 8 )
     function hLine:Paint( w, h )
-        surface.SetDrawColor( chatBox.defines.theme.sidePanelAccent )
+        surface.SetDrawColor( bc.defines.theme.sidePanelAccent )
         surface.DrawRect( 0, 0, w, 1 )
 
-        surface.SetMaterial( chatBox.defines.materials.gradientUp )
-        surface.SetDrawColor( chatBox.defines.theme.sidePanelForeground )
+        surface.SetMaterial( bc.defines.materials.gradientUp )
+        surface.SetDrawColor( bc.defines.theme.sidePanelForeground )
         surface.DrawTexturedRect( 0, 1, w, h - 1 )
     end
 
-    local data = chatBox.sidePanel.players.settings[ply:SteamID()]
+    local data = bc.sidePanel.players.settings[ply:SteamID()]
 
     local k = 3.7 -- weird number simply used for positioning (as if this was drawn at index 3.7), not index
     local settingsAdded = {}
-    for idx, v in pairs( chatBox.sidePanel.players.template ) do
-        if not chatBox.sidePanel.players.canAddSetting( ply, v, settingsAdded ) then continue end
+    for idx, v in pairs( bc.sidePanel.players.template ) do
+        if not bc.sidePanel.players.canAddSetting( ply, v, settingsAdded ) then continue end
         table.insert( settingsAdded, v.name )
-        chatBox.sidePanel.renderSetting( p, data, v, k )
+        bc.sidePanel.renderSetting( p, data, v, k )
         k = k + 1
     end
 end
 
-function chatBox.sidePanel.players.canAddSetting( ply, setting, settingsAdded )
+function bc.sidePanel.players.canAddSetting( ply, setting, settingsAdded )
     settingsAdded = settingsAdded or {}
-    if setting.command and not chatBox.util.canRunULX( setting.command, ply ) then return false end
+    if setting.command and not bc.util.canRunULX( setting.command, ply ) then return false end
     if setting.extraCanRun and not setting.extraCanRun( ply, setting ) then return false end
     if setting.parentSetting then
         if not table.HasValue( settingsAdded, setting.parentSetting ) then
@@ -188,14 +188,14 @@ function chatBox.sidePanel.players.canAddSetting( ply, setting, settingsAdded )
     return true
 end
 
-function chatBox.sidePanel.players.removeEntry( id )
-    if not chatBox.sidePanel.players.settings[id] then return end
+function bc.sidePanel.players.removeEntry( id )
+    if not bc.sidePanel.players.settings[id] then return end
 
-    if chatBox.sidePanel.panels["Player"].isOpen and chatBox.sidePanel.panels["Player"].activePanel == id then
-        chatBox.sidePanel.close( "Player", true )
+    if bc.sidePanel.panels["Player"].isOpen and bc.sidePanel.panels["Player"].activePanel == id then
+        bc.sidePanel.close( "Player", true )
     end
 
-    local panels = chatBox.sidePanel.panels["Player"].graphics.panels
+    local panels = bc.sidePanel.panels["Player"].graphics.panels
     local idx = -1
     for k, v in pairs( panels ) do
         if v.Name == id then
@@ -208,10 +208,10 @@ function chatBox.sidePanel.players.removeEntry( id )
     end
 end
 
-function chatBox.sidePanel.players.removeAllEntries()
-    local panels = chatBox.sidePanel.panels["Player"].graphics.panels
+function bc.sidePanel.players.removeAllEntries()
+    local panels = bc.sidePanel.panels["Player"].graphics.panels
     for k, v in pairs( panels ) do
         v.Panel:Remove()
     end
-    chatBox.sidePanel.panels["Player"].graphics.panels = {}
+    bc.sidePanel.panels["Player"].graphics.panels = {}
 end

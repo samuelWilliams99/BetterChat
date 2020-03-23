@@ -1,8 +1,8 @@
-function chatBox.sidePanel.renderSettingFuncs.key( sPanel, panel, data, y, w, h, setting )
+function bc.sidePanel.renderSettingFuncs.key( sPanel, panel, data, y, w, h, setting )
     local textEntry = vgui.Create( "DTextEntry", panel )
     textEntry:SetName( "BC_settingsKeyEntry" )
-    textEntry:SetPos( w - chatBox.sidePanel.defaultWidth, y - 1 )
-    textEntry:SetSize( chatBox.sidePanel.defaultWidth, 18 )
+    textEntry:SetPos( w - bc.sidePanel.defaultWidth, y - 1 )
+    textEntry:SetSize( bc.sidePanel.defaultWidth, 18 )
     textEntry:SetFont( "BC_monospace" )
     textEntry:SetDisabled( setting.disabled or false )
 
@@ -30,12 +30,12 @@ function chatBox.sidePanel.renderSettingFuncs.key( sPanel, panel, data, y, w, h,
                 self:SetPlaceholderText( input.GetKeyEnum( val ) )
             end
             if setting.onChange then setting.onChange( data ) end
-            chatBox.data.saveData()
+            bc.data.saveData()
         else
             self:SetPlaceholderText( self.data[self.val] and input.GetKeyEnum( self.data[self.val] ) or "NOT SET" )
         end
         self:KillFocus()
-        chatBox.graphics.derma.textEntry:RequestFocus()
+        bc.graphics.derma.textEntry:RequestFocus()
     end
     function textEntry:OnFocusChanged( gained )
         if gained then
@@ -48,5 +48,5 @@ function chatBox.sidePanel.renderSettingFuncs.key( sPanel, panel, data, y, w, h,
         return true
     end
 
-    return chatBox.sidePanel.defaultWidth
+    return bc.sidePanel.defaultWidth
 end

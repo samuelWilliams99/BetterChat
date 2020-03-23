@@ -1,5 +1,5 @@
-chatBox = chatBox or {}
-chatBox.base = chatBox.base or {}
+bc = bc or {}
+bc.base = bc.base or {}
 
 --[[
 naming convention
@@ -50,15 +50,15 @@ if SERVER then
     --includes
     include( "betterchat/server/sv_manager.lua" )
 
-    table.mapSelf( chatBox.defines.networkStrings, util.AddNetworkString )
+    table.mapSelf( bc.defines.networkStrings, util.AddNetworkString )
 
-    chatBox.base.chatBoxEnabled = {}
-    function chatBox.base.getEnabledPlayers()
-        return table.filterSeq( table.GetKeys( chatBox.base.chatBoxEnabled ), IsValid )
+    bc.base.chatBoxEnabled = {}
+    function bc.base.getEnabledPlayers()
+        return table.filterSeq( table.GetKeys( bc.base.chatBoxEnabled ), IsValid )
     end
 
     net.Receive( "BC_chatOpenState", function( len, ply )
-        ULib.clientRPC( nil, "chatBox.base.setPlayersOpen", ply, net.ReadBool() )
+        ULib.clientRPC( nil, "bc.base.setPlayersOpen", ply, net.ReadBool() )
     end )
 
     net.Receive( "BC_forwardMessage", function( len, ply )
@@ -66,32 +66,32 @@ if SERVER then
     end )
 
     hook.Add( "PlayerInitialSpawn", "BC_playerSpawn", function( ply )
-        local plys = chatBox.base.getEnabledPlayers()
+        local plys = bc.base.getEnabledPlayers()
 
-        ULib.clientRPC( plys, "chatBox.sidePanel.players.generateEntry", ply )
+        ULib.clientRPC( plys, "bc.sidePanel.players.generateEntry", ply )
         ULib.clientRPC( plys, "hook.Run", "BC_playerConnect", ply )
 
-        if chatBox.giphy.enabled then
-            ULib.clientRPC( ply, "chatBox.images.enableGiphy" )
+        if bc.giphy.enabled then
+            ULib.clientRPC( ply, "bc.images.enableGiphy" )
         end
     end )
 
     hook.Add( "PlayerDisconnected", "BC_plyLeave", function( ply )
-        chatBox.base.chatBoxEnabled[ply] = false
-        local plys = chatBox.base.getEnabledPlayers()
+        bc.base.chatBoxEnabled[ply] = false
+        local plys = bc.base.getEnabledPlayers()
         table.RemoveByValue( plys, ply )
 
-        ULib.clientRPC( plys, "chatBox.sidePanel.players.removeEntry", ply:SteamID() )
+        ULib.clientRPC( plys, "bc.sidePanel.players.removeEntry", ply:SteamID() )
         ULib.clientRPC( plys, "hook.Run", "BC_playerDisconnect", ply:SteamID() )
     end )
 
     net.Receive( "BC_playerReady", function( len, ply ) --can now send data to ply
-        chatBox.base.chatBoxEnabled[ply] = true
+        bc.base.chatBoxEnabled[ply] = true
         hook.Run( "BC_playerReady", ply )
     end )
 
     net.Receive( "BC_disable", function( len, ply )
-        chatBox.base.chatBoxEnabled[ply] = false
+        bc.base.chatBoxEnabled[ply] = false
     end )
 end
 
@@ -115,132 +115,132 @@ include( "betterchat/client/vguipanels/dnicescrollpanel.lua" )
 include( "betterchat/client/vguipanels/drichertext.lua" )
 
 concommand.Add( "bc_enable", function()
-    if chatBox.base.enabled then
-        chatBox.base.disableChatBox()
+    if bc.base.enabled then
+        bc.base.disableChatBox()
     end
-    chatBox.base.enableChatBox()
+    bc.base.enableChatBox()
 end, true, "Enables BetterChat" )
 
 concommand.Add( "bc_disable", function()
-    if chatBox.base.enabled then
-        chatBox.base.disableChatBox()
+    if bc.base.enabled then
+        bc.base.disableChatBox()
     end
-    chat.AddText( chatBox.defines.theme.betterChat, "BetterChat ",
-        chatBox.defines.colors.printBlue, "has been disabled. Go to Q->Options->BetterChat (or run bc_enable) to enable it." )
+    chat.AddText( bc.defines.theme.betterChat, "BetterChat ",
+        bc.defines.colors.printBlue, "has been disabled. Go to Q->Options->BetterChat (or run bc_enable) to enable it." )
 end, true, "Disables BetterChat" )
 
 concommand.Add( "bc_restart", function()
-    if chatBox.base.enabled then
-        chatBox.base.disableChatBox()
+    if bc.base.enabled then
+        bc.base.disableChatBox()
     end
-    chatBox.base.enableChatBox()
+    bc.base.enableChatBox()
 end )
 
 concommand.Add( "bc_reload", function()
-    if chatBox.base.enabled then
-        chatBox.base.disableChatBox()
+    if bc.base.enabled then
+        bc.base.disableChatBox()
     end
     timer.Simple( 0.1, function() -- Delay to allow save
         include( "betterChat/shared/sh_base.lua" )
-        chatBox.base.enableChatBox()
+        bc.base.enableChatBox()
     end )
 end, true, "Rebuilds BetterChat" )
 
-concommand.Add( "bc_savedata", chatBox.data.saveData, true, "Saves all BetterChat data to file" )
+concommand.Add( "bc_savedata", bc.data.saveData, true, "Saves all BetterChat data to file" )
 
 concommand.Add( "bc_removesavedata", function()
-    chatBox.data.deleteSaveData()
-    if chatBox.base.enabled then
-        chatBox.base.disableChatBox( true )
-        chatBox.base.enableChatBox()
+    bc.data.deleteSaveData()
+    if bc.base.enabled then
+        bc.base.disableChatBox( true )
+        bc.base.enableChatBox()
     end
-    chat.AddText( chatBox.defines.theme.betterChat, "BetterChat ", chatBox.defines.colors.printBlue, "data has been deleted." )
+    chat.AddText( bc.defines.theme.betterChat, "BetterChat ", bc.defines.colors.printBlue, "data has been deleted." )
 end )
 
-chatBox.base.enabled = true
-chatBox.base.ready = false
-chatBox.base.playersOpen = {}
+bc.base.enabled = true
+bc.base.ready = false
+bc.base.playersOpen = {}
 
 hook.Add( "InitPostEntity", "BC_loaded", function()
-    chatBox.data.loadEnabled()
-    if chatBox.base.enabled then
-        chatBox.base.enableChatBox()
+    bc.data.loadEnabled()
+    if bc.base.enabled then
+        bc.base.enableChatBox()
     else
-        chat.AddText( chatBox.defines.theme.betterChat, "BetterChat ", chatBox.defines.colors.printBlue, "is currently disabled. Go to Q->Options->BetterChat (or run bc_enable) to enable it." )
+        chat.AddText( bc.defines.theme.betterChat, "BetterChat ", bc.defines.colors.printBlue, "is currently disabled. Go to Q->Options->BetterChat (or run bc_enable) to enable it." )
     end
 end )
 
-chatBox.sidePanel.players.parse()
+bc.sidePanel.players.parse()
 
-function chatBox.base.enableChatBox()
-    chatBox.base.enabled = true
-    chatBox.base.initializing = true
+function bc.base.enableChatBox()
+    bc.base.enabled = true
+    bc.base.initializing = true
 
-    chatBox.overload.undo()
-    chatBox.overload.overload()
+    bc.overload.undo()
+    bc.overload.overload()
 
-    chatBox.graphics.build()
+    bc.graphics.build()
 
     -- Wait for other prints
     timer.Simple( 0, function()
-        chatBox.channels.message( nil, chatBox.defines.theme.betterChat, "BetterChat", chatBox.defines.colors.printBlue, " initialisation complete." )
+        bc.channels.message( nil, bc.defines.theme.betterChat, "BetterChat", bc.defines.colors.printBlue, " initialisation complete." )
     end )
-    chatBox.base.initializing = false
-    chatBox.base.closeChatBox()
+    bc.base.initializing = false
+    bc.base.closeChatBox()
 
     net.SendEmpty( "BC_playerReady" )
 
-    chatBox.data.loadData()
-    chatBox.base.enabled = true
-    chatBox.data.saveEnabled()
+    bc.data.loadData()
+    bc.base.enabled = true
+    bc.data.saveEnabled()
 end
 
-function chatBox.base.disableChatBox( noSave )
-    chatBox.base.closeChatBox()
-    chatBox.base.enabled = false
+function bc.base.disableChatBox( noSave )
+    bc.base.closeChatBox()
+    bc.base.enabled = false
     if not noSave then
-        chatBox.data.saveData()
+        bc.data.saveData()
     end
-    chatBox.overload.undo()
+    bc.overload.undo()
 
-    chatBox.graphics.remove()
-    chatBox.autoComplete = nil
+    bc.graphics.remove()
+    bc.autoComplete = nil
 
     net.SendEmpty( "BC_disable" )
 end
 
-function chatBox.base.openChatBox( selectedTab )
-    if chatBox.base.isOpen then return end
-    chatBox.overload.old.Close()
+function bc.base.openChatBox( selectedTab )
+    if bc.base.isOpen then return end
+    bc.overload.old.Close()
     selectedTab = selectedTab or "All"
 
-    if chatBox.settings.getValue( "rememberChannel" ) and selectedTab == "All" and chatBox.base.lastChannel then
-        selectedTab = chatBox.base.lastChannel
+    if bc.settings.getValue( "rememberChannel" ) and selectedTab == "All" and bc.base.lastChannel then
+        selectedTab = bc.base.lastChannel
     end
 
-    local chan = chatBox.channels.getAndOpen( selectedTab )
+    local chan = bc.channels.getAndOpen( selectedTab )
     if not chan then return end
     selectedTab = chan.name
 
-    chatBox.graphics.show( selectedTab )
+    bc.graphics.show( selectedTab )
 
     hook.Run( "StartChat" )
-    chatBox.base.isOpen = true
+    bc.base.isOpen = true
     net.Start( "BC_chatOpenState" )
     net.WriteBool( true )
     net.SendToServer()
 end
 
-function chatBox.base.closeChatBox()
-    if not chatBox.base.enabled then return end
-    chatBox.overload.old.Close()
+function bc.base.closeChatBox()
+    if not bc.base.enabled then return end
+    bc.overload.old.Close()
 
-    chatBox.base.lastChannel = chatBox.channels.getActiveChannel().name
+    bc.base.lastChannel = bc.channels.getActiveChannel().name
 
-    chatBox.graphics.hide()
+    bc.graphics.hide()
 
     hook.Run( "FinishChat" )
-    chatBox.base.isOpen = false
+    bc.base.isOpen = false
     net.Start( "BC_chatOpenState" )
     net.WriteBool( false )
     net.SendToServer()
@@ -249,6 +249,6 @@ function chatBox.base.closeChatBox()
     hook.Run( "ChatTextChanged", "" )
 end
 
-function chatBox.base.setPlayersOpen( ply, val )
-    chatBox.base.playersOpen[ply] = val
+function bc.base.setPlayersOpen( ply, val )
+    bc.base.playersOpen[ply] = val
 end

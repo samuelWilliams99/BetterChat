@@ -1,7 +1,7 @@
-chatBox.util = {}
+bc.util = {}
 
 -- Can a player run a command on a person (via ULX)
-function chatBox.util.canRunULX( cmd, target, ply )
+function bc.util.canRunULX( cmd, target, ply )
     if not ULib then return false end
     local ply = ply or LocalPlayer()
 
@@ -21,11 +21,11 @@ function chatBox.util.canRunULX( cmd, target, ply )
 end
 
 if SERVER then
-    function chatBox.util.getRunnableULXCommands( ply )
+    function bc.util.getRunnableULXCommands( ply )
         local sayCmds = ULib.sayCmds
         local allCmds = {}
         for cmd, data in pairs( sayCmds ) do
-            if data.__cmd and chatBox.util.canRunULX( data.__cmd, nil, ply ) and cmd[1] == "!" then
+            if data.__cmd and bc.util.canRunULX( data.__cmd, nil, ply ) and cmd[1] == "!" then
                 table.insert( allCmds, string.sub( cmd, 0, #cmd - 1 ) )
             end
         end
@@ -34,19 +34,19 @@ if SERVER then
     end
 end
 
-function chatBox.util.isLetter( char )
+function bc.util.isLetter( char )
     return string.byte( char ) >= string.byte( "A" ) and string.byte( char ) <= string.byte( "z" )
 end
 
 -- Length treating tabs as 4 spaces
-function chatBox.util.getChatTextLength( txt )
+function bc.util.getChatTextLength( txt )
     local _, count = string.gsub( txt, "\t", "" )
     return #txt + count * 3
 end
 
-function chatBox.util.shortenChatText( txt, len )
+function bc.util.shortenChatText( txt, len )
     local a = 1000
-    while chatBox.util.getChatTextLength( txt ) > len and a > 0 do
+    while bc.util.getChatTextLength( txt ) > len and a > 0 do
         a = a - 1
         txt = string.sub( txt, 1, -2 )
     end
@@ -80,7 +80,7 @@ end
 local function max4( a, b, c, d ) return math.max( a + 0, b + 0, c + 0, d + 0 ) end
 local protocols = { [""] = 0, ["http://"] = 0, ["https://"] = 0, ["ftp://"] = 0 }
 
-function chatBox.util.getNextUrl( inputStr )
+function bc.util.getNextUrl( inputStr )
     local pos_start, pos_end, url, prot, subd, tld, colon, port, slash, path =
         string.find( inputStr, "(([%w_.~!*:@&+$/?%%#-]-)(%w[-.%w]*%.)(%w+)(:?)(%d*)(/?)([%w_.~!*:@&+$/?%%#=-]*))" )
     if pos_start and protocols[prot:lower()] == ( 1 - #slash ) * #path and not string.find( subd, "%W%W" )
@@ -102,7 +102,7 @@ end
 -- End urlFinding
 
 -- Different to IsColor, as doesn't require mt to be set
-function chatBox.util.isColor( tab )
+function bc.util.isColor( tab )
     return type( tab ) == "table" and type( tab.r ) == "number" and
         type( tab.g ) == "number" and type( tab.b ) == "number" and
         type( tab.a ) == "number" and #table.GetKeys( tab ) == 4
@@ -167,7 +167,7 @@ if CLIENT then
 
     local blur = Material( "pp/blurscreen" )
 
-    function chatBox.util.blur( panel, layers, density, alpha, w, h )
+    function bc.util.blur( panel, layers, density, alpha, w, h )
         local x, y = panel:LocalToScreen( 0, 0 )
         if not w then
             w, h = panel:GetSize()
@@ -185,10 +185,10 @@ if CLIENT then
         end
     end
 
-    function chatBox.util.msgC( ... )
+    function bc.util.msgC( ... )
         local data = { ... }
 
-        local lastCol = chatBox.defines.colors.white
+        local lastCol = bc.defines.colors.white
         local k = 1
         while k <= #data do
             local v = data[k]
@@ -216,7 +216,7 @@ if CLIENT then
                     table.remove( data, k )
                     table.insert( data, k, lastCol )
                     table.insert( data, k, "Console" )
-                    table.insert( data, k, chatBox.defines.colors.printBlue )
+                    table.insert( data, k, bc.defines.colors.printBlue )
                     k = k + 2
                 else
                     lastCol = v

@@ -1,6 +1,6 @@
-function chatBox.sidePanel.renderSettingFuncs.color( sPanel, panel, data, y, w, h, setting )
+function bc.sidePanel.renderSettingFuncs.color( sPanel, panel, data, y, w, h, setting )
     local curCol = data[setting.value]
-    local width = setting.overrideWidth or chatBox.sidePanel.defaultWidth
+    local width = setting.overrideWidth or bc.sidePanel.defaultWidth
     local allowedAlpha = setting.allowAlpha
 
     local button = vgui.Create( "DColorButton", panel )
@@ -16,9 +16,9 @@ function chatBox.sidePanel.renderSettingFuncs.color( sPanel, panel, data, y, w, 
 
     function button:Paint( w, h )
         local col = self:GetColor()
-        draw.RoundedBox( 2, 0, 0, w, h, chatBox.defines.colors.black )
+        draw.RoundedBox( 2, 0, 0, w, h, bc.defines.colors.black )
         draw.RoundedBox( 2, 1, 1, w - 2, h - 2, col )
-        draw.DrawText( self:GetText(), self:GetFont(), w / 2, h / 4, chatBox.defines.theme.buttonTextFocused, TEXT_ALIGN_CENTER )
+        draw.DrawText( self:GetText(), self:GetFont(), w / 2, h / 4, bc.defines.theme.buttonTextFocused, TEXT_ALIGN_CENTER )
         return true
     end
     function button:DoClick()
@@ -61,12 +61,12 @@ local function openColorMixer( data, setting )
     local mixer -- Init here so mixerFrame can grab it
 
     function mixerFrame:Paint( w, h )
-        chatBox.util.blur( self, 10, 20, 255 )
-        draw.RoundedBox( 0, 0, 0, w, h, chatBox.defines.theme.background )
+        bc.util.blur( self, 10, 20, 255 )
+        draw.RoundedBox( 0, 0, 0, w, h, bc.defines.theme.background )
     end
 
     function mixerFrame:Think()
-        if not chatBox.base.isOpen then
+        if not bc.base.isOpen then
             self:Remove()
         end
     end
@@ -120,7 +120,7 @@ local function openColorMixer( data, setting )
         if data[setting.value] ~= mixer:GetColor() then
             data[setting.value] = table.Copy( mixer:GetColor() )
             if setting.onChange then setting.onChange( data ) end
-            chatBox.data.saveData()
+            bc.data.saveData()
         end
         mixerFrame:Remove()
     end

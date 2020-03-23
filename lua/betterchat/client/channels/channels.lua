@@ -6,9 +6,9 @@ include( "betterchat/client/channels/logschannel.lua" )
 include( "betterchat/client/channels/groupchannels.lua" )
 include( "betterchat/client/channels/teamoverload.lua" )
 
-chatBox.channels = {}
-chatBox.channels.panels = {}
-chatBox.channels.openChannels = {}
+bc.channels = {}
+bc.channels.panels = {}
+bc.channels.openChannels = {}
 
 -- Changes arguments of AddSheet to AddSheet( label, panel, material, tabIndex )
 local function alterAddSheet( sheet )
@@ -48,9 +48,9 @@ local function alterAddSheet( sheet )
 end
 
 hook.Add( "BC_preInitPanels", "BC_initChannels", function()
-    chatBox.channels.channels = {}
-    chatBox.channels.openChannels = {}
-    local g = chatBox.graphics
+    bc.channels.channels = {}
+    bc.channels.openChannels = {}
+    local g = bc.graphics
     local d = g.derma
 
     d.psheet = vgui.Create( "DPropertySheet", d.chatFrame )
@@ -62,8 +62,8 @@ hook.Add( "BC_preInitPanels", "BC_initChannels", function()
     d.psheet:SetMouseInputEnabled( true )
     d.psheet.Paint = nil
     function d.psheet:OnActiveTabChanged( old, new )
-        chatBox.sidePanel.close( "Channel Settings" )
-        chatBox.sidePanel.close( "Group Members" )
+        bc.sidePanel.close( "Channel Settings" )
+        bc.sidePanel.close( "Group Members" )
         timer.Simple( 0.02, function()
             hook.Run( "BC_channelChanged" ) -- delay to allow channel data to change
         end )
@@ -80,10 +80,10 @@ hook.Add( "BC_preInitPanels", "BC_initChannels", function()
     local btn = vgui.Create( "DButton", d.chatFrame )
     btn:SetPos( g.size.x - 50 - 33, 5 )
     btn:SetSize( 50, 19 )
-    btn:SetTextColor( chatBox.defines.theme.buttonTextFocused )
+    btn:SetTextColor( bc.defines.theme.buttonTextFocused )
     btn:SetText( "Open" )
     function btn:Paint( w, h )
-        draw.RoundedBox( 0, 0, 0, w, h, chatBox.defines.theme.foreground )
+        draw.RoundedBox( 0, 0, 0, w, h, bc.defines.theme.foreground )
     end
     function btn:DoClick()
         local menu = DermaMenu()
@@ -105,10 +105,10 @@ end )
 local function updateRPListener()
     if not DarkRP then return end
 
-    local c = chatBox.channels.getActiveChannel()
+    local c = bc.channels.getActiveChannel()
 
-    DarkRP.addChatReceiver( chatBox.channels.wackyString, "talk in " .. c.displayName, function( ply )
-        local chan = chatBox.channels.getActiveChannel()
+    DarkRP.addChatReceiver( bc.channels.wackyString, "talk in " .. c.displayName, function( ply )
+        local chan = bc.channels.getActiveChannel()
 
         if chan.group then
             return table.HasValue( chan.group.members, ply:SteamID() )
@@ -123,13 +123,13 @@ local function updateRPListener()
 end
 
 hook.Add( "BC_postInitPanels", "BC_postInitChannels", function()
-    for k, channel in pairs( chatBox.channels.channels ) do
+    for k, channel in pairs( bc.channels.channels ) do
         local shouldOpen = channel.openOnStart
         if type( shouldOpen ) == "function" then
             shouldOpen = shouldOpen()
         end
         if shouldOpen then
-            chatBox.channels.add( channel )
+            bc.channels.add( channel )
         end
     end
 
@@ -139,7 +139,7 @@ hook.Add( "BC_postInitPanels", "BC_postInitChannels", function()
 	This prefix should never ever be typed in normal chat, else the wrong listener will be called (wont error, just wont be correct)
 	So heres a wacky string that people probably wont ever type :)
 	]]
-    chatBox.channels.wackyString = "┘♣├ôÒ"
+    bc.channels.wackyString = "┘♣├ôÒ"
 
     updateRPListener()
 
@@ -147,27 +147,27 @@ end )
 
 hook.Add( "BC_channelChanged", "BC_changeRPListener", function()
     updateRPListener()
-    local c = chatBox.channels.getActiveChannel()
+    local c = bc.channels.getActiveChannel()
     if c.hideChatText then
-        hook.Run( "ChatTextChanged", chatBox.channels.wackyString )
+        hook.Run( "ChatTextChanged", bc.channels.wackyString )
     else
-        hook.Run( "ChatTextChanged", chatBox.graphics.derma.textEntry:GetText() or "" )
+        hook.Run( "ChatTextChanged", bc.graphics.derma.textEntry:GetText() or "" )
     end
 end )
 
 hook.Add( "BC_keyCodeTyped", "BC_sendMessageHook", function( code, ctrl, shift )
     if code == KEY_ENTER then
-        local channel = chatBox.channels.getActiveChannel()
-        local txt = chatBox.graphics.derma.textEntry:GetText()
-        chatBox.graphics.derma.textEntry:SetText( "" )
+        local channel = bc.channels.getActiveChannel()
+        local txt = bc.graphics.derma.textEntry:GetText()
+        bc.graphics.derma.textEntry:SetText( "" )
 
         local abort, dontClose = hook.Run( "BC_messageCanSend", channel, txt )
 
         if abort then
             if not dontClose then
-                chatBox.input.historyIndex = 0
-                chatBox.input.historyInput = ""
-                chatBox.base.closeChatBox()
+                bc.input.historyIndex = 0
+                bc.input.historyInput = ""
+                bc.base.closeChatBox()
             end
             return
         end
@@ -178,17 +178,17 @@ hook.Add( "BC_keyCodeTyped", "BC_sendMessageHook", function( code, ctrl, shift )
 
         if #txt > 0 then
             channel.send( channel, txt )
-            table.insert( chatBox.input.history, txt )
+            table.insert( bc.input.history, txt )
         end
-        chatBox.input.historyIndex = 0
-        chatBox.input.historyInput = ""
+        bc.input.historyIndex = 0
+        bc.input.historyInput = ""
 
         hook.Run( "BC_messageSent", channel, txt )
-        chatBox.base.closeChatBox()
+        bc.base.closeChatBox()
         return true
-    elseif not chatBox.graphics.derma.emoteMenu:IsVisible() then
+    elseif not bc.graphics.derma.emoteMenu:IsVisible() then
         if code == KEY_TAB and ctrl then
-            local psheet = chatBox.graphics.derma.psheet
+            local psheet = bc.graphics.derma.psheet
             local tabs = psheet.tabScroller.Panels
             local activeTab = psheet:GetActiveTab()
 
@@ -210,7 +210,7 @@ hook.Add( "BC_keyCodeTyped", "BC_sendMessageHook", function( code, ctrl, shift )
 
             return true
         elseif code >= KEY_1 and code <= KEY_9 and ctrl then
-            local psheet = chatBox.graphics.derma.psheet
+            local psheet = bc.graphics.derma.psheet
             local index = code - 1
             local tabs = psheet.tabScroller.Panels
             if tabs[index] then
@@ -221,16 +221,16 @@ hook.Add( "BC_keyCodeTyped", "BC_sendMessageHook", function( code, ctrl, shift )
 end )
 
 hook.Add( "BC_showChat", "BC_showChannelElements", function()
-    chatBox.graphics.derma.psheet.tabScroller:Show()
-    chatBox.graphics.derma.channelButton:Show()
+    bc.graphics.derma.psheet.tabScroller:Show()
+    bc.graphics.derma.channelButton:Show()
 end )
 hook.Add( "BC_hideChat", "BC_hideChannelElements", function()
-    chatBox.graphics.derma.psheet.tabScroller:Hide()
-    chatBox.graphics.derma.channelButton:Hide()
+    bc.graphics.derma.psheet.tabScroller:Hide()
+    bc.graphics.derma.channelButton:Hide()
 end )
 
-function chatBox.channels.getChannel( chanName )
-    for k, v in pairs( chatBox.channels.channels ) do
+function bc.channels.getChannel( chanName )
+    for k, v in pairs( bc.channels.channels ) do
         if v.name == chanName then
             return v
         end
@@ -238,26 +238,26 @@ function chatBox.channels.getChannel( chanName )
     return nil
 end
 
-function chatBox.channels.isOpen( channel )
+function bc.channels.isOpen( channel )
     if not channel then return false end
-    return table.HasValue( chatBox.channels.openChannels, channel.name )
+    return table.HasValue( bc.channels.openChannels, channel.name )
 end
 
-function chatBox.channels.getActiveChannel()
-    local tab = chatBox.graphics.derma.psheet:GetActiveTab()
-    local tabs = chatBox.graphics.derma.psheet:GetItems()
+function bc.channels.getActiveChannel()
+    local tab = bc.graphics.derma.psheet:GetActiveTab()
+    local tabs = bc.graphics.derma.psheet:GetItems()
     local name = nil
     for k, v in pairs( tabs ) do
         if v.Tab == tab then
             name = v.Name
         end
     end
-    return chatBox.channels.getChannel( name )
+    return bc.channels.getChannel( name )
 end
 
-function chatBox.channels.getActiveChannelIdx()
-    local tab = chatBox.graphics.derma.psheet:GetActiveTab()
-    local tabs = chatBox.graphics.derma.psheet:GetItems()
+function bc.channels.getActiveChannelIdx()
+    local tab = bc.graphics.derma.psheet:GetActiveTab()
+    local tabs = bc.graphics.derma.psheet:GetItems()
     local name = nil
     for k, v in pairs( tabs ) do
         if v.Tab == tab then
@@ -267,12 +267,12 @@ function chatBox.channels.getActiveChannelIdx()
     return nil
 end
 
-function chatBox.channels.message( channelNames, ... )
-    if not chatBox.base.ready then return end
+function bc.channels.message( channelNames, ... )
+    if not bc.base.ready then return end
     if channelNames == nil then
-        for k, v in pairs( chatBox.channels.channels ) do
+        for k, v in pairs( bc.channels.channels ) do
             if v.replicateAll then continue end
-            chatBox.channels.messageDirect( v, ... )
+            bc.channels.messageDirect( v, ... )
         end
         return
     end
@@ -309,7 +309,7 @@ function chatBox.channels.message( channelNames, ... )
             continue
         end
 
-        local channel = chatBox.channels.getChannel( chanName )
+        local channel = bc.channels.getChannel( chanName )
         if not channel then continue end
         if channel.relayAll then
             relayToAll = true
@@ -336,14 +336,14 @@ function chatBox.channels.message( channelNames, ... )
     end
 
     if relayToAll then
-        chatBox.channels.messageDirect( "All", unpack( dataAll ) )
+        bc.channels.messageDirect( "All", unpack( dataAll ) )
     end
 
     for k, c in pairs( channels ) do
         if c.showAllPrefix then
-            chatBox.channels.messageDirect( c, unpack( dataAll ) )
+            bc.channels.messageDirect( c, unpack( dataAll ) )
         else
-            chatBox.channels.messageDirect( c, unpack( data ) )
+            bc.channels.messageDirect( c, unpack( data ) )
         end
     end
 
@@ -351,7 +351,7 @@ function chatBox.channels.message( channelNames, ... )
         if editChan and useEditFunc then
             editChan.allFunc( editChan, data, editIdx or 1, true )
         end
-        chatBox.util.msgC( unpack( data ) )
+        bc.util.msgC( unpack( data ) )
     end
 end
 
@@ -361,18 +361,18 @@ local function parseName( name )
     return name
 end
 
-function chatBox.channels.messageDirect( channel, controller, ... )
-    if not chatBox.base.ready then return end
+function bc.channels.messageDirect( channel, controller, ... )
+    if not bc.base.ready then return end
     if type( channel ) == "string" then
-        channel = chatBox.channels.getChannel( channel )
+        channel = bc.channels.getChannel( channel )
     end
 
-    if not channel or not table.HasValue( chatBox.channels.openChannels, channel.name ) then return end
+    if not channel or not table.HasValue( bc.channels.openChannels, channel.name ) then return end
 
     if channel.name == "All" then
-        for k, v in pairs( chatBox.channels.channels ) do
+        for k, v in pairs( bc.channels.channels ) do
             if v.replicateAll then
-                chatBox.channels.messageDirect( v, controller, ... )
+                bc.channels.messageDirect( v, controller, ... )
             end
         end
     end
@@ -394,25 +394,25 @@ function chatBox.channels.messageDirect( channel, controller, ... )
 
     if doSound then
         if channel.tickMode == 0 then
-            chatBox.formatting.triggerTick()
+            bc.formatting.triggerTick()
         end
         if channel.popMode == 0 then
-            chatBox.formatting.triggerPop()
+            bc.formatting.triggerPop()
         end
     end
 
     if channel.showTimestamps then
-        table.insert( data, 1, chatBox.defines.theme.timeStamps )
+        table.insert( data, 1, bc.defines.theme.timeStamps )
         local timeData = string.FormattedTime( os.time() )
         timeData.h = timeData.h % 24
         table.insert( data, 2, string.format( "%02i:%02i", timeData.h, timeData.m ) .. " - " )
-        table.insert( data, 3, chatBox.defines.colors.white )
+        table.insert( data, 3, bc.defines.colors.white )
     end
 
-    local richText = chatBox.channels.panels[chanName].text
-    local prevCol = chatBox.defines.colors.white
+    local richText = bc.channels.panels[chanName].text
+    local prevCol = bc.defines.colors.white
     richText:InsertColorChange( prevCol )
-    richText:SetMaxLines( chatBox.settings.getValue( "chatHistory" ) )
+    richText:SetMaxLines( bc.settings.getValue( "chatHistory" ) )
     local ignoreNext = false
     for _, obj in pairs( data ) do
         if type( obj ) == "table" then --colour/formatter
@@ -434,9 +434,9 @@ function chatBox.channels.messageDirect( channel, controller, ... )
                         richText:InsertColorChange( prevCol )
                     end
                 elseif obj.type == "image" then
-                    chatBox.images.addEmote( richText, obj )
+                    bc.images.addEmote( richText, obj )
                 elseif obj.type == "gif" then
-                    chatBox.images.addGif( richText, obj )
+                    bc.images.addGif( richText, obj )
                 elseif obj.type == "text" then
                     if obj.font then
                         richText:SetFont( obj.font )
@@ -446,7 +446,7 @@ function chatBox.channels.messageDirect( channel, controller, ... )
                 elseif obj.type == "decoration" then
                     richText:SetDecorations( obj.bold, obj.italic, obj.underline, obj.strike )
                 elseif obj.type == "themeColor" then
-                    local col = table.Copy( chatBox.defines.theme[obj.name] )
+                    local col = table.Copy( bc.defines.theme[obj.name] )
                     if col then
                         col.a = 255
                         richText:InsertColorChange( col )
@@ -454,7 +454,7 @@ function chatBox.channels.messageDirect( channel, controller, ... )
                     end
                 end
             elseif obj.isConsole then
-                richText:InsertColorChange( chatBox.defines.theme.server )
+                richText:InsertColorChange( bc.defines.theme.server )
                 richText:AppendText( "Server" )
                 richText:InsertColorChange( prevCol )
             elseif IsColor( obj ) then
@@ -473,10 +473,10 @@ function chatBox.channels.messageDirect( channel, controller, ... )
             if obj == LocalPlayer() and not ignoreNext then
                 if doSound then
                     if channel.tickMode == 1 then
-                        chatBox.formatting.triggerTick()
+                        bc.formatting.triggerTick()
                     end
                     if channel.popMode == 1 then
-                        chatBox.formatting.triggerPop()
+                        bc.formatting.triggerPop()
                     end
                 end
             end
@@ -497,9 +497,9 @@ function chatBox.channels.messageDirect( channel, controller, ... )
     end
 end
 
-function chatBox.channels.remove( channel )
-    local d = chatBox.channels.panels[channel.name]
-    local psheet = chatBox.graphics.derma.psheet
+function bc.channels.remove( channel )
+    local d = bc.channels.panels[channel.name]
+    local psheet = bc.graphics.derma.psheet
     local tabs = psheet.tabScroller.Panels
     local activeTab = psheet:GetActiveTab()
 
@@ -513,22 +513,22 @@ function chatBox.channels.remove( channel )
         end
     end
 
-    chatBox.graphics.derma.psheet:CloseTab( d.tab, true )
-    table.RemoveByValue( chatBox.channels.openChannels, channel.name )
+    bc.graphics.derma.psheet:CloseTab( d.tab, true )
+    table.RemoveByValue( bc.channels.openChannels, channel.name )
     if not channel.hideInitMessage then
         local chanName = channel.hideRealName and channel.displayName or channel.name
-        if channel.name ~= "All" and chatBox.settings.getValue( "printChannelEvents" ) then
-            chatBox.channels.messageDirect( "All", chatBox.defines.colors.printBlue, "Channel ",
-                chatBox.defines.theme.channels, chanName, chatBox.defines.colors.printBlue, " removed." )
+        if channel.name ~= "All" and bc.settings.getValue( "printChannelEvents" ) then
+            bc.channels.messageDirect( "All", bc.defines.colors.printBlue, "Channel ",
+                bc.defines.theme.channels, chanName, bc.defines.colors.printBlue, " removed." )
         end
     end
-    chatBox.sidePanel.removeChild( "Channel Settings", channel.name )
+    bc.sidePanel.removeChild( "Channel Settings", channel.name )
     if channel.group then
-        chatBox.sidePanel.removeChild( "Group Members", channel.name )
+        bc.sidePanel.removeChild( "Group Members", channel.name )
     end
 
     if nextChannel then
-        chatBox.channels.focus( nextChannel )
+        bc.channels.focus( nextChannel )
     end
 end
 
@@ -536,18 +536,18 @@ local function openLink( url )
     if string.Left( url, 7 ) ~= "http://" and string.Left( url, 8 ) ~= "https://" then
         url = "http://" .. url
     end
-    chatBox.base.closeChatBox()
+    bc.base.closeChatBox()
     gui.OpenURL( url )
 end
 
-function chatBox.channels.add( data )
+function bc.channels.add( data )
     if not data.displayName then data.displayName = data.name end
-    local g = chatBox.graphics
+    local g = bc.graphics
     local d = g.derma
-    local sPanel = chatBox.sidePanel.createChild( "Channel Settings", data.name )
-    chatBox.sidePanel.channels.applyDefaults( data )
-    chatBox.sidePanel.channels.generateSettings( sPanel, data )
-    table.insert( chatBox.channels.openChannels, data.name )
+    local sPanel = bc.sidePanel.createChild( "Channel Settings", data.name )
+    bc.sidePanel.channels.applyDefaults( data )
+    bc.sidePanel.channels.generateSettings( sPanel, data )
+    table.insert( bc.channels.openChannels, data.name )
 
     data.needsData = false
 
@@ -556,8 +556,8 @@ function chatBox.channels.add( data )
     function panel:Paint( w, h )
         self.settingsBtn:SetVisible( self.doPaint )
         if not self.doPaint then return end
-        draw.RoundedBox( 0, 5, 2, w - 10 - 28, h - 7, chatBox.defines.theme.foreground )
-        draw.RoundedBox( 0, w - 10 - 19, 2, 24, h - 7, chatBox.defines.theme.foreground )
+        draw.RoundedBox( 0, 5, 2, w - 10 - 28, h - 7, bc.defines.theme.foreground )
+        draw.RoundedBox( 0, w - 10 - 19, 2, 24, h - 7, bc.defines.theme.foreground )
     end
     panel.doPaint = true
 
@@ -565,8 +565,8 @@ function chatBox.channels.add( data )
     richText:SetPos( 10, 10 )
     richText:SetSize( g.size.x - 20, g.size.y - 42 - 37 )
     richText:SetFont( data.font or g.font )
-    richText:SetMaxLines( chatBox.settings.getValue( "chatHistory" ) )
-    richText:SetHighlightColor( chatBox.defines.theme.textHighlight )
+    richText:SetMaxLines( bc.settings.getValue( "chatHistory" ) )
+    richText:SetHighlightColor( bc.defines.theme.textHighlight )
 
     richText.panel = panel
 
@@ -586,14 +586,14 @@ function chatBox.channels.add( data )
                 local ply = player.GetBySteamID( dataArg )
                 if not ply then return end
 
-                if not chatBox.sidePanel.childExists( "Player", dataArg ) then
-                    chatBox.sidePanel.players.generateEntry( ply )
+                if not bc.sidePanel.childExists( "Player", dataArg ) then
+                    bc.sidePanel.players.generateEntry( ply )
                 end
-                local s = chatBox.sidePanel.panels["Player"]
+                local s = bc.sidePanel.panels["Player"]
                 if s.isOpen and s.activePanel == dataArg then
-                    chatBox.sidePanel.close( "Player" )
+                    bc.sidePanel.close( "Player" )
                 else
-                    chatBox.sidePanel.open( "Player", dataArg )
+                    bc.sidePanel.open( "Player", dataArg )
                 end
             elseif dataType == "Link" then
                 openLink( dataArg )
@@ -602,14 +602,14 @@ function chatBox.channels.add( data )
             if dataType == "Player" then
                 local ply = player.GetBySteamID( dataArg )
                 if not ply then return end
-                if not chatBox.private.canMessage( ply ) then return end
+                if not bc.private.canMessage( ply ) then return end
 
-                channel = chatBox.private.createChannel( ply )
+                channel = bc.private.createChannel( ply )
 
-                if not chatBox.channels.isOpen( channel ) then
-                    chatBox.private.addChannel( channel )
+                if not bc.channels.isOpen( channel ) then
+                    bc.private.addChannel( channel )
                 end
-                chatBox.channels.focus( channel.name )
+                bc.channels.focus( channel.name )
             elseif dataType == "Link" then
                 openLink( dataArg )
             end
@@ -623,17 +623,17 @@ function chatBox.channels.add( data )
                     SetClipboardText( dataArg )
                 end )
                 local ply = player.GetBySteamID( dataArg )
-                if ply and chatBox.private.canMessage( ply ) then
+                if ply and bc.private.canMessage( ply ) then
                     m:AddOption( "Open Private Channel", function()
                         local ply = player.GetBySteamID( dataArg )
                         if not ply then return end
 
-                        channel = chatBox.private.createChannel( ply )
+                        channel = bc.private.createChannel( ply )
 
-                        if not chatBox.channels.isOpen( channel ) then
-                            chatBox.private.addChannel( channel )
+                        if not bc.channels.isOpen( channel ) then
+                            bc.private.addChannel( channel )
                         end
-                        chatBox.channels.focus( channel.name )
+                        bc.channels.focus( channel.name )
                     end )
                 end
             end
@@ -650,14 +650,14 @@ function chatBox.channels.add( data )
         element.lineNo = lineNum
         element.timeCreated = CurTime()
         function element:Think()
-            if chatBox.base.isOpen then
+            if bc.base.isOpen then
                 local col = self:GetTextColor()
                 col.a = 255
                 self:SetTextColor( col )
             else
                 local col = self:GetTextColor()
                 local dt = CurTime() - self.timeCreated
-                local fadeTime = chatBox.settings.getValue( "fadeTime" )
+                local fadeTime = bc.settings.getValue( "fadeTime" )
                 if fadeTime == 0 then
                     col.a = 255
                 elseif dt > fadeTime + 1 then
@@ -676,7 +676,7 @@ function chatBox.channels.add( data )
     settingsBtn:SetPos( d.chatFrame:GetWide() - 59, 5 )
     settingsBtn:SetSize( 24, 24 )
     settingsBtn:SetText( "" )
-    settingsBtn:SetColor( chatBox.defines.theme.channelCog )
+    settingsBtn:SetColor( bc.defines.theme.channelCog )
     settingsBtn.ang = 0
     settingsBtn.name = data.name
 
@@ -687,17 +687,17 @@ function chatBox.channels.add( data )
     end
 
     function settingsBtn:DoClick()
-        local s = chatBox.sidePanel.panels["Channel Settings"]
+        local s = bc.sidePanel.panels["Channel Settings"]
         if s.isOpen then
-            chatBox.sidePanel.close( s.name )
+            bc.sidePanel.close( s.name )
         else
-            chatBox.sidePanel.open( s.name, self.name )
+            bc.sidePanel.open( s.name, self.name )
         end
     end
     function settingsBtn:Paint( w, h )
-        self.ang = -45 * chatBox.sidePanel.panels["Channel Settings"].animState
-        self:SetColor( chatHelper.lerpCol( chatBox.defines.theme.channelCog, chatBox.defines.theme.channelCogFocused, chatBox.sidePanel.panels["Channel Settings"].animState ) )
-        surface.SetMaterial( chatBox.defines.materials.cog )
+        self.ang = -45 * bc.sidePanel.panels["Channel Settings"].animState
+        self:SetColor( chatHelper.lerpCol( bc.defines.theme.channelCog, bc.defines.theme.channelCogFocused, bc.sidePanel.panels["Channel Settings"].animState ) )
+        surface.SetMaterial( bc.defines.materials.cog )
         surface.SetDrawColor( self:GetColor() )
         surface.DrawTexturedRectRotated( w / 2, h / 2, w, h, self.ang )
     end
@@ -716,7 +716,7 @@ function chatBox.channels.add( data )
     end
 
     local v = d.psheet:AddSheet( data.name, panel, "icon16/" .. data.icon, idx )
-    chatBox.channels.panels[data.name] = {
+    bc.channels.panels[data.name] = {
         panel = panel,
         text = richText,
         tab = v.Tab
@@ -725,7 +725,7 @@ function chatBox.channels.add( data )
     v.Tab.data = data
     function v.Tab:Paint( w, h )
         local a = self:IsActive()
-        local col = a and chatBox.defines.theme.foreground or chatBox.defines.theme.foregroundLight
+        local col = a and bc.defines.theme.foreground or bc.defines.theme.foregroundLight
 
         draw.RoundedBox( 0, 2, 0, w - 4, h, col )
         if self:GetText() ~= self.data.displayName then
@@ -736,16 +736,16 @@ function chatBox.channels.add( data )
     function v.Tab:DoRightClick()
         local menu = DermaMenu()
         menu:AddOption( "Settings", function()
-            local s = chatBox.sidePanel.panels["Channel Settings"]
+            local s = bc.sidePanel.panels["Channel Settings"]
             if s.isOpen and s.activePanel == self.data.name then
-                chatBox.sidePanel.close( s.name )
+                bc.sidePanel.close( s.name )
             else
-                chatBox.sidePanel.open( s.name, self.data.name )
+                bc.sidePanel.open( s.name, self.data.name )
             end
         end )
         if not self.data.disallowClose then
             menu:AddOption( "Close", function()
-                chatBox.channels.remove( self.data )
+                bc.channels.remove( self.data )
             end )
         end
         menu:Open()
@@ -753,7 +753,7 @@ function chatBox.channels.add( data )
 
     function v.Tab:DoMiddleClick()
         if not self.data.disallowClose then
-            chatBox.channels.remove( self.data )
+            bc.channels.remove( self.data )
         end
     end
 
@@ -777,30 +777,30 @@ function chatBox.channels.add( data )
 
     if data.postAdd then data.postAdd( data, panel ) end
 
-    for k, v in pairs( chatBox.sidePanel.channels.template ) do
+    for k, v in pairs( bc.sidePanel.channels.template ) do
         if v.onInit then
             v.onInit( data, richText )
         end
     end
 
-    if not chatBox.base.isOpen then
+    if not bc.base.isOpen then
         v.Tab:Hide()
     end
 
-    if not data.hideInitMessage and chatBox.settings.getValue( "printChannelEvents" ) then
+    if not data.hideInitMessage and bc.settings.getValue( "printChannelEvents" ) then
         local chanName = data.hideRealName and data.displayName or data.name
 
         local function createdPrint()
             if not data.replicateAll then
-                chatBox.channels.messageDirect( data.name, chatBox.defines.colors.printBlue, "Channel ",
-                    chatBox.defines.theme.channels, chanName, chatBox.defines.colors.printBlue, " created." )
+                bc.channels.messageDirect( data.name, bc.defines.colors.printBlue, "Channel ",
+                    bc.defines.theme.channels, chanName, bc.defines.colors.printBlue, " created." )
             end
             if data.name ~= "All" then
-                chatBox.channels.messageDirect( "All", chatBox.defines.colors.printBlue, "Channel ",
-                    chatBox.defines.theme.channels, chanName, chatBox.defines.colors.printBlue, " created." )
+                bc.channels.messageDirect( "All", bc.defines.colors.printBlue, "Channel ",
+                    bc.defines.theme.channels, chanName, bc.defines.colors.printBlue, " created." )
             end
         end
-        if chatBox.base.initializing then
+        if bc.base.initializing then
             timer.Simple( 0, createdPrint ) -- Delay messages to allow other channels to be created before prints
         else
             createdPrint()
@@ -808,23 +808,23 @@ function chatBox.channels.add( data )
     end
 end
 
-function chatBox.channels.focus( channel )
+function bc.channels.focus( channel )
     local tabName
     if type( channel ) == "string" then
         tabName = channel
     else
         tabName = channel.name
     end
-    for k, tab in pairs( chatBox.graphics.derma.psheet:GetItems() ) do
+    for k, tab in pairs( bc.graphics.derma.psheet:GetItems() ) do
         if tab.Name == tabName then
-            chatBox.graphics.derma.psheet:SetActiveTab( tab.Tab )
-            chatBox.graphics.derma.psheet.tabScroller:ScrollToChild( tab.Tab )
+            bc.graphics.derma.psheet:SetActiveTab( tab.Tab )
+            bc.graphics.derma.psheet.tabScroller:ScrollToChild( tab.Tab )
         end
     end
 end
 
-function chatBox.channels.showPSheet()
-    for k, v in pairs( chatBox.graphics.derma.psheet:GetItems() ) do
+function bc.channels.showPSheet()
+    for k, v in pairs( bc.graphics.derma.psheet:GetItems() ) do
         v.Tab:Show()
         v.Panel.text:SetVerticalScrollbarEnabled( true )
         if not v.Panel.data.displayClosed then
@@ -832,11 +832,11 @@ function chatBox.channels.showPSheet()
         end
         v.Panel.doPaint = true
     end
-    chatBox.graphics.derma.psheet.tabScroller:InvalidateLayout( true ) --Psheets like to just fuck up their tabs
+    bc.graphics.derma.psheet.tabScroller:InvalidateLayout( true ) --Psheets like to just fuck up their tabs
 end
 
-function chatBox.channels.hidePSheet()
-    for k, v in pairs( chatBox.graphics.derma.psheet:GetItems() ) do
+function bc.channels.hidePSheet()
+    for k, v in pairs( bc.graphics.derma.psheet:GetItems() ) do
         v.Panel.text:UnselectText()
         v.Tab:Hide()
         v.Panel.text:scrollToBottom()
@@ -846,39 +846,39 @@ function chatBox.channels.hidePSheet()
             v.Panel.doPaint = true
         else
             v.Panel.doPaint = false
-            chatBox.graphics.derma.psheet:SetActiveTab( v.Tab )
+            bc.graphics.derma.psheet:SetActiveTab( v.Tab )
         end
     end
 end
 
-function chatBox.channels.getAndOpen( chanName )
-    local chan = chatBox.channels.getChannel( chanName )
+function bc.channels.getAndOpen( chanName )
+    local chan = bc.channels.getChannel( chanName )
 
-    if not chan or not chatBox.channels.isOpen( chan ) then
+    if not chan or not bc.channels.isOpen( chan ) then
         local dashPos = string.find( chanName, " - ", 1, true )
         if not dashPos then return nil end
         local nameType = string.sub( chanName, 1, dashPos - 1 )
         local nameArg = string.sub( chanName, dashPos + 3 )
 
-        if nameType == "Group" and chatBox.group.allowed() then
+        if nameType == "Group" and bc.group.allowed() then
             local id = tonumber( nameArg )
             local found = false
-            for k, v in pairs( chatBox.group.groups ) do
+            for k, v in pairs( bc.group.groups ) do
                 if v.id == id then
                     found = true
-                    local c = chatBox.group.createChannel( v )
+                    local c = bc.group.createChannel( v )
                     if not c then continue end
-                    chatBox.channels.add( c )
+                    bc.channels.add( c )
                 end
             end
             if not found then return nil end
-        elseif nameType == "Player" and chatBox.private.allowed() then
+        elseif nameType == "Player" and bc.private.allowed() then
             local sId = nameArg
             local ply = player.GetBySteamID( sId )
             if not ply then return nil end
-            chatBox.private.addChannel( chatBox.private.createChannel( ply ) )
+            bc.private.addChannel( bc.private.createChannel( ply ) )
         else
-            return chatBox.channels.getChannel( "All" )
+            return bc.channels.getChannel( "All" )
         end
     end
 

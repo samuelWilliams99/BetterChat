@@ -5,20 +5,20 @@ local setSuggestions, updateText, incOption, setOption, setText, getSimilarStrin
 
 net.Receive( "BC_sendULXCommands", function()
     local cmds = util.JSONToTable( net.ReadString() )
-    chatBox.autoComplete.extraCmds = {}
-    chatBox.autoComplete.cmds = chatBox.autoComplete.cmds or {}
+    bc.autoComplete.extraCmds = {}
+    bc.autoComplete.cmds = bc.autoComplete.cmds or {}
     local newCmds = {}
     for k, v in pairs( cmds ) do
-        newCmds[v] = chatBox.autoComplete.cmds[v] or 0
+        newCmds[v] = bc.autoComplete.cmds[v] or 0
     end
-    if chatBox.images.giphyEnabled then
-        newCmds[chatBox.defines.giphyCommand] = chatBox.autoComplete.cmds[chatBox.defines.giphyCommand] or 0
+    if bc.images.giphyEnabled then
+        newCmds[bc.defines.giphyCommand] = bc.autoComplete.cmds[bc.defines.giphyCommand] or 0
     else
-        chatBox.autoComplete.extraCmds[chatBox.defines.giphyCommand] = chatBox.autoComplete.cmds[chatBox.defines.giphyCommand] or 0
+        bc.autoComplete.extraCmds[bc.defines.giphyCommand] = bc.autoComplete.cmds[bc.defines.giphyCommand] or 0
     end
-    chatBox.autoComplete.cmds = newCmds
-    chatBox.autoComplete.emoteUsage = chatBox.autoComplete.emoteUsage or {}
-    chatBox.autoComplete.gotCommands = true
+    bc.autoComplete.cmds = newCmds
+    bc.autoComplete.emoteUsage = bc.autoComplete.emoteUsage or {}
+    bc.autoComplete.gotCommands = true
 end )
 
 hook.Add( "BC_hideChat", "BC_removeSuggestions", function()
@@ -26,9 +26,9 @@ hook.Add( "BC_hideChat", "BC_removeSuggestions", function()
 end )
 
 hook.Add( "BC_initPanels", "BC_initAutoComplete", function()
-    chatBox.autoComplete = chatBox.autoComplete or {}
-    chatBox.autoComplete.cur = {}
-    chatBox.autoComplete.cur.option = 0
+    bc.autoComplete = bc.autoComplete or {}
+    bc.autoComplete.cur = {}
+    bc.autoComplete.cur.option = 0
 end )
 
 hook.Add( "BC_keyCodeTyped", "BC_autoCompleteHook", function( code, ctrl, shift, entry )
@@ -37,7 +37,7 @@ hook.Add( "BC_keyCodeTyped", "BC_autoCompleteHook", function( code, ctrl, shift,
     local txtEx = string.Explode( " ", txt )
     if code == KEY_TAB then
         if not ctrl then
-            if #chatBox.autoComplete.cur.options == 0 then
+            if #bc.autoComplete.cur.options == 0 then
                 local options
                 if #txtEx == 1 and txtEx[1][1] == "!" then
                     options = getSimilarCommands( txtEx[1] )
@@ -52,30 +52,30 @@ hook.Add( "BC_keyCodeTyped", "BC_autoCompleteHook", function( code, ctrl, shift,
         end
     elseif code == KEY_SPACE or code == KEY_ENTER then
         local strCompleted
-        local c = chatBox.autoComplete.cur
+        local c = bc.autoComplete.cur
 
-        if chatBox.autoComplete.cur.option ~= 0 then
+        if bc.autoComplete.cur.option ~= 0 then
             strCompleted = c.options[c.option]
         else
             strCompleted = txtEx[#txtEx]
         end
 
         if txt[1] == "!" and #txtEx == 1 then --Is command
-            if chatBox.autoComplete.cmds[strCompleted] ~= nil then
-                chatBox.autoComplete.cmds[strCompleted] = chatBox.autoComplete.cmds[strCompleted] + 1
-                chatBox.data.saveData()
+            if bc.autoComplete.cmds[strCompleted] ~= nil then
+                bc.autoComplete.cmds[strCompleted] = bc.autoComplete.cmds[strCompleted] + 1
+                bc.data.saveData()
             end
         end
     end
 end )
 
 hook.Add( "BC_messageSent", "BC_autoCompleteUsageTracker", function( channel, txt )
-    local tab = chatBox.formatting.formatMessage( LocalPlayer(), txt, false )
+    local tab = bc.formatting.formatMessage( LocalPlayer(), txt, false )
     local change = false
     for k, v in pairs( tab ) do
         if type( v ) == "table" and v.formatter and v.type == "image" then
-            if chatBox.autoComplete.emoteUsage[v.text] ~= nil then
-                chatBox.autoComplete.emoteUsage[v.text] = chatBox.autoComplete.emoteUsage[v.text] + 1
+            if bc.autoComplete.emoteUsage[v.text] ~= nil then
+                bc.autoComplete.emoteUsage[v.text] = bc.autoComplete.emoteUsage[v.text] + 1
                 change = true
             end
         end
@@ -84,17 +84,17 @@ hook.Add( "BC_messageSent", "BC_autoCompleteUsageTracker", function( channel, tx
     setSuggestions()
 
     if change then
-        chatBox.images.reloadUsedEmotesMenu()
-        chatBox.data.saveData()
+        bc.images.reloadUsedEmotesMenu()
+        bc.data.saveData()
     end
 end )
 
 hook.Add( "BC_channelChanged", "BC_hideAutocomplete", function()
-    hook.Run( "ChatTextChanged", chatBox.graphics.derma.textEntry:GetText() )
+    hook.Run( "ChatTextChanged", bc.graphics.derma.textEntry:GetText() )
 end )
 
 hook.Add( "BC_chatTextChanged", "autoCompletePreview", function( txt )
-    if not chatBox.base.enabled then return end
+    if not bc.base.enabled then return end
     local txtEx = string.Explode( " ", txt )
     local options
     if #txtEx == 1 and txtEx[1][1] == "!" then
@@ -115,22 +115,22 @@ end )
 
 function setSuggestions( text, options )
     if text then
-        chatBox.autoComplete.cur.options = options
-        chatBox.autoComplete.cur.option = 0
-        chatBox.autoComplete.cur.originalText = text
+        bc.autoComplete.cur.options = options
+        bc.autoComplete.cur.option = 0
+        bc.autoComplete.cur.originalText = text
         local split = string.Explode( " ", text )
-        chatBox.autoComplete.cur.word = table.remove( split, #split )
-        chatBox.autoComplete.cur.prefix = table.concat( split, " " ) .. ( #split > 0 and " " or "" )
+        bc.autoComplete.cur.word = table.remove( split, #split )
+        bc.autoComplete.cur.prefix = table.concat( split, " " ) .. ( #split > 0 and " " or "" )
     else
-        chatBox.autoComplete.cur.options = {}
+        bc.autoComplete.cur.options = {}
     end
     updateText()
 end
 
 function updateText()
-    if not chatBox.settings.getValue( "acDisplay" ) then return end
-    if #chatBox.autoComplete.cur.options > 0 then
-        local c = chatBox.autoComplete.cur
+    if not bc.settings.getValue( "acDisplay" ) then return end
+    if #bc.autoComplete.cur.options > 0 then
+        local c = bc.autoComplete.cur
         local OPTIONS_SHOWN = math.min( 4, #c.options )
 
         local sIdx = c.option and math.max( c.option, 1 ) or 1
@@ -147,30 +147,30 @@ function updateText()
         if c.option > ( #c.options - OPTIONS_SHOWN + 1 ) then
             t = t .. table.concat( c.options, "; ", 1, OPTIONS_SHOWN - ( #c.options - c.option ) - 1 )
         end
-        chatBox.graphics.derma.textEntry.bgText = t
+        bc.graphics.derma.textEntry.bgText = t
     else
-        chatBox.graphics.derma.textEntry.bgText = ""
+        bc.graphics.derma.textEntry.bgText = ""
     end
 
 end
 
 function incOption()
-    setOption( ( chatBox.autoComplete.cur.option + 1 ) % ( #chatBox.autoComplete.cur.options + 1 ) )
+    setOption( ( bc.autoComplete.cur.option + 1 ) % ( #bc.autoComplete.cur.options + 1 ) )
 end
 
 function setOption( n )
-    chatBox.autoComplete.cur.option = n
+    bc.autoComplete.cur.option = n
     if n == 0 then
-        setText( chatBox.autoComplete.cur.originalText )
+        setText( bc.autoComplete.cur.originalText )
     else
-        setText( chatBox.autoComplete.cur.prefix .. chatBox.autoComplete.cur.options[n] )
+        setText( bc.autoComplete.cur.prefix .. bc.autoComplete.cur.options[n] )
     end
     updateText()
 end
 
 function setText( txt )
-    chatBox.graphics.derma.textEntry:SetText( txt )
-    chatBox.graphics.derma.textEntry:SetCaretPos( #txt )
+    bc.graphics.derma.textEntry:SetText( txt )
+    bc.graphics.derma.textEntry:SetCaretPos( #txt )
 end
 
 --takes a string and assiative array, array format
@@ -189,15 +189,15 @@ function getSimilarStrings( str, arr )
 end
 
 function getSimilarCommands( str )
-    local out = getSimilarStrings( str, table.GetKeys( chatBox.autoComplete.cmds ) )
+    local out = getSimilarStrings( str, table.GetKeys( bc.autoComplete.cmds ) )
     table.sort( out, function( a, b )
-        if chatBox.autoComplete.cmds[a] == chatBox.autoComplete.cmds[b] or not chatBox.settings.getValue( "acUsage" ) then
+        if bc.autoComplete.cmds[a] == bc.autoComplete.cmds[b] or not bc.settings.getValue( "acUsage" ) then
             if #a == #b then
                 return a < b
             end
             return #a < #b
         end
-        return chatBox.autoComplete.cmds[a] > chatBox.autoComplete.cmds[b]
+        return bc.autoComplete.cmds[a] > bc.autoComplete.cmds[b]
     end )
     return out
 end
@@ -212,7 +212,7 @@ end
 
 function getSimilarEmotes( str )
     local longEmotes = {}
-    for k, v in pairs( chatBox.images.emoteLookup.list ) do
+    for k, v in pairs( bc.images.emoteLookup.list ) do
         if v[1] == ":" and v[#v] == ":" then
             table.insert( longEmotes, v )
         end
@@ -221,13 +221,13 @@ function getSimilarEmotes( str )
     local out = getSimilarStrings( str, longEmotes )
 
     table.sort( out, function( a, b )
-        if chatBox.autoComplete.emoteUsage[a] == chatBox.autoComplete.emoteUsage[b] or not chatBox.settings.getValue( "acUsage" ) then
+        if bc.autoComplete.emoteUsage[a] == bc.autoComplete.emoteUsage[b] or not bc.settings.getValue( "acUsage" ) then
             if #a == #b then
                 return a < b
             end
             return #a < #b
         end
-        return chatBox.autoComplete.emoteUsage[a] > chatBox.autoComplete.emoteUsage[b]
+        return bc.autoComplete.emoteUsage[a] > bc.autoComplete.emoteUsage[b]
     end )
     return out
 end

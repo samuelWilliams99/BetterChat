@@ -1,6 +1,6 @@
-chatBox.teamOverload = {}
+bc.teamOverload = {}
 
-chatBox.teamOverload.defaultChannel = {
+bc.teamOverload.defaultChannel = {
     icon = "group.png",
     send = function( self, msg )
         if DarkRP and not LocalPlayer():IsAlive() then return end
@@ -9,36 +9,36 @@ chatBox.teamOverload.defaultChannel = {
         net.SendToServer()
     end,
     onMessage = function()
-        chatBox.private.lastMessaged = nil
+        bc.private.lastMessaged = nil
     end,
     doPrints = true,
     addNewLines = true,
     disabledSettings = { "openKey" },
     allFunc = function( self, tab, idx )
-        table.insert( tab, idx, chatBox.defines.theme.team )
+        table.insert( tab, idx, bc.defines.theme.team )
         table.insert( tab, idx + 1, "(" .. chatHelper.teamName( LocalPlayer() ) .. ") " )
     end,
     openOnStart = true,
     disallowClose = true,
     hideRealName = true,
-    textEntryColor = chatBox.defines.theme.teamTextEntry,
+    textEntryColor = bc.defines.theme.teamTextEntry,
     replicateAll = true,
     position = 3,
 }
 
 hook.Add( "BC_initPanels", "BC_initAddTeamOverloadChannel", function()
-    if chatBox.settings.getServerValue( "replaceTeam" ) then
+    if bc.settings.getServerValue( "replaceTeam" ) then
         local teamName = chatHelper.teamName( LocalPlayer() )
         local chanName = "TeamOverload-" .. teamName
-        local channel = chatBox.channels.getChannel( chanName )
+        local channel = bc.channels.getChannel( chanName )
 
         if not channel then
-            channel = table.Copy( chatBox.teamOverload.defaultChannel )
+            channel = table.Copy( bc.teamOverload.defaultChannel )
             channel.name = chanName
-            table.insert( chatBox.channels.channels, channel )
+            table.insert( bc.channels.channels, channel )
         end
         if channel.needsData then
-            for k, v in pairs( chatBox.teamOverload.defaultChannel ) do
+            for k, v in pairs( bc.teamOverload.defaultChannel ) do
                 if channel[k] == nil then
                     channel[k] = v
                 end
@@ -56,11 +56,11 @@ hook.Add( "BC_initPanels", "BC_initAddTeamOverloadChannel", function()
 
             local t = chatHelper.teamName( LocalPlayer() )
             local chanName = "TeamOverload-" .. t
-            local chan = chatBox.channels.getChannel( chanName )
+            local chan = bc.channels.getChannel( chanName )
 
-            if chan and chatBox.channels.isOpen( chan ) then
-                local tab = chatBox.formatting.formatMessage( ply, text, not ply:Alive() )
-                chatBox.channels.message( { chan.name, "MsgC" }, unpack( tab ) )
+            if chan and bc.channels.isOpen( chan ) then
+                local tab = bc.formatting.formatMessage( ply, text, not ply:Alive() )
+                bc.channels.message( { chan.name, "MsgC" }, unpack( tab ) )
             end
         end )
     end

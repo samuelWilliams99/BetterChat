@@ -1,14 +1,14 @@
 -- Delete if already defined, for development
-if chatBox.graphics and chatBox.graphics.remove then
-    chatBox.graphics.remove()
+if bc.graphics and bc.graphics.remove then
+    bc.graphics.remove()
 end
-chatBox.graphics = {}
+bc.graphics = {}
 include( "betterchat/client/sizemove.lua" )
 
-function chatBox.graphics.build()
-    chatBox.graphics.remove()
+function bc.graphics.build()
+    bc.graphics.remove()
 
-    local g = chatBox.graphics
+    local g = bc.graphics
     g.derma = {}
     local d = g.derma
 
@@ -45,17 +45,17 @@ function chatBox.graphics.build()
             if self.EscapeDown then return end
             self.EscapeDown = true
 
-            if not chatBox.base.isOpen then return end
+            if not bc.base.isOpen then return end
 
             local mx, my = gui.MousePos()
             -- Work around to hide the chatbox when the client presses escape
             gui.HideGameUI()
 
             if vgui.GetKeyboardFocus() and vgui.GetKeyboardFocus():GetName() == "BC_settingsKeyEntry" then
-                chatBox.graphics.derma.textEntry:RequestFocus()
+                bc.graphics.derma.textEntry:RequestFocus()
             else
-                chatBox.graphics.derma.textEntry:SetText( "" )
-                chatBox.base.closeChatBox()
+                bc.graphics.derma.textEntry:SetText( "" )
+                bc.base.closeChatBox()
             end
         else
             self.EscapeDown = false
@@ -78,21 +78,21 @@ function chatBox.graphics.build()
 
     function d.chatFrame:Paint( w, h )
         if not self.doPaint then return end
-        chatBox.util.blur( self, 10, 20, 255 )
+        bc.util.blur( self, 10, 20, 255 )
         --main box
-        draw.RoundedBox( 0, 0, 0, w, h - 33, chatBox.defines.theme.background )
+        draw.RoundedBox( 0, 0, 0, w, h - 33, bc.defines.theme.background )
         --left text bg
-        draw.RoundedBox( 0, 0, h - 31, w - 32, 31, chatBox.defines.theme.background )
+        draw.RoundedBox( 0, 0, h - 31, w - 32, 31, bc.defines.theme.background )
         --left text fg
-        local c = chatBox.channels.getActiveChannel()
-        local col = chatBox.defines.theme.foreground
+        local c = bc.channels.getActiveChannel()
+        local col = bc.defines.theme.foreground
         if c.textEntryColor then
             col = table.Copy( c.textEntryColor )
             col.a = 100
         end
         draw.RoundedBox( 0, 5, h - 26, w - 42, 21, col )
         --right bg
-        draw.RoundedBox( 0, w - 30, h - 31, 30, 31, chatBox.defines.theme.background )
+        draw.RoundedBox( 0, w - 30, h - 31, 30, 31, bc.defines.theme.background )
 
     end
     d.chatFrame.doPaint = true
@@ -100,14 +100,14 @@ function chatBox.graphics.build()
     local allowedFocus = { "BC_settingsEntry", "BC_settingsKeyEntry", "BC_chatEntry" }
     function d.chatFrame:Think()
         local focusName = vgui.GetKeyboardFocus() and vgui.GetKeyboardFocus():GetName() or ""
-        if chatBox.base.isOpen and not table.HasValue( allowedFocus, focusName ) then
+        if bc.base.isOpen and not table.HasValue( allowedFocus, focusName ) then
             d.textEntry:RequestFocus()
         end
 
-        chatBox.sizeMove.think()
+        bc.sizeMove.think()
 
-        if chatBox.sidePanel.panels then
-            for k, v in pairs( chatBox.sidePanel.panels ) do
+        if bc.sidePanel.panels then
+            for k, v in pairs( bc.sidePanel.panels ) do
                 local g = v.graphics
                 if v.isOpen or v.animState > 0 then
                     g.pane:Show()
@@ -125,9 +125,9 @@ function chatBox.graphics.build()
     d.textEntry:SetPos( 10, g.size.y - 10 - 16 )
     d.textEntry:SetSize( g.size.x - 52, 20 )
     d.textEntry:SetFont( g.font )
-    d.textEntry:SetTextColor( chatBox.defines.theme.inputText )
-    d.textEntry:SetCursorColor( chatBox.defines.theme.inputText )
-    d.textEntry:SetHighlightColor( chatBox.defines.theme.textHighlight )
+    d.textEntry:SetTextColor( bc.defines.theme.inputText )
+    d.textEntry:SetCursorColor( bc.defines.theme.inputText )
+    d.textEntry:SetHighlightColor( bc.defines.theme.textHighlight )
     d.textEntry:SetHistoryEnabled( true )
 
     function d.textEntry:PerformLayout()
@@ -137,7 +137,7 @@ function chatBox.graphics.build()
 
     function d.textEntry:Paint( w, h )
         surface.SetFont( self:GetFont() )
-        surface.SetTextColor( chatBox.defines.theme.inputSuggestionText )
+        surface.SetTextColor( bc.defines.theme.inputSuggestionText )
         surface.SetTextPos( 3, -1 )
         surface.DrawText( d.textEntry.bgText )
 
@@ -160,10 +160,10 @@ function chatBox.graphics.build()
         return hook.Run( "BC_keyCodeTyped", code, ctrl, shift, self )
     end
     function d.textEntry:OnTextChanged()
-        self.maxCharacters = chatBox.settings.getServerValue( "maxLength" )
+        self.maxCharacters = bc.settings.getServerValue( "maxLength" )
         if self and self:GetText() then
-            if chatBox.util.getChatTextLength( self:GetText() ) > self.maxCharacters then
-                self:SetText( chatBox.util.shortenChatText( self:GetText(), self.maxCharacters ) )
+            if bc.util.getChatTextLength( self:GetText() ) > self.maxCharacters then
+                self:SetText( bc.util.shortenChatText( self:GetText(), self.maxCharacters ) )
                 self:SetCaretPos( self.maxCharacters )
                 surface.PlaySound( "resource/warning.wav" )
             end
@@ -176,9 +176,9 @@ function chatBox.graphics.build()
             self:SetText( txt )
             self:SetCaretPos( cPos )
 
-            local c = chatBox.channels.getActiveChannel()
+            local c = bc.channels.getActiveChannel()
             if c.hideChatText then
-                hook.Run( "ChatTextChanged", chatBox.channels.wackyString )
+                hook.Run( "ChatTextChanged", bc.channels.wackyString )
             else
                 hook.Run( "ChatTextChanged", self:GetText() or "" )
             end
@@ -188,15 +188,15 @@ function chatBox.graphics.build()
 
     function d.textEntry:OnMousePressed( keyCode )
         if keyCode == MOUSE_LEFT then
-            for k, v in pairs( chatBox.graphics.derma.psheet:GetItems() ) do
+            for k, v in pairs( bc.graphics.derma.psheet:GetItems() ) do
                 v.Panel.text:UnselectText()
             end
         end
     end
 
     hook.Add( "BC_channelChanged", "BC_disableTextEntry", function()
-        local text = chatBox.graphics.derma.textEntry
-        local chan = chatBox.channels.getActiveChannel()
+        local text = bc.graphics.derma.textEntry
+        local chan = bc.channels.getActiveChannel()
         if not chan then return end
         text:SetDisabled( chan.noSend )
         text:SetTooltip( chan.noSend and "This channel does not allow messages to be sent" or nil )
@@ -205,82 +205,82 @@ function chatBox.graphics.build()
     hook.Run( "BC_preInitPanels" )
     hook.Run( "BC_initPanels" )
 
-    chatBox.base.ready = true
+    bc.base.ready = true
 
     hook.Run( "BC_postInitPanels" )
 end
 
-function chatBox.graphics.show( selectedTab )
-    local d = chatBox.graphics.derma
+function bc.graphics.show( selectedTab )
+    local d = bc.graphics.derma
     d.frame:MakePopup()
-    d.textEntry.maxCharacters = chatBox.settings.getServerValue( "maxLength" )
+    d.textEntry.maxCharacters = bc.settings.getServerValue( "maxLength" )
 
     d.chatFrame.doPaint = true
     d.textEntry:Show()
     d.frame:SetMouseInputEnabled( true )
     d.frame:SetKeyboardInputEnabled( true )
-    chatBox.channels.showPSheet()
+    bc.channels.showPSheet()
     hook.Run( "BC_showChat" )
 
     d.textEntry:RequestFocus()
 
-    chatBox.channels.focus( selectedTab )
+    bc.channels.focus( selectedTab )
 end
 
-function chatBox.graphics.hide()
+function bc.graphics.hide()
     CloseDermaMenus()
-    local d = chatBox.graphics.derma
+    local d = bc.graphics.derma
     d.chatFrame.doPaint = false
 
     d.textEntry:Hide()
     d.frame:SetMouseInputEnabled( false )
     d.frame:SetKeyboardInputEnabled( false )
     gui.EnableScreenClicker( false )
-    chatBox.channels.hidePSheet()
+    bc.channels.hidePSheet()
     hook.Run( "BC_hideChat" )
 
-    for k, v in pairs( chatBox.sidePanel.panels ) do
-        chatBox.sidePanel.close( v.name, true )
+    for k, v in pairs( bc.sidePanel.panels ) do
+        bc.sidePanel.close( v.name, true )
     end
 end
 
 hook.Add( "PlayerButtonDown", "BC_buttonDown", function( ply, keyCode )
-    if not chatBox.base.enabled or ply ~= LocalPlayer() then return end
+    if not bc.base.enabled or ply ~= LocalPlayer() then return end
 
-    for k, v in pairs( chatBox.channels.channels ) do
+    for k, v in pairs( bc.channels.channels ) do
         if v.openKey and v.openKey == keyCode then
-            chatBox.base.openChatBox( v.name )
+            bc.base.openChatBox( v.name )
             return
         end
     end
 end )
 
-function chatBox.graphics.remove()
-    local g = chatBox.graphics
+function bc.graphics.remove()
+    local g = bc.graphics
     if g and g.derma and g.derma.frame then
         g.derma.frame:Remove()
     end
 end
 
 hook.Add( "Think", "BC_hidePauseMenu", function()
-    if not chatBox.base.enabled then return end
-    if chatBox.base.isOpen and gui.IsGameUIVisible() then
+    if not bc.base.enabled then return end
+    if bc.base.isOpen and gui.IsGameUIVisible() then
         gui.HideGameUI()
     end
 end )
 
 hook.Add( "PlayerBindPress", "BC_overrideChatBind", function( ply, bind, pressed )
-    if not chatBox.base.enabled or not pressed then return end
+    if not bc.base.enabled or not pressed then return end
 
     local chan = "All"
 
     if bind == "messagemode2" then
-        if chatBox.private.lastMessaged and chatBox.settings.getValue( "teamOpenPM" ) then
-            chan = chatBox.private.lastMessaged.name
-            chatBox.private.lastMessaged = nil
+        if bc.private.lastMessaged and bc.settings.getValue( "teamOpenPM" ) then
+            chan = bc.private.lastMessaged.name
+            bc.private.lastMessaged = nil
         else
             if DarkRP then
-                if chatBox.settings.getServerValue( "replaceTeam" ) then
+                if bc.settings.getServerValue( "replaceTeam" ) then
                     local t = chatHelper.teamName( LocalPlayer() )
                     chan = "TeamOverload-" .. t
                 else
@@ -294,17 +294,17 @@ hook.Add( "PlayerBindPress", "BC_overrideChatBind", function( ply, bind, pressed
         return
     end
 
-    local succ, err = pcall( function( chan ) chatBox.base.openChatBox( chan ) end, chan )
+    local succ, err = pcall( function( chan ) bc.base.openChatBox( chan ) end, chan )
     if not succ then
         print( "Chatbox not initialized, disabling." )
-        chatBox.base.enabled = false
+        bc.base.enabled = false
     else
         return true -- Doesn't allow any functions to be called for this bind
     end
 end )
 
 hook.Add( "HUDShouldDraw", "BC_hideDefaultChat", function( name )
-    if not chatBox.base.enabled then return end
+    if not bc.base.enabled then return end
     if name == "CHudChat" then
         return false
     end

@@ -1,5 +1,5 @@
-chatBox.input = {}
-local i = chatBox.input
+bc.input = {}
+local i = bc.input
 include( "betterchat/client/input/autocomplete.lua" )
 
 hook.Add( "BC_initPanels", "BC_initInput", function()
@@ -68,7 +68,7 @@ hook.Add( "BC_keyCodeTyped", "BC_inputHook", function( code, ctrl, shift, entry 
 end )
 
 hook.Add( "BC_messageCanSend", "BC_runConsoleCommand", function( channel, txt )
-    if chatBox.settings.getValue( "allowConsole" ) then
+    if bc.settings.getValue( "allowConsole" ) then
         if txt and txt[1] == "%" then
             local cmd = txt:sub( 2 )
             if not cmd or #cmd == 0 then return true end
@@ -76,8 +76,8 @@ hook.Add( "BC_messageCanSend", "BC_runConsoleCommand", function( channel, txt )
             return true
         end
     end
-    local giphyCommand = chatBox.defines.giphyCommand
-    if chatBox.images.giphyEnabled and string.sub( txt, 1, #giphyCommand + 1 ) == giphyCommand .. " " then
+    local giphyCommand = bc.defines.giphyCommand
+    if bc.images.giphyEnabled and string.sub( txt, 1, #giphyCommand + 1 ) == giphyCommand .. " " then
         local str = string.sub( txt, 8 )
         net.Start( "BC_sendGif" )
         net.WriteString( str )

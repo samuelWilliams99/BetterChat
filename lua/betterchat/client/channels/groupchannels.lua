@@ -1,8 +1,8 @@
-chatBox.group = {}
-chatBox.group.groups = {}
-chatBox.group.buttonEnabled = false
+bc.group = {}
+bc.group.groups = {}
+bc.group.buttonEnabled = false
 
-chatBox.group.defaultChannel = {
+bc.group.defaultChannel = {
     init = false,
     displayName = "[Loading]",
     icon = "group.png",
@@ -14,7 +14,7 @@ chatBox.group.defaultChannel = {
         net.SendToServer()
     end,
     allFunc = function( self, tab, idx )
-        table.insert( tab, idx, chatBox.defines.theme.group )
+        table.insert( tab, idx, bc.defines.theme.group )
         table.insert( tab, idx + 1, "(" .. self.displayName .. ") " )
     end,
     tickMode = 0,
@@ -22,137 +22,137 @@ chatBox.group.defaultChannel = {
     hideRealName = true,
     postAdd = function( data, panel )
         local membersBtn = vgui.Create( "DButton", panel )
-        membersBtn:SetPos( chatBox.graphics.derma.chatFrame:GetWide() - 59, 34 )
+        membersBtn:SetPos( bc.graphics.derma.chatFrame:GetWide() - 59, 34 )
         membersBtn:SetSize( 24, 24 )
         membersBtn:SetText( "" )
-        membersBtn:SetColor( chatBox.defines.theme.groupMembers )
+        membersBtn:SetColor( bc.defines.theme.groupMembers )
         membersBtn.name = data.name
         function membersBtn:DoClick()
-            local s = chatBox.sidePanel.panels["Group Members"]
+            local s = bc.sidePanel.panels["Group Members"]
             if s.isOpen then
-                chatBox.sidePanel.close( s.name )
+                bc.sidePanel.close( s.name )
             else
-                chatBox.sidePanel.open( s.name, self.name )
+                bc.sidePanel.open( s.name, self.name )
             end
         end
         function membersBtn:Paint( w, h )
-            local animState = chatBox.sidePanel.panels["Group Members"].animState
-            self:SetColor( chatHelper.lerpCol( chatBox.defines.theme.groupMembers, chatBox.defines.theme.groupMembersFocused, animState ) )
-            surface.SetMaterial( chatBox.defines.materials.groupBW )
+            local animState = bc.sidePanel.panels["Group Members"].animState
+            self:SetColor( chatHelper.lerpCol( bc.defines.theme.groupMembers, bc.defines.theme.groupMembersFocused, animState ) )
+            surface.SetMaterial( bc.defines.materials.groupBW )
             surface.SetDrawColor( self:GetColor() )
             surface.DrawTexturedRect( 0, 0, w, h )
         end
     end,
     runCommandSeparately = true,
     hideChatText = true,
-    textEntryColor = chatBox.defines.theme.groupTextEntry,
+    textEntryColor = bc.defines.theme.groupTextEntry,
     position = 5,
 }
 
-function chatBox.group.allowed()
-    return chatBox.settings.isAllowed( "bc_groups" )
+function bc.group.allowed()
+    return bc.settings.isAllowed( "bc_groups" )
 end
 
-function chatBox.group.removeHooks()
+function bc.group.removeHooks()
     hook.Remove( "PlayerConnect", "BC_reloadMembersConnect" )
     hook.Remove( "BC_playerDisconnect", "BC_reloadMembersDisconnect" )
 end
 
 hook.Add( "BC_postInitPanels", "BC_groupAddButton", function() -- add group change check
-    if chatBox.group.allowed() then
-        chatBox.group.enable()
+    if bc.group.allowed() then
+        bc.group.enable()
     else
-        chatBox.group.removeHooks()
+        bc.group.removeHooks()
     end
 end )
 
 hook.Add( "BC_userAccessChange", "BC_groupChannelCheck", function()
-    if chatBox.group.allowed() then
-        chatBox.group.enable()
+    if bc.group.allowed() then
+        bc.group.enable()
     else
-        chatBox.group.disable()
+        bc.group.disable()
     end
 end )
 
-function chatBox.group.disable()
-    chatBox.group.buttonEnabled = false
-    chatBox.group.removeHooks()
-    for k, v in pairs( chatBox.channels.channels ) do
+function bc.group.disable()
+    bc.group.buttonEnabled = false
+    bc.group.removeHooks()
+    for k, v in pairs( bc.channels.channels ) do
         if string.sub( v.name, 1, 8 ) == "Group - " then
-            chatBox.channels.remove( v )
+            bc.channels.remove( v )
         end
     end
 end
 
-function chatBox.group.enable()
-    chatBox.group.buttonEnabled = true
+function bc.group.enable()
+    bc.group.buttonEnabled = true
     hook.Add( "PlayerConnect", "BC_reloadMembersConnect", function()
-        for k, v in pairs( chatBox.channels.channels ) do
-            if chatBox.channels.isOpen( v ) and v.group then
-                chatBox.sidePanel.members.reload( v )
+        for k, v in pairs( bc.channels.channels ) do
+            if bc.channels.isOpen( v ) and v.group then
+                bc.sidePanel.members.reload( v )
             end
         end
     end )
 
     hook.Add( "BC_playerDisconnect", "BC_reloadMembersDisconnect", function()
-        for k, v in pairs( chatBox.channels.channels ) do
-            if chatBox.channels.isOpen( v ) and v.group then
-                chatBox.sidePanel.members.reload( v )
+        for k, v in pairs( bc.channels.channels ) do
+            if bc.channels.isOpen( v ) and v.group then
+                bc.sidePanel.members.reload( v )
             end
         end
     end )
 
-    net.Receive( "BC_sendGroups", chatBox.group.onReceiveGroups )
-    net.Receive( "BC_updateGroup", chatBox.group.onUpdate )
-    net.Receive( "BC_GM", chatBox.group.onMessage )
+    net.Receive( "BC_sendGroups", bc.group.onReceiveGroups )
+    net.Receive( "BC_updateGroup", bc.group.onUpdate )
+    net.Receive( "BC_GM", bc.group.onMessage )
 end
 
 hook.Add( "BC_makeChannelButtons", "BC_makeGroupButton", function( menu )
-    if not chatBox.group.buttonEnabled then return end
+    if not bc.group.buttonEnabled then return end
     local subMenu = menu:AddSubMenu( "Groups" )
-    if #chatBox.group.groups < 5 then
+    if #bc.group.groups < 5 then
         subMenu:AddOption( "Create Group", function()
             net.Start( "BC_newGroup" )
             net.SendToServer()
         end )
-        if #chatBox.group.groups > 0 then
+        if #bc.group.groups > 0 then
             subMenu:AddSpacer()
         end
     end
 
-    for k, group in pairs( chatBox.group.groups ) do
+    for k, group in pairs( bc.group.groups ) do
         subMenu:AddOption( group.name, function()
-            local chan = chatBox.channels.getChannel( "Group - " .. group.id )
+            local chan = bc.channels.getChannel( "Group - " .. group.id )
             if not chan or chan.needsData then
-                chan = chatBox.group.createChannel( group )
+                chan = bc.group.createChannel( group )
             end
-            if not chatBox.channels.isOpen( chan ) then
-                chatBox.channels.add( chan )
+            if not bc.channels.isOpen( chan ) then
+                bc.channels.add( chan )
             end
-            chatBox.sidePanel.members.reload( chan )
-            chatBox.channels.focus( chan )
+            bc.sidePanel.members.reload( chan )
+            bc.channels.focus( chan )
         end )
     end
 end )
 
-function chatBox.group.onReceiveGroups()
-    chatBox.group.groups = util.JSONToTable( net.ReadString() )
+function bc.group.onReceiveGroups()
+    bc.group.groups = util.JSONToTable( net.ReadString() )
     local ids = {}
 
-    for k, v in ipairs( chatBox.group.groups ) do
+    for k, v in ipairs( bc.group.groups ) do
         table.insert( ids, v.id )
     end
 
-    for k, v in pairs( chatBox.channels.channels ) do
+    for k, v in pairs( bc.channels.channels ) do
         if v.group then
             if not table.HasValue( ids, v.group.id ) then
-                chatBox.group.deleteGroup( v.group )
+                bc.group.deleteGroup( v.group )
             else
                 local index = table.KeyFromValue( ids, v.group.id )
-                local newGroup = chatBox.group.groups[index]
+                local newGroup = bc.group.groups[index]
                 v.group = newGroup
-                if chatBox.sidePanel.getChild( "Group Members", v.name ) then
-                    chatBox.sidePanel.members.reload( v )
+                if bc.sidePanel.getChild( "Group Members", v.name ) then
+                    bc.sidePanel.members.reload( v )
                 end
 
                 if table.HasValue( newGroup.admins, LocalPlayer():SteamID() ) then
@@ -160,76 +160,76 @@ function chatBox.group.onReceiveGroups()
                 else
                     v.disabledSettings = { "displayName" }
                 end
-                chatBox.sidePanel.channels.reloadSettings( v )
+                bc.sidePanel.channels.reloadSettings( v )
 
             end
         end
     end
 end
 
-function chatBox.group.onUpdate()
-    if not chatBox.base.enabled then return end
+function bc.group.onUpdate()
+    if not bc.base.enabled then return end
     local group = util.JSONToTable( net.ReadString() )
     local foundLocal = false
-    for k, v in pairs( chatBox.group.groups ) do
+    for k, v in pairs( bc.group.groups ) do
         if v.id == group.id then
             foundLocal = true
             if table.HasValue( group.members, LocalPlayer():SteamID() ) then
-                chatBox.group.groups[k] = group
+                bc.group.groups[k] = group
                 break
             else
-                chatBox.group.deleteGroup( group )
+                bc.group.deleteGroup( group )
                 return
             end
 
         end
     end
     if not foundLocal then
-        table.insert( chatBox.group.groups, group )
+        table.insert( bc.group.groups, group )
     end
 
-    local chan = chatBox.channels.getChannel( "Group - " .. group.id )
+    local chan = bc.channels.getChannel( "Group - " .. group.id )
     if chan then
         chan.group = group
         chan.displayName = group.name
         chan.dataChanged = chan.dataChanged or {}
         chan.dataChanged.displayName = true
-        if chatBox.sidePanel.getChild( "Group Members", chan.name ) then
-            chatBox.sidePanel.members.reload( chan )
+        if bc.sidePanel.getChild( "Group Members", chan.name ) then
+            bc.sidePanel.members.reload( chan )
         end
 
-        if chatBox.channels.isOpen( chan ) then
+        if bc.channels.isOpen( chan ) then
             if table.HasValue( group.admins, LocalPlayer():SteamID() ) then
                 chan.disabledSettings = {}
             else
                 chan.disabledSettings = { "displayName" }
             end
-            chatBox.sidePanel.channels.reloadSettings( chan )
+            bc.sidePanel.channels.reloadSettings( chan )
         end
     end
 
     if group.openNow then
         if not chan or chan.needsData then
-            chan = chatBox.group.createChannel( group )
+            chan = bc.group.createChannel( group )
         end
-        if not chatBox.channels.isOpen( chan ) then
-            chatBox.channels.add( chan )
+        if not bc.channels.isOpen( chan ) then
+            bc.channels.add( chan )
         end
-        chatBox.channels.focus( chan )
+        bc.channels.focus( chan )
     end
 end
 
-function chatBox.group.onMessage()
-    if not chatBox.base.enabled then return end
+function bc.group.onMessage()
+    if not bc.base.enabled then return end
     local groupId = net.ReadUInt( 16 )
     local ply = net.ReadEntity()
     local text = net.ReadString()
 
-    local chan = chatBox.channels.getChannel( "Group - " .. groupId )
+    local chan = bc.channels.getChannel( "Group - " .. groupId )
     if not chan or chan.needsData then
-        for k, v in pairs( chatBox.group.groups ) do
+        for k, v in pairs( bc.group.groups ) do
             if v.id == groupId then
-                chan = chatBox.group.createChannel( v )
+                chan = bc.group.createChannel( v )
                 break
             end
         end
@@ -239,46 +239,46 @@ function chatBox.group.onMessage()
 
     if not chan.openOnMessage then return end
 
-    if not chatBox.channels.isOpen( chan ) then
-        chatBox.channels.add( chan )
+    if not bc.channels.isOpen( chan ) then
+        bc.channels.add( chan )
     end
 
-    local tab = chatBox.formatting.formatMessage( ply, text, not ply:Alive() )
+    local tab = bc.formatting.formatMessage( ply, text, not ply:Alive() )
     table.insert( tab, 1, { isController = true, doSound = ply ~= LocalPlayer() } )
-    chatBox.channels.message( { chan.name, "MsgC" }, unpack( tab ) )
+    bc.channels.message( { chan.name, "MsgC" }, unpack( tab ) )
 end
 
-function chatBox.group.deleteGroup( group )
-    if not chatBox.group.allowed() then return end
+function bc.group.deleteGroup( group )
+    if not bc.group.allowed() then return end
     -- table.RemoveByMember would work here
-    for k, v in pairs( chatBox.group.groups ) do --table.RemoveByValue wasn't working so delete by id instead
+    for k, v in pairs( bc.group.groups ) do --table.RemoveByValue wasn't working so delete by id instead
         if v.id == group.id then
-            table.remove( chatBox.group.groups, k )
+            table.remove( bc.group.groups, k )
         end
     end
-    local chan = chatBox.channels.getChannel( "Group - " .. group.id )
+    local chan = bc.channels.getChannel( "Group - " .. group.id )
     if chan then
-        if chatBox.channels.isOpen( chan ) then
-            chatBox.channels.remove( chan )
+        if bc.channels.isOpen( chan ) then
+            bc.channels.remove( chan )
         end
-        table.RemoveByValue( chatBox.channels.channels, chan )
+        table.RemoveByValue( bc.channels.channels, chan )
     end
-    chatBox.channels.messageDirect( "All", chatBox.defines.colors.printYellow, "You have been removed from group \"",
-        chatBox.defines.theme.group, group.name, chatBox.defines.colors.printYellow, "\"." )
-    chatBox.data.saveData()
+    bc.channels.messageDirect( "All", bc.defines.colors.printYellow, "You have been removed from group \"",
+        bc.defines.theme.group, group.name, bc.defines.colors.printYellow, "\"." )
+    bc.data.saveData()
 end
 
-function chatBox.group.createChannel( group )
-    if not chatBox.group.allowed() then return nil end
+function bc.group.createChannel( group )
+    if not bc.group.allowed() then return nil end
     local name = "Group - " .. group.id
-    local channel = chatBox.channels.getChannel( name )
+    local channel = bc.channels.getChannel( name )
     if not channel then
-        channel = table.Copy( chatBox.group.defaultChannel )
+        channel = table.Copy( bc.group.defaultChannel )
         channel.name = name
-        table.insert( chatBox.channels.channels, channel )
+        table.insert( bc.channels.channels, channel )
     end
     if channel.needsData then
-        for k, v in pairs( chatBox.group.defaultChannel ) do
+        for k, v in pairs( bc.group.defaultChannel ) do
             if channel[k] == nil then
                 channel[k] = v
             end
@@ -288,16 +288,16 @@ function chatBox.group.createChannel( group )
     if not table.HasValue( group.admins, LocalPlayer():SteamID() ) then
         channel.disabledSettings = { "displayName" }
     end
-    chatBox.sidePanel.channels.applyDefaults( channel )
+    bc.sidePanel.channels.applyDefaults( channel )
 
     channel.displayName = group.name
     channel.group = group
-    chatBox.sidePanel.members.reload( channel )
+    bc.sidePanel.members.reload( channel )
     if not channel.dataChanged then channel.dataChanged = {} end
     return channel
 end
 
-function chatBox.group.generateMemberData( group )
+function bc.group.generateMemberData( group )
     local data = {}
     for k, v in pairs( player.GetAll() ) do
         if v:IsBot() then continue end

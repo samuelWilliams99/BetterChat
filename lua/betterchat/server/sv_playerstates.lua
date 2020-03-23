@@ -4,24 +4,24 @@ local trackedStates = {
     inGod = function( ply ) return ply:HasGodMode() end,
     isFrozen = function( ply ) return ply.frozen end,
     isRagdolled = function( ply ) return ply.ragdoll end,
-    isChatEnabled = function( ply ) return chatBox.base.chatBoxEnabled[ply] end,
+    isChatEnabled = function( ply ) return bc.base.chatBoxEnabled[ply] end,
     isMuted = function( ply ) return ply:GetNWBool( "ulx_muted", false ) end,
 }
 
 local onChanges = {
     isChatEnabled = function( ply, newVal )
-        ULib.clientRPC( chatBox.base.getEnabledPlayers(), "chatBox.sidePanel.members.reloadAll" )
+        ULib.clientRPC( bc.base.getEnabledPlayers(), "bc.sidePanel.members.reloadAll" )
     end,
 }
 
 --dont touch
 
-chatBox.states = chatBox.states or {}
+bc.states = bc.states or {}
 
 for state, getter in pairs( trackedStates ) do
-    chatBox.states[state] = {}
+    bc.states[state] = {}
     for k1, ply in pairs( player.GetAll() ) do
-        chatBox.states[state][ply] = getter( ply )
+        bc.states[state][ply] = getter( ply )
     end
 end
 
@@ -29,8 +29,8 @@ timer.Create( "BC_stateMonitor", 1 / 30, 0, function()
     for state, getter in pairs( trackedStates ) do
         for k, ply in pairs( player.GetAll() ) do
             local newState = getter( ply )
-            if newState ~= chatBox.states[state][ply] then
-                chatBox.states[state][ply] = newState
+            if newState ~= bc.states[state][ply] then
+                bc.states[state][ply] = newState
                 net.Start( "BC_sendPlayerState" )
                 net.WriteString( state )
                 net.WriteEntity( ply )
@@ -50,7 +50,7 @@ hook.Add( "BC_playerReady", "BC_stateInit", function( ply )
             net.Start( "BC_sendPlayerState" )
             net.WriteString( state )
             net.WriteEntity( sPly )
-            net.WriteBool( chatBox.states[state][sPly] )
+            net.WriteBool( bc.states[state][sPly] )
             net.Send( ply )
         end
     end

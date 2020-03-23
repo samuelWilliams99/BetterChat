@@ -1,9 +1,9 @@
-chatBox.sidePanel.members = {}
+bc.sidePanel.members = {}
 include( "betterchat/client/sidepanel/templates/membersettings.lua" )
 
 hook.Add( "BC_initPanels", "BC_initSidePanelMembers", function()
-    chatBox.sidePanel.create( "Group Members", 250, {
-        icon = chatBox.defines.materials.group,
+    bc.sidePanel.create( "Group Members", 250, {
+        icon = bc.defines.materials.group,
         border = 1
     } )
 end )
@@ -19,37 +19,37 @@ hook.Add( "BC_chatTextClick", "BC_groupAccept", function( eventType, dataType, d
     end
 end )
 
-hook.Add( "BC_playerDisconnect", "BC_memberUpdateDiscon", chatBox.sidePanel.members.reloadAll )
-hook.Add( "BC_playerConnect", "BC_memberUpdateCon", chatBox.sidePanel.members.reloadAll )
+hook.Add( "BC_playerDisconnect", "BC_memberUpdateDiscon", bc.sidePanel.members.reloadAll )
+hook.Add( "BC_playerConnect", "BC_memberUpdateCon", bc.sidePanel.members.reloadAll )
 
-function chatBox.sidePanel.members.reloadAll()
-    if not chatBox.base.enabled then return end
-    for k, v in pairs( chatBox.channels.channels ) do
+function bc.sidePanel.members.reloadAll()
+    if not bc.base.enabled then return end
+    for k, v in pairs( bc.channels.channels ) do
         if v.group then
-            chatBox.sidePanel.members.reload( v )
+            bc.sidePanel.members.reload( v )
         end
     end
 end
 
-function chatBox.sidePanel.members.addMenu( chan )
+function bc.sidePanel.members.addMenu( chan )
     local group = chan.group
-    local p = chatBox.sidePanel.createChild( "Group Members", chan.name )
+    local p = bc.sidePanel.createChild( "Group Members", chan.name )
 
-    chatBox.sidePanel.members.generateMenu( p, group )
+    bc.sidePanel.members.generateMenu( p, group )
 end
 
-function chatBox.sidePanel.members.reload( chan )
-    local p = chatBox.sidePanel.getChild( "Group Members", chan.name )
+function bc.sidePanel.members.reload( chan )
+    local p = bc.sidePanel.getChild( "Group Members", chan.name )
     if p then
         p:Clear()
     else
-        p = chatBox.sidePanel.createChild( "Group Members", chan.name )
+        p = bc.sidePanel.createChild( "Group Members", chan.name )
     end
-    chatBox.sidePanel.members.generateMenu( p, chan.group )
+    bc.sidePanel.members.generateMenu( p, chan.group )
 end
 
-function chatBox.sidePanel.members.generateMenu( panel, group )
-    panel.data = chatBox.group.generateMemberData( group )
+function bc.sidePanel.members.generateMenu( panel, group )
+    panel.data = bc.group.generateMemberData( group )
 
     -- first sort by value in panel.data, then alphabetically by name (names before sids)
     -- Then for nonmembers, invited at the top
@@ -87,7 +87,7 @@ function chatBox.sidePanel.members.generateMenu( panel, group )
 
     panel.data.group = group
 
-    local channel = chatBox.channels.getChannel( "Group - " .. group.id )
+    local channel = bc.channels.getChannel( "Group - " .. group.id )
 
     if not channel then return end
 
@@ -102,11 +102,11 @@ function chatBox.sidePanel.members.generateMenu( panel, group )
     line:SetType( "Rect" )
     line:SetPos( 2, 22 )
     line:SetSize( w - 29, 2 )
-    line:SetColor( chatBox.defines.theme.sidePanelAccent )
+    line:SetColor( bc.defines.theme.sidePanelAccent )
 
     local title = vgui.Create( "DLabel", canvas )
     title:SetPos( 24, 0 )
-    title:SetFont( chatBox.graphics.font )
+    title:SetFont( bc.graphics.font )
     title:SetText( channel.displayName )
     title:SizeToContents()
     title.data = channel
@@ -119,12 +119,12 @@ function chatBox.sidePanel.members.generateMenu( panel, group )
 
     local isAdmin = table.HasValue( group.admins, LocalPlayer():SteamID() )
 
-    chatBox.sidePanel.renderSetting( panel, panel.data, chatBox.sidePanel.members.template.leaveGroup, 1 )
+    bc.sidePanel.renderSetting( panel, panel.data, bc.sidePanel.members.template.leaveGroup, 1 )
 
     local counter = 2
 
     if isAdmin then
-        chatBox.sidePanel.renderSetting( panel, panel.data, chatBox.sidePanel.members.template.deleteGroup, 2 )
+        bc.sidePanel.renderSetting( panel, panel.data, bc.sidePanel.members.template.deleteGroup, 2 )
         counter = 3
     end
 
@@ -132,7 +132,7 @@ function chatBox.sidePanel.members.generateMenu( panel, group )
     line2:SetType( "Rect" )
     line2:SetPos( 2, 14 + counter * 20 )
     line2:SetSize( w - 29, 1 )
-    line2:SetColor( chatBox.defines.theme.sidePanelAccent )
+    line2:SetColor( bc.defines.theme.sidePanelAccent )
     counter = counter + 0.5
 
     local lastRole = panel.data[sortedIds[1]]
@@ -140,19 +140,19 @@ function chatBox.sidePanel.members.generateMenu( panel, group )
         local role = panel.data[id]
         local setting
         if role < 2 then
-            setting = table.Copy( chatBox.sidePanel.members.template.member )
+            setting = table.Copy( bc.sidePanel.members.template.member )
             setting.disabled = not isAdmin
         else
             if not isAdmin then continue end
-            setting = table.Copy( chatBox.sidePanel.members.template.nonMember )
-            setting.disabled = ( group.invites[id] or not chatBox.sidePanel.players.settings[id].isChatEnabled ) and true or false
+            setting = table.Copy( bc.sidePanel.members.template.nonMember )
+            setting.disabled = ( group.invites[id] or not bc.sidePanel.players.settings[id].isChatEnabled ) and true or false
             setting.text = setting.disabled and ( group.invites[id] and "Invited" or "Disabled" ) or "Invite"
         end
         local ply = player.GetBySteamID( id )
         if ply then
-            local chatEnabled = chatBox.sidePanel.players.settings[id] and chatBox.sidePanel.players.settings[id].isChatEnabled or false
+            local chatEnabled = bc.sidePanel.players.settings[id] and bc.sidePanel.players.settings[id].isChatEnabled or false
             if not chatEnabled then
-                setting.nameColor = chatBox.defines.colors.red
+                setting.nameColor = bc.defines.colors.red
                 setting.extra = setting.extra .. ". This person currently has BetterChat disabled"
             end
 
@@ -171,11 +171,11 @@ function chatBox.sidePanel.members.generateMenu( panel, group )
             line:SetType( "Rect" )
             line:SetPos( 4, ( counter * 20 ) + 11 )
             line:SetSize( w - 33, 1 )
-            line:SetColor( chatBox.defines.theme.sidePanelAccent )
+            line:SetColor( bc.defines.theme.sidePanelAccent )
             counter = counter + 0.25
         end
 
-        chatBox.sidePanel.renderSetting( panel, panel.data, setting, counter )
+        bc.sidePanel.renderSetting( panel, panel.data, setting, counter )
         counter = counter + 1
     end
 end
