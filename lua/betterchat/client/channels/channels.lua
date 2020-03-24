@@ -6,9 +6,9 @@ include( "betterchat/client/channels/logschannel.lua" )
 include( "betterchat/client/channels/groupchannels.lua" )
 include( "betterchat/client/channels/teamoverload.lua" )
 
-bc.channels = {}
-bc.channels.panels = {}
-bc.channels.openChannels = {}
+bc.channels = bc.channels or {}
+bc.channels.panels = bc.channels.panels or {}
+bc.channels.openChannels = bc.channels.openChannels or {}
 
 -- Changes arguments of AddSheet to AddSheet( label, panel, material, tabIndex )
 local function alterAddSheet( sheet )
@@ -129,7 +129,7 @@ hook.Add( "BC_postInitPanels", "BC_postInitChannels", function()
             shouldOpen = shouldOpen()
         end
         if shouldOpen then
-            bc.channels.add( channel )
+            bc.channels.open( channel.name )
         end
     end
 
@@ -167,7 +167,7 @@ hook.Add( "BC_keyCodeTyped", "BC_sendMessageHook", function( code, ctrl, shift )
             if not dontClose then
                 bc.input.historyIndex = 0
                 bc.input.historyInput = ""
-                bc.base.closeChatBox()
+                bc.base.close()
             end
             return
         end
@@ -184,7 +184,7 @@ hook.Add( "BC_keyCodeTyped", "BC_sendMessageHook", function( code, ctrl, shift )
         bc.input.historyInput = ""
 
         hook.Run( "BC_messageSent", channel, txt )
-        bc.base.closeChatBox()
+        bc.base.close()
         return true
     elseif not bc.graphics.derma.emoteMenu:IsVisible() then
         if code == KEY_TAB and ctrl then
@@ -238,9 +238,9 @@ function bc.channels.getChannel( chanName )
     return nil
 end
 
-function bc.channels.isOpen( channel )
-    if not channel then return false end
-    return table.HasValue( bc.channels.openChannels, channel.name )
+function bc.channels.isOpen( name )
+    if not name then return false end
+    return table.HasValue( bc.channels.openChannels, name )
 end
 
 function bc.channels.getActiveChannel()
@@ -258,7 +258,6 @@ end
 function bc.channels.getActiveChannelIdx()
     local tab = bc.graphics.derma.psheet:GetActiveTab()
     local tabs = bc.graphics.derma.psheet:GetItems()
-    local name = nil
     for k, v in pairs( tabs ) do
         if v.Tab == tab then
             return k
@@ -497,7 +496,12 @@ function bc.channels.messageDirect( channel, controller, ... )
     end
 end
 
-function bc.channels.remove( channel )
+function bc.channels.close( name )
+    local idx = table.keyFromMember( bc.channels.channels, "name", name )
+    if not idx then return end
+    local channel = bc.channels.channels[idx]
+    if not bc.channels.isOpen( name ) then return end
+
     local d = bc.channels.panels[channel.name]
     local psheet = bc.graphics.derma.psheet
     local tabs = psheet.tabScroller.Panels
@@ -536,20 +540,39 @@ local function openLink( url )
     if string.Left( url, 7 ) ~= "http://" and string.Left( url, 8 ) ~= "https://" then
         url = "http://" .. url
     end
-    bc.base.closeChatBox()
+    bc.base.close()
     gui.OpenURL( url )
 end
 
 function bc.channels.add( data )
+    local idx = table.keyFromMember( bc.channels.channels, "name", data.name )
+    if idx then
+        return bc.channels.channels[idx]
+    end
     if not data.displayName then data.displayName = data.name end
+    bc.data.loadChannel( data )
+    bc.sidePanel.channels.applyDefaults( data )
+    table.insert( bc.channels.channels, data )
+    return data
+end
+
+function bc.channels.remove( name )
+    local idx = table.keyFromMember( bc.channels.channels, "name", name )
+    if not idx then return end
+    table.remove( bc.channels.channels, idx )
+end
+
+function bc.channels.open( name )
+    local idx = table.keyFromMember( bc.channels.channels, "name", name )
+    if not idx then return end
+    local data = bc.channels.channels[idx]
+    if bc.channels.isOpen( name ) then return end
+
     local g = bc.graphics
     local d = g.derma
     local sPanel = bc.sidePanel.createChild( "Channel Settings", data.name )
-    bc.sidePanel.channels.applyDefaults( data )
     bc.sidePanel.channels.generateSettings( sPanel, data )
     table.insert( bc.channels.openChannels, data.name )
-
-    data.needsData = false
 
     local panel = vgui.Create( "DPanel", d.psheet )
 
@@ -606,8 +629,8 @@ function bc.channels.add( data )
 
                 channel = bc.private.createChannel( ply )
 
-                if not bc.channels.isOpen( channel ) then
-                    bc.private.addChannel( channel )
+                if not bc.channels.isOpen( channel.name ) then
+                    bc.private.openChannel( channel.name )
                 end
                 bc.channels.focus( channel.name )
             elseif dataType == "Link" then
@@ -630,8 +653,8 @@ function bc.channels.add( data )
 
                         channel = bc.private.createChannel( ply )
 
-                        if not bc.channels.isOpen( channel ) then
-                            bc.private.addChannel( channel )
+                        if not bc.channels.isOpen( channel.name ) then
+                            bc.private.openChannel( channel.name )
                         end
                         bc.channels.focus( channel.name )
                     end )
@@ -745,7 +768,7 @@ function bc.channels.add( data )
         end )
         if not self.data.disallowClose then
             menu:AddOption( "Close", function()
-                bc.channels.remove( self.data )
+                bc.channels.close( self.data.name )
             end )
         end
         menu:Open()
@@ -753,7 +776,7 @@ function bc.channels.add( data )
 
     function v.Tab:DoMiddleClick()
         if not self.data.disallowClose then
-            bc.channels.remove( self.data )
+            bc.channels.close( self.data.name )
         end
     end
 
@@ -854,9 +877,12 @@ end
 function bc.channels.getAndOpen( chanName )
     local chan = bc.channels.getChannel( chanName )
 
-    if not chan or not bc.channels.isOpen( chan ) then
+    if not chan or not bc.channels.isOpen( chanName ) then
         local dashPos = string.find( chanName, " - ", 1, true )
-        if not dashPos then return nil end
+        if not dashPos then
+            return bc.channels.getChannel( "All" )
+        end
+
         local nameType = string.sub( chanName, 1, dashPos - 1 )
         local nameArg = string.sub( chanName, dashPos + 3 )
 
@@ -866,17 +892,17 @@ function bc.channels.getAndOpen( chanName )
             for k, v in pairs( bc.group.groups ) do
                 if v.id == id then
                     found = true
-                    local c = bc.group.createChannel( v )
-                    if not c then continue end
-                    bc.channels.add( c )
+                    local chan = bc.group.createChannel( v )
+                    if not chan then continue end
+                    bc.channels.open( chan.name )
                 end
             end
-            if not found then return nil end
+            if not found then return end
         elseif nameType == "Player" and bc.private.allowed() then
             local sId = nameArg
             local ply = player.GetBySteamID( sId )
             if not ply then return nil end
-            bc.private.addChannel( bc.private.createChannel( ply ) )
+            bc.private.openChannel( bc.private.createChannel( ply ) )
         else
             return bc.channels.getChannel( "All" )
         end

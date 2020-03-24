@@ -11,7 +11,7 @@ function bc.admin.sendAdmin( ply, text )
     local plys = {}
     for k, p in pairs( player.GetAll() ) do
         if bc.settings.isAllowed( p, "seeasay" ) then
-            if bc.base.chatBoxEnabled[p] then
+            if bc.base.playersEnabled[p] then
                 net.Start( "BC_AM" )
                 net.WriteEntity( ply )
                 net.WriteString( text )

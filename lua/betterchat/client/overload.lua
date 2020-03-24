@@ -49,11 +49,11 @@ function bc.overload.overload()
                 chan = "Team"
             end
         end
-        bc.base.openChatBox( chan )
+        bc.base.open( chan )
     end
 
     o.Close = chat.Close
-    chat.Close = bc.base.closeChatBox
+    chat.Close = bc.base.close
 
     o.plyMeta = FindMetaTable( "Player" )
     o.plyChatPrint = o.plyMeta.ChatPrint

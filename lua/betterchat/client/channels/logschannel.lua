@@ -31,11 +31,10 @@ hook.Add( "BC_makeChannelButtons", "BC_makeLogsButton", function( menu )
     menu:AddOption( "Logs", function()
         local chan = bc.channels.getChannel( "Logs" )
         if not chan then return end
+        if not bc.logs.allowed() then return end
 
-        if not bc.channels.isOpen( chan ) and bc.logs.allowed() then
-            bc.channels.add( chan )
-        end
-        bc.channels.focus( chan )
+        bc.channels.open( "Logs" )
+        bc.channels.focus( "Logs" )
     end )
 end )
 
@@ -69,8 +68,7 @@ net.Receive( "BC_LM", function()
         for k, v in pairs( bc.group.groups ) do
             if v.id == id then
                 local group = v
-                local chan = bc.channels.getChannel( "Group - " + group.id )
-                if bc.channels.isOpen( chan ) then
+                if bc.channels.isOpen( "Group - " + group.id ) then
                     return
                 end
             end
@@ -80,22 +78,7 @@ net.Receive( "BC_LM", function()
 end )
 
 function bc.logs.addChannel()
-    local channel = bc.channels.getChannel( "Logs" )
-    if not channel then
-        channel = table.Copy( bc.logs.defaultChannel )
-        table.insert( bc.channels.channels, channel )
-    end
-    if channel.needsData then
-        for k, v in pairs( bc.logs.defaultChannel ) do
-            if channel[k] == nil then
-                channel[k] = v
-            end
-        end
-        channel.needsData = nil
-    end
-    bc.sidePanel.channels.applyDefaults( channel )
-    if not channel.dataChanged then channel.dataChanged = {} end
-    return channel
+    return bc.channels.add( table.Copy( bc.logs.defaultChannel ) )
 end
 
 hook.Add( "BC_initPanels", "BC_initAddLogsChannel", function()
@@ -109,19 +92,11 @@ hook.Add( "BC_postInitPanels", "BC_logsAddButton", function()
 end )
 
 hook.Add( "BC_userAccessChange", "BC_logsChannelCheck", function()
-    local logsChannel = bc.channels.getChannel( "Logs" )
     if bc.logs.allowed() then
-        if not logsChannel then
-            logsChannel = bc.logs.addChannel()
-        end
-        if not bc.channels.isOpen( logsChannel ) then
-            bc.channels.add( logsChannel )
-        end
+        bc.channels.open( "Logs" )
         bc.logs.addButton()
     else
-        if logsChannel and bc.channels.isOpen( logsChannel ) then
-            bc.channels.remove( logsChannel ) -- closes
-        end
+        bc.channels.close( "Logs" )
         bc.logs.removeButton()
     end
 end )

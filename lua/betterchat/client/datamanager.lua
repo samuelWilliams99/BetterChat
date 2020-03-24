@@ -14,20 +14,19 @@ end
 
 local function loadFromTemplate( data, dest, template )
     for k, v in pairs( template ) do
-        if not data[v.value] then continue end
+        if data[v.value] == nil then continue end
         -- If data is options but value isn't a valid option
         if v.type == "options" and not table.HasValue( v.optionValues, data[v.value] ) then
             data[v.value] = v.default
         end
         dest[v.value] = data[v.value]
-        dest.dataChanged[v.value] = true
     end
 end
 
 function bc.data.saveData()
     local data = {}
-    data.channelSettings = {}
-    data.playerSettings = {}
+    data.channelSettings = bc.data.channels or {}
+    data.playerSettings = bc.data.players or {}
     data.extraPlayerSettings = bc.sidePanel.players.extraSettings
     data.enabled = bc.base.enabled
     data.size = bc.graphics.size
@@ -49,11 +48,26 @@ function bc.data.saveData()
 
     if bc.autoComplete then
         local cmdUsage = table.filter( bc.autoComplete.cmds, function( x ) return x > 0 end )
-        data.cmdUsage = table.Merge( table.Copy( bc.autoComplete.extraCmds or {} ), cmdUsage )
+        data.cmdUsage = table.Merge( table.Copy( bc.autoComplete.disabledCmds or {} ), cmdUsage )
         data.emoteUsage = table.filter( bc.autoComplete.emoteUsage, function( x ) return x > 0 end )
     end
 
     file.Write( "bc_data_cl.txt", util.TableToJSON( data ) )
+end
+
+function bc.data.loadChannel( chan )
+    if bc.data.channels[chan.name] then
+        loadFromTemplate( bc.data.channels[chan.name], chan, bc.sidePanel.channels.template )
+        bc.data.channels[chan.name] = nil
+    end
+end
+
+function bc.data.loadPlayer( data )
+    local ply = data.ply
+    if bc.data.players[ply:SteamID()] then
+        loadFromTemplate( data, bc.data.players[ply:SteamID()], bc.sidePanel.players.template )
+        bc.data.players[ply:SteamID()] = nil
+    end
 end
 
 function bc.data.loadData()
@@ -62,66 +76,25 @@ function bc.data.loadData()
     local data = util.JSONToTable( file.Read( "bc_data_cl.txt" ) )
     if not data then return end
 
-    if data.pos then
-        bc.graphics.derma.frame:SetPos( data.pos.x, data.pos.y )
+    bc.data.pos = data.pos
+    bc.data.size = data.size
+
+    for k, v in pairs( data.extraPlayerSettings or {} ) do
+        bc.sidePanel.players.createCustomSetting( v )
     end
 
-    if data.size then
-        bc.sizeMove.resize( data.size.x, data.size.y, true )
-    end
+    bc.data.channels = data.channelSettings or {}
 
-    if data.extraPlayerSettings then
-        for k, v in pairs( data.extraPlayerSettings ) do
-            bc.sidePanel.players.createCustomSetting( v )
-        end
-    end
+    bc.data.players = data.playerSettings or {}
 
-    for k, v in pairs( bc.channels.channels ) do --load over already open channels
-        v.dataChanged = {}
-        if data.channelSettings and data.channelSettings[v.name] then
-            loadFromTemplate( data.channelSettings[v.name], v, bc.sidePanel.channels.template )
-            for k1, setting in pairs( bc.sidePanel.channels.template ) do
-                if setting.onChange then setting.onChange( v ) end
-            end
-            data.channelSettings[v.name] = nil
-        end
-    end
-
-    if data.channelSettings then
-        for k, v in pairs( data.channelSettings ) do --load remaining channels
-            channel = {}
-            channel.name = k
-            channel.needsData = true
-            channel.dataChanged = {}
-            loadFromTemplate( v, channel, bc.sidePanel.channels.template )
-            table.insert( bc.channels.channels, channel )
-        end
-    end
-
-    if data.playerSettings then
-        for k, v in pairs( data.playerSettings ) do
-            if not bc.sidePanel.players.settings[k] then
-                bc.sidePanel.players.settings[k] = {}
-                bc.sidePanel.players.settings[k].needsData = true
-            end
-            bc.sidePanel.players.settings[k].dataChanged = {}
-            loadFromTemplate( v, bc.sidePanel.players.settings[k], bc.sidePanel.players.template )
-        end
-    end
-
-    if not bc.autoComplete then bc.autoComplete = { cmds = {}, emoteUsage = {} } end
-    if not bc.autoComplete.cmds then bc.autoComplete.cmds = {} end
-    if not bc.autoComplete.emoteUsage then bc.autoComplete.emoteUsage = {} end
+    bc.autoComplete = { cmds = {}, emoteUsage = {} }
 
     if data.cmdUsage then
-        for k, v in pairs( data.cmdUsage ) do
-            bc.autoComplete.cmds[k] = v
-        end
+        table.Merge( bc.autoComplete.cmds, data.cmdUsage )
     end
 
     if data.emoteUsage then
         table.Merge( bc.autoComplete.emoteUsage, data.emoteUsage )
-        bc.images.reloadUsedEmotesMenu()
     end
 end
 

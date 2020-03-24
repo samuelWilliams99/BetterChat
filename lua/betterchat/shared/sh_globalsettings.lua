@@ -29,7 +29,7 @@ bc.settings.clientTemplate = {
         name = "Remember channel on close",
         value = "rememberChannel",
         type = "boolean",
-        extra = "Should the chatbox remember your most recent channel when opening",
+        extra = "Should betterchat remember your most recent channel when opening",
         default = false,
     },
     {

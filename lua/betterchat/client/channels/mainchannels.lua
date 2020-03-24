@@ -26,7 +26,7 @@ local function teamSend( self, txt )
 end
 
 hook.Add( "BC_initPanels", "BC_initAddMainChannels", function()
-    table.insert( bc.channels.channels, {
+    bc.channels.add( {
         name = "All",
         icon = "world.png",
         send = globalSend,
@@ -42,7 +42,7 @@ hook.Add( "BC_initPanels", "BC_initAddMainChannels", function()
         relayAll = false,
         position = 1,
     } )
-    table.insert( bc.channels.channels, {
+    bc.channels.add( {
         name = "Players",
         icon = "group.png",
         send = globalSend,
@@ -53,7 +53,7 @@ hook.Add( "BC_initPanels", "BC_initAddMainChannels", function()
         position = 2,
     } )
     if not DarkRP then
-        table.insert( bc.channels.channels, {
+        bc.channels.add( {
             name = "Team",
             icon = "group.png",
             send = teamSend,

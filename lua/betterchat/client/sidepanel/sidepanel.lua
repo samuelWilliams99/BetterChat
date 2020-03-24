@@ -1,4 +1,4 @@
-bc.sidePanel = {}
+bc.sidePanel = bc.sidePanel or {}
 include( "betterchat/client/sidepanel/panels/channels.lua" )
 include( "betterchat/client/sidepanel/panels/players.lua" )
 include( "betterchat/client/sidepanel/panels/members.lua" )
@@ -43,8 +43,6 @@ function bc.sidePanel.renderSetting( sPanel, data, setting, k )
         setting = table.Copy( setting )
         setting.overrideWidth = w - 39
     end
-
-    if not data.dataChanged then data.dataChanged = {} end
 
     local elemWidth = bc.sidePanel.renderSettingFuncs[setting.type]( sPanel, panel, data, y, w - 32, h, setting ) or 0
 

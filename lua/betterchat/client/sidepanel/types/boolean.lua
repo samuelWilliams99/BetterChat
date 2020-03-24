@@ -4,12 +4,6 @@ function bc.sidePanel.renderSettingFuncs.boolean( sPanel, panel, data, y, w, h, 
     checkBox:SetValue( data[setting.value] )
     checkBox:SetTooltip( setting.extra )
 
-    function checkBox:Think()
-        if self.data.dataChanged[self.val] then
-            self:SetValue( self.data[self.val] )
-            self.data.dataChanged[self.val] = false
-        end
-    end
     function checkBox:Paint( w, h )
         local disabled = self:GetDisabled()
         local ticked = self:GetChecked()

@@ -5,17 +5,16 @@ local setSuggestions, updateText, incOption, setOption, setText, getSimilarStrin
 
 net.Receive( "BC_sendULXCommands", function()
     local cmds = util.JSONToTable( net.ReadString() )
-    bc.autoComplete.extraCmds = {}
+    if bc.images.giphyEnabled then
+        table.insert( cmds, bc.defines.giphyCommand )
+    end
     bc.autoComplete.cmds = bc.autoComplete.cmds or {}
     local newCmds = {}
     for k, v in pairs( cmds ) do
         newCmds[v] = bc.autoComplete.cmds[v] or 0
+        bc.autoComplete.cmds[v] = nil
     end
-    if bc.images.giphyEnabled then
-        newCmds[bc.defines.giphyCommand] = bc.autoComplete.cmds[bc.defines.giphyCommand] or 0
-    else
-        bc.autoComplete.extraCmds[bc.defines.giphyCommand] = bc.autoComplete.cmds[bc.defines.giphyCommand] or 0
-    end
+    bc.autoComplete.disabledCmds = bc.autoComplete.cmds
     bc.autoComplete.cmds = newCmds
     bc.autoComplete.emoteUsage = bc.autoComplete.emoteUsage or {}
     bc.autoComplete.gotCommands = true

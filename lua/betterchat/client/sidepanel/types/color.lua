@@ -35,11 +35,6 @@ function bc.sidePanel.renderSettingFuncs.color( sPanel, panel, data, y, w, h, se
             ( allowedAlpha and ( "|" .. chatHelper.padString( col.a, 3, nil, true ) ) or "" )
         )
         self:SetCursor( self:GetDisabled() and "no" or "Hand" )
-
-        if data.dataChanged[val] then
-            data.dataChanged[val] = false -- This one just auto updates
-            CloseDermaMenus() -- Just to be sure ;)
-        end
     end
 
     return bw

@@ -79,7 +79,7 @@ function bc.group.disable()
     bc.group.removeHooks()
     for k, v in pairs( bc.channels.channels ) do
         if string.sub( v.name, 1, 8 ) == "Group - " then
-            bc.channels.remove( v )
+            bc.channels.close( v )
         end
     end
 end
@@ -123,14 +123,12 @@ hook.Add( "BC_makeChannelButtons", "BC_makeGroupButton", function( menu )
     for k, group in pairs( bc.group.groups ) do
         subMenu:AddOption( group.name, function()
             local chan = bc.channels.getChannel( "Group - " .. group.id )
-            if not chan or chan.needsData then
+            if not chan then
                 chan = bc.group.createChannel( group )
             end
-            if not bc.channels.isOpen( chan ) then
-                bc.channels.add( chan )
-            end
+            bc.channels.open( chan.name )
             bc.sidePanel.members.reload( chan )
-            bc.channels.focus( chan )
+            bc.channels.focus( chan.name )
         end )
     end
 end )
@@ -192,13 +190,11 @@ function bc.group.onUpdate()
     if chan then
         chan.group = group
         chan.displayName = group.name
-        chan.dataChanged = chan.dataChanged or {}
-        chan.dataChanged.displayName = true
         if bc.sidePanel.getChild( "Group Members", chan.name ) then
             bc.sidePanel.members.reload( chan )
         end
 
-        if bc.channels.isOpen( chan ) then
+        if bc.channels.isOpen( chan.name ) then
             if table.HasValue( group.admins, LocalPlayer():SteamID() ) then
                 chan.disabledSettings = {}
             else
@@ -209,13 +205,11 @@ function bc.group.onUpdate()
     end
 
     if group.openNow then
-        if not chan or chan.needsData then
+        if not chan then
             chan = bc.group.createChannel( group )
         end
-        if not bc.channels.isOpen( chan ) then
-            bc.channels.add( chan )
-        end
-        bc.channels.focus( chan )
+        bc.channels.open( chan.name )
+        bc.channels.focus( chan.name )
     end
 end
 
@@ -226,7 +220,7 @@ function bc.group.onMessage()
     local text = net.ReadString()
 
     local chan = bc.channels.getChannel( "Group - " .. groupId )
-    if not chan or chan.needsData then
+    if not chan then
         for k, v in pairs( bc.group.groups ) do
             if v.id == groupId then
                 chan = bc.group.createChannel( v )
@@ -239,9 +233,7 @@ function bc.group.onMessage()
 
     if not chan.openOnMessage then return end
 
-    if not bc.channels.isOpen( chan ) then
-        bc.channels.add( chan )
-    end
+    bc.channels.open( chan.name )
 
     local tab = bc.formatting.formatMessage( ply, text, not ply:Alive() )
     table.insert( tab, 1, { isController = true, doSound = ply ~= LocalPlayer() } )
@@ -251,17 +243,12 @@ end
 function bc.group.deleteGroup( group )
     if not bc.group.allowed() then return end
     -- table.RemoveByMember would work here
-    for k, v in pairs( bc.group.groups ) do --table.RemoveByValue wasn't working so delete by id instead
-        if v.id == group.id then
-            table.remove( bc.group.groups, k )
-        end
-    end
+    table.RemoveByMember( bc.group.groups, "id", group.id )
+    
     local chan = bc.channels.getChannel( "Group - " .. group.id )
     if chan then
-        if bc.channels.isOpen( chan ) then
-            bc.channels.remove( chan )
-        end
-        table.RemoveByValue( bc.channels.channels, chan )
+        bc.channels.close( chan.name )
+        bc.channels.remove( chan.name )
     end
     bc.channels.messageDirect( "All", bc.defines.colors.printYellow, "You have been removed from group \"",
         bc.defines.theme.group, group.name, bc.defines.colors.printYellow, "\"." )
@@ -271,29 +258,17 @@ end
 function bc.group.createChannel( group )
     if not bc.group.allowed() then return nil end
     local name = "Group - " .. group.id
-    local channel = bc.channels.getChannel( name )
-    if not channel then
-        channel = table.Copy( bc.group.defaultChannel )
-        channel.name = name
-        table.insert( bc.channels.channels, channel )
-    end
-    if channel.needsData then
-        for k, v in pairs( bc.group.defaultChannel ) do
-            if channel[k] == nil then
-                channel[k] = v
-            end
-        end
-        channel.needsData = nil
-    end
+    local channel = table.Copy( bc.group.defaultChannel )
+    channel.name = name
+    bc.channels.add( channel )
+
     if not table.HasValue( group.admins, LocalPlayer():SteamID() ) then
         channel.disabledSettings = { "displayName" }
     end
-    bc.sidePanel.channels.applyDefaults( channel )
 
     channel.displayName = group.name
     channel.group = group
     bc.sidePanel.members.reload( channel )
-    if not channel.dataChanged then channel.dataChanged = {} end
     return channel
 end
 

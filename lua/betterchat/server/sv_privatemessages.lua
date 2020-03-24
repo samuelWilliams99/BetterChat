@@ -5,7 +5,7 @@ function bc.private.sendPrivate( chan, from, to, text, noLog )
     if not noLog then
         bc.logs.sendLog( bc.defines.channelTypes.PRIVATE, "Private", from, " → ", to, ": ", text )
     end
-    if bc.base.chatBoxEnabled[to] then
+    if bc.base.playersEnabled[to] then
         net.Start( "BC_PM" )
         net.WriteEntity( chan )
         net.WriteEntity( from )
@@ -45,7 +45,7 @@ local function DarkRP_PM( ply, args )
     local target = DarkRP.findPlayer( name )
     if not bc.private.canMessage( ply, target ) then return "" end
     if target == ply then
-        if bc.base.chatBoxEnabled[ply] then
+        if bc.base.playersEnabled[ply] then
             bc.private.sendPrivate( ply, ply, ply, msg )
         end
         return ""

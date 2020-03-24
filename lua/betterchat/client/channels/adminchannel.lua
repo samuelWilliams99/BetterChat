@@ -36,11 +36,10 @@ hook.Add( "BC_makeChannelButtons", "BC_makeAdminButton", function( menu )
     menu:AddOption( "Admin", function()
         local chan = bc.channels.getChannel( "Admin" )
         if not chan then return end
+        if not bc.admin.allowed() then return end
 
-        if not bc.channels.isOpen( chan ) and bc.admin.allowed() then
-            bc.channels.add( chan )
-        end
-        bc.channels.focus( chan )
+        bc.channels.open( "Admin" )
+        bc.channels.focus( "Admin" )
     end )
 end )
 
@@ -49,17 +48,15 @@ function bc.admin.allowed()
 end
 
 net.Receive( "BC_AM", function()
+    if not bc.admin.allowed() then return end
     local ply = net.ReadEntity()
     local text = net.ReadString()
     local chan = bc.channels.getChannel( "Admin" )
 
     if not chan then return end
-
     if not chan.openOnMessage then return end
 
-    if not bc.channels.isOpen( chan ) and bc.admin.allowed() then
-        bc.channels.add( chan )
-    end
+    bc.channels.open( "Admin" )
 
     local isAlive, isAdmin = true, true
     if ply:IsValid() then
@@ -72,22 +69,7 @@ net.Receive( "BC_AM", function()
 end )
 
 function bc.admin.addChannel()
-    local channel = bc.channels.getChannel( "Admin" )
-    if not channel then
-        channel = table.Copy( bc.admin.defaultChannel )
-        table.insert( bc.channels.channels, channel )
-    end
-    if channel.needsData then
-        for k, v in pairs( bc.admin.defaultChannel ) do
-            if channel[k] == nil then
-                channel[k] = v
-            end
-        end
-        channel.needsData = nil
-    end
-    bc.sidePanel.channels.applyDefaults( channel )
-    if not channel.dataChanged then channel.dataChanged = {} end
-    return channel
+    return bc.channels.add( table.Copy( bc.admin.defaultChannel ) )
 end
 
 hook.Add( "BC_initPanels", "BC_initAddAdminChannel", function()
@@ -101,19 +83,11 @@ hook.Add( "BC_postInitPanels", "BC_adminAddButton", function()
 end )
 
 hook.Add( "BC_userAccessChange", "BC_adminChannelCheck", function()
-    local adminChannel = bc.channels.getChannel( "Admin" )
     if bc.admin.allowed() then
-        if not adminChannel then
-            adminChannel = bc.admin.addChannel()
-        end
-        if not bc.channels.isOpen( adminChannel ) then
-            bc.channels.add( adminChannel )
-        end
+        bc.channels.open( "Admin" )
         bc.admin.addButton()
     else
-        if adminChannel and bc.channels.isOpen( adminChannel ) then
-            bc.channels.remove( adminChannel ) -- closes
-        end
+        bc.channels.close( "Admin" )
         bc.admin.removeButton()
     end
 end )

@@ -90,7 +90,7 @@ hook.Add( "BC_userAccessChange", "BC_privateChannelCheck", function()
     if not bc.private.allowed() then
         for k, v in pairs( bc.channels.channels ) do
             if string.sub( v.name, 1, 9 ) == "Player - " then
-                bc.channels.remove( v )
+                bc.channels.close( v )
             end
         end
     end
@@ -133,7 +133,7 @@ hook.Add( "BC_preInitPanels", "BC_privateAddHooks", function()
         end
 
         local chan = bc.channels.getChannel( "Player - " .. getSteamID( ply ) )
-        if not chan or chan.needsData then
+        if not chan then
             chan = bc.private.createChannel( ply )
         end
 
@@ -141,8 +141,9 @@ hook.Add( "BC_preInitPanels", "BC_privateAddHooks", function()
 
         if not plySettings or plySettings.ignore == 0 then
             if not bc.channels.isOpen( chan ) then
-                bc.private.addChannel( chan )
+                bc.private.openChannel( chan )
             end
+
             local tab = table.Add( {
                 {
                     isController = true,
@@ -162,31 +163,19 @@ end )
 function bc.private.createChannel( ply )
     if not bc.private.allowed() then return nil end
     local name = "Player - " .. getSteamID( ply )
-    local channel = bc.channels.getChannel( name )
-    if not channel then
-        channel = table.Copy( bc.private.defaultChannel )
-        channel.name = name
-        channel.plySID = getSteamID( ply )
-        table.insert( bc.channels.channels, channel )
-    end
-    if channel.needsData then
-        for k, v in pairs( bc.private.defaultChannel ) do
-            if channel[k] == nil then
-                channel[k] = v
-            end
-        end
-        channel.plySID = getSteamID( ply )
-        channel.needsData = nil
-    end
+    local channel = table.Copy( bc.private.defaultChannel )
+    channel.name = name
     channel.ply = ply:IsValid() and ply or bc.defines.consolePlayer
+    channel.plySID = getSteamID( ply )
     channel.displayName = getName( ply )
-    if not channel.dataChanged then channel.dataChanged = {} end
+    
+    bc.channels.add( channel )
     return channel
 end
 
-function bc.private.addChannel( channel )
+function bc.private.openChannel( channel )
     if not channel then return end
-    bc.channels.add( channel )
+    bc.channels.open( channel.name )
     bc.channels.messageDirect( "All", { isController = true, doSound = false }, bc.defines.colors.printBlue, "Private channel with ", channel.ply, " has been opened." )
     bc.channels.messageDirect( channel, { isController = true, doSound = false }, bc.defines.colors.printBlue, "This is a private channel with ", channel.ply, ". Any messages posted here will not affect Expression2 or Starfall chips." )
 end

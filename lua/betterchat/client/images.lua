@@ -93,7 +93,7 @@ hook.Add( "BC_initPanels", "BC_initImages", function()
     emoteBtn:SetMaterial( bc.defines.materials.emoteButton )
     emoteBtn:SetPos( g.size.x - 25, g.size.y - 25 )
     emoteBtn:SetIsMenu( true )
-    function emoteBtn:DoClick()
+    function emoteBtn:OnMousePressed()
         bc.images.toggleEmoteMenu()
     end
     local oldLayout = emoteBtn.PerformLayout
@@ -359,7 +359,7 @@ end
 function bc.images.enableGiphy()
     bc.images.giphyEnabled = true
     if bc.autoComplete and bc.autoComplete.gotCommands then
-        bc.autoComplete.cmds[bc.defines.giphyCommand] = bc.autoComplete.extraCmds[bc.defines.giphyCommand] or 0
+        bc.autoComplete.cmds[bc.defines.giphyCommand] = bc.autoComplete.disabledCmds[bc.defines.giphyCommand] or 0
     end
 end
 

@@ -8,9 +8,13 @@ always full names
 hookIds: BC_camelCase
 eventNames: BC_camelCase
 
-ctrt+w for close tab
+TODO
 
+ctrt+w for close tab
 make players closable
+Tab in custom player command moves to next box
+make it clear that "mute" means "ulx mute", not ignore
+add ignore to context menu
 
 joining after bots
 	[ERROR] addons/betterchat/lua/betterchat/client/sidepanel/panels/players.lua:30: attempt to call method 'SteamID' (a nil value)
@@ -18,23 +22,15 @@ joining after bots
    2. func - addons/ulib-master/lua/ulib/client/cl_util.lua:22
     3. unknown - lua/includes/extensions/net.lua:32
 
-
-
-	logs channel - implement with a ulx permission, ulx bc_seechatlogs
-
 	chat cooldown - sounds like a fair bit of work, especially when other addons already do it
 		maybe call onchat with generic ply/message to trigger it?
 
 	resize/move
-		double right click on thing in corner requires mouse movement ????
-		preferable change hand to sizeall when hovering
-		some button to enable moving/resizing, as a mode
-			panel over top of the whole chat, removes issue with cursor as panel will be only focused thing
-			gray the panel a bit and pop an icon in the middle?
-
-		scroll bar on side panels not updating -- this is a problem, idk how fix
-			could just not show chat when resizing/moving
-			enter kinda like an edit hud mode, where no gui are actually rendered, just shitty boxes
+		button at top right to edit box
+        Fades to white showing areas to drag
+            middle = move
+            edges/corners = resize
+        little "Done" button
 
 	test darkrp - l o l
 
@@ -52,9 +48,9 @@ if SERVER then
 
     table.mapSelf( bc.defines.networkStrings, util.AddNetworkString )
 
-    bc.base.chatBoxEnabled = {}
+    bc.base.playersEnabled = {}
     function bc.base.getEnabledPlayers()
-        return table.filterSeq( table.GetKeys( bc.base.chatBoxEnabled ), IsValid )
+        return table.filterSeq( table.GetKeys( bc.base.playersEnabled ), IsValid )
     end
 
     net.Receive( "BC_chatOpenState", function( len, ply )
@@ -77,7 +73,7 @@ if SERVER then
     end )
 
     hook.Add( "PlayerDisconnected", "BC_plyLeave", function( ply )
-        bc.base.chatBoxEnabled[ply] = false
+        bc.base.playersEnabled[ply] = false
         local plys = bc.base.getEnabledPlayers()
         table.RemoveByValue( plys, ply )
 
@@ -86,12 +82,12 @@ if SERVER then
     end )
 
     net.Receive( "BC_playerReady", function( len, ply ) --can now send data to ply
-        bc.base.chatBoxEnabled[ply] = true
+        bc.base.playersEnabled[ply] = true
         hook.Run( "BC_playerReady", ply )
     end )
 
     net.Receive( "BC_disable", function( len, ply )
-        bc.base.chatBoxEnabled[ply] = false
+        bc.base.playersEnabled[ply] = false
     end )
 end
 
@@ -116,14 +112,14 @@ include( "betterchat/client/vguipanels/drichertext.lua" )
 
 concommand.Add( "bc_enable", function()
     if bc.base.enabled then
-        bc.base.disableChatBox()
+        bc.base.disable()
     end
-    bc.base.enableChatBox()
+    bc.base.enable()
 end, true, "Enables BetterChat" )
 
 concommand.Add( "bc_disable", function()
     if bc.base.enabled then
-        bc.base.disableChatBox()
+        bc.base.disable()
     end
     chat.AddText( bc.defines.theme.betterChat, "BetterChat ",
         bc.defines.colors.printBlue, "has been disabled. Go to Q->Options->BetterChat (or run bc_enable) to enable it." )
@@ -131,18 +127,18 @@ end, true, "Disables BetterChat" )
 
 concommand.Add( "bc_restart", function()
     if bc.base.enabled then
-        bc.base.disableChatBox()
+        bc.base.disable()
     end
-    bc.base.enableChatBox()
+    bc.base.enable()
 end )
 
 concommand.Add( "bc_reload", function()
     if bc.base.enabled then
-        bc.base.disableChatBox()
+        bc.base.disable()
     end
     timer.Simple( 0.1, function() -- Delay to allow save
         include( "betterChat/shared/sh_base.lua" )
-        bc.base.enableChatBox()
+        bc.base.enable()
     end )
 end, true, "Rebuilds BetterChat" )
 
@@ -151,8 +147,8 @@ concommand.Add( "bc_savedata", bc.data.saveData, true, "Saves all BetterChat dat
 concommand.Add( "bc_removesavedata", function()
     bc.data.deleteSaveData()
     if bc.base.enabled then
-        bc.base.disableChatBox( true )
-        bc.base.enableChatBox()
+        bc.base.disable( true )
+        bc.base.enable()
     end
     chat.AddText( bc.defines.theme.betterChat, "BetterChat ", bc.defines.colors.printBlue, "data has been deleted." )
 end )
@@ -164,7 +160,7 @@ bc.base.playersOpen = {}
 hook.Add( "InitPostEntity", "BC_loaded", function()
     bc.data.loadEnabled()
     if bc.base.enabled then
-        bc.base.enableChatBox()
+        bc.base.enable()
     else
         chat.AddText( bc.defines.theme.betterChat, "BetterChat ", bc.defines.colors.printBlue, "is currently disabled. Go to Q->Options->BetterChat (or run bc_enable) to enable it." )
     end
@@ -172,13 +168,14 @@ end )
 
 bc.sidePanel.players.parse()
 
-function bc.base.enableChatBox()
+function bc.base.enable()
     bc.base.enabled = true
     bc.base.initializing = true
 
     bc.overload.undo()
     bc.overload.overload()
 
+    bc.data.loadData()
     bc.graphics.build()
 
     -- Wait for other prints
@@ -186,17 +183,16 @@ function bc.base.enableChatBox()
         bc.channels.message( nil, bc.defines.theme.betterChat, "BetterChat", bc.defines.colors.printBlue, " initialisation complete." )
     end )
     bc.base.initializing = false
-    bc.base.closeChatBox()
+    bc.base.close()
 
     net.SendEmpty( "BC_playerReady" )
 
-    bc.data.loadData()
     bc.base.enabled = true
     bc.data.saveEnabled()
 end
 
-function bc.base.disableChatBox( noSave )
-    bc.base.closeChatBox()
+function bc.base.disable( noSave )
+    bc.base.close()
     bc.base.enabled = false
     if not noSave then
         bc.data.saveData()
@@ -209,8 +205,9 @@ function bc.base.disableChatBox( noSave )
     net.SendEmpty( "BC_disable" )
 end
 
-function bc.base.openChatBox( selectedTab )
+function bc.base.open( selectedTab )
     if bc.base.isOpen then return end
+
     bc.overload.old.Close()
     selectedTab = selectedTab or "All"
 
@@ -220,6 +217,7 @@ function bc.base.openChatBox( selectedTab )
 
     local chan = bc.channels.getAndOpen( selectedTab )
     if not chan then return end
+
     selectedTab = chan.name
 
     bc.graphics.show( selectedTab )
@@ -231,11 +229,11 @@ function bc.base.openChatBox( selectedTab )
     net.SendToServer()
 end
 
-function bc.base.closeChatBox()
+function bc.base.close()
     if not bc.base.enabled then return end
     bc.overload.old.Close()
 
-    bc.base.lastChannel = bc.channels.getActiveChannel().name
+    bc.base.lastChannel = ( bc.channels.getActiveChannel() or {} ).name
 
     bc.graphics.hide()
 

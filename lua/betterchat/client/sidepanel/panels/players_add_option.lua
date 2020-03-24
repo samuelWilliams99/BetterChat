@@ -259,12 +259,12 @@ function bc.sidePanel.players.addCustomSetting( ply )
             require_confirm = confirm:GetChecked(),
             addToPlayerContext = plyContext:GetChecked(),
             call_ply = ply,
-        } )
+        }, true )
         frame:Close()
     end
 end
 
-function bc.sidePanel.players.createCustomSetting( data )
+function bc.sidePanel.players.createCustomSetting( data, userMade )
     --Convert command
     if table.hasMember( bc.sidePanel.players.template, "name", data.name ) then return end
 
@@ -358,12 +358,14 @@ function bc.sidePanel.players.createCustomSetting( data )
 
     table.insert( bc.sidePanel.players.template, 1, setting )
 
-    bc.sidePanel.players.removeAllEntries()
+    if userMade then
+        bc.sidePanel.players.removeAllEntries()
 
-    if data.call_ply then
-        bc.sidePanel.players.generateEntry( data.call_ply )
-        bc.sidePanel.show( "Player", data.call_ply:SteamID() )
+        if data.call_ply then
+            bc.sidePanel.players.generateEntry( data.call_ply )
+            bc.sidePanel.show( "Player", data.call_ply:SteamID() )
+        end
+
+        bc.data.saveData()
     end
-
-    bc.data.saveData()
 end

@@ -30,20 +30,6 @@ function bc.sidePanel.renderSettingFuncs.options( sPanel, panel, data, y, w, h, 
     comboBox.setting = setting
 
     function comboBox:Think()
-        if self.data.dataChanged[self.val] then
-            local setting = self.setting
-            local val = self.data[self.val]
-            local idx
-            for k = 1, #setting.optionValues do
-                local v = setting.optionValues[k]
-                if val == v then
-                    idx = k
-                end
-            end
-
-            self:ChooseOption( setting.options[idx], idx )
-            self.data.dataChanged[self.val] = false
-        end
         if self:IsMenuOpen() and not self.Menu.paintSet then
             self.Menu.paintSet = true
             local this = self

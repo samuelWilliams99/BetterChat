@@ -14,9 +14,12 @@ function bc.graphics.build()
 
     g.font = "BC_default"
     g.minSize = { x = 400, y = 250 }
+    
     g.originalSize = { x = 550, y = 301 }
-    g.size = table.Copy( g.originalSize )
+    g.size = table.Copy( bc.data.size or g.originalSize )
+
     g.originalFramePos = { x = 38, y = ScrH() - g.size.y - 150 }
+    local framePos = table.Copy( bc.data.pos or g.originalFramePos )
 
     timer.Create( "BC_visCheck", 1 / 60, 0, function()
         if not d.frame or not d.frame:IsValid() then
@@ -31,7 +34,7 @@ function bc.graphics.build()
     end )
 
     d.frame = vgui.Create( "DFrame" )
-    d.frame:SetPos( g.originalFramePos.x, g.originalFramePos.y )
+    d.frame:SetPos( framePos.x, framePos.y )
     d.frame:SetSize( g.size.x, g.size.y )
     d.frame:SetTitle( "" )
     d.frame:SetName( "BC_chatFrame" )
@@ -55,7 +58,7 @@ function bc.graphics.build()
                 bc.graphics.derma.textEntry:RequestFocus()
             else
                 bc.graphics.derma.textEntry:SetText( "" )
-                bc.base.closeChatBox()
+                bc.base.close()
             end
         else
             self.EscapeDown = false
@@ -249,7 +252,7 @@ hook.Add( "PlayerButtonDown", "BC_buttonDown", function( ply, keyCode )
 
     for k, v in pairs( bc.channels.channels ) do
         if v.openKey and v.openKey == keyCode then
-            bc.base.openChatBox( v.name )
+            bc.base.open( v.name )
             return
         end
     end
@@ -294,7 +297,7 @@ hook.Add( "PlayerBindPress", "BC_overrideChatBind", function( ply, bind, pressed
         return
     end
 
-    local succ, err = pcall( function( chan ) bc.base.openChatBox( chan ) end, chan )
+    local succ, err = pcall( function( chan ) bc.base.open( chan ) end, chan )
     if not succ then
         print( "Chatbox not initialized, disabling." )
         bc.base.enabled = false

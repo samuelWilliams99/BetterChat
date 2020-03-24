@@ -24,7 +24,7 @@ bc.sidePanel.players.template = {
         onClick = function( data )
             channel = bc.private.createChannel( data.ply )
             if not bc.channels.isOpen( channel ) then
-                bc.private.addChannel( channel )
+                bc.private.openChannel( channel )
             end
             bc.channels.focus( channel.name )
         end,

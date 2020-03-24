@@ -22,30 +22,32 @@ hook.Add( "BC_initPanels", "BC_initSidePanelPlayers", function()
 end )
 
 net.Receive( "BC_userRankChange", function()
-    bc.base.closeChatBox()
+    bc.base.close()
     bc.sidePanel.players.removeAllEntries()
     hook.Run( "BC_userAccessChange" )
 end )
 
+function bc.sidePanel.players.applyDefaults( data )
+    for k, v in pairs( bc.sidePanel.players.template ) do
+        if not v.value then continue end
+        if data[v.value] == nil then data[v.value] = v.default end
+    end
+end
+
 function bc.sidePanel.players.generateEntry( ply )
     if not ply then return end
-    if not bc.sidePanel.players.settings[ply:SteamID()] then
-        bc.sidePanel.players.settings[ply:SteamID()] = { needsData = true }
-    end
 
     local plySettings = bc.sidePanel.players.settings[ply:SteamID()]
-
-    if plySettings.needsData then
-        for idx, v in pairs( bc.sidePanel.players.template ) do
-            if not v.value then continue end
-            if plySettings[v.value] == nil then
-                plySettings[v.value] = v.default
-            end
-        end
-        plySettings.dataChanged = plySettings.dataChanged or {}
+    if not plySettings then
+        plySettings = {}
+        plySettings.ply = ply
+        bc.data.loadPlayer( plySettings )
+        bc.sidePanel.players.applyDefaults( plySettings )
+        
+        bc.sidePanel.players.settings[ply:SteamID()] = plySettings
+    else
+        plySettings.ply = ply
     end
-
-    plySettings.ply = ply
 
     local p = bc.sidePanel.createChild( "Player", ply:SteamID() )
     local w, h = p:GetSize()

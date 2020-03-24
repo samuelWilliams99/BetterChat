@@ -14,12 +14,7 @@ function bc.sidePanel.renderSettingFuncs.key( sPanel, panel, data, y, w, h, sett
 
     textEntry.data = data
     textEntry.val = setting.value
-    function textEntry:Think()
-        if self.data.dataChanged[self.val] then
-            self:SetPlaceholderText( self.data[self.val] and input.GetKeyEnum( self.data[self.val] ) or "NOT SET" )
-            self.data.dataChanged[self.val] = false
-        end
-    end
+
     function textEntry:OnKeyCodeTyped( val )
         if val ~= KEY_ESCAPE then
             if val == KEY_BACKSPACE then

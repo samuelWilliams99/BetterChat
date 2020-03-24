@@ -9,7 +9,7 @@ bc.sidePanel.members.template = {
         extra = "Set this player's role in the group",
         onChange = function( data )
             local chan = bc.channels.getChannel( "Group - " .. data.group.id )
-            if not chan or chan.needsData then return end -- Shouldn't be able to edit these but u kno
+            if not chan then return end -- Shouldn't be able to edit this but u kno
 
             local oldGroup = data.group
             local newGroup = { name = oldGroup.name, id = oldGroup.id, members = {}, admins = {}, invites = oldGroup.invites }

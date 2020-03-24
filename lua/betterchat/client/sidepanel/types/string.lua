@@ -12,12 +12,7 @@ function bc.sidePanel.renderSettingFuncs.string( sPanel, panel, data, y, w, h, s
     textEntry.val = setting.value
     textEntry.limit = setting.limit
     textEntry.trim = setting.trim
-    function textEntry:Think()
-        if self.data.dataChanged[self.val] then
-            self:SetText( self.data[self.val] )
-            self.data.dataChanged[self.val] = false
-        end
-    end
+
     function textEntry:OnValueChange( val )
         if self.trim then
             val = string.Trim( val )

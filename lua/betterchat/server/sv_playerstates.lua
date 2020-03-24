@@ -4,7 +4,7 @@ local trackedStates = {
     inGod = function( ply ) return ply:HasGodMode() end,
     isFrozen = function( ply ) return ply.frozen end,
     isRagdolled = function( ply ) return ply.ragdoll end,
-    isChatEnabled = function( ply ) return bc.base.chatBoxEnabled[ply] end,
+    isChatEnabled = function( ply ) return bc.base.playersEnabled[ply] end,
     isMuted = function( ply ) return ply:GetNWBool( "ulx_muted", false ) end,
 }
 

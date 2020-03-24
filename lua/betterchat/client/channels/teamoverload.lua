@@ -30,24 +30,11 @@ hook.Add( "BC_initPanels", "BC_initAddTeamOverloadChannel", function()
     if bc.settings.getServerValue( "replaceTeam" ) then
         local teamName = chatHelper.teamName( LocalPlayer() )
         local chanName = "TeamOverload-" .. teamName
-        local channel = bc.channels.getChannel( chanName )
-
-        if not channel then
-            channel = table.Copy( bc.teamOverload.defaultChannel )
-            channel.name = chanName
-            table.insert( bc.channels.channels, channel )
-        end
-        if channel.needsData then
-            for k, v in pairs( bc.teamOverload.defaultChannel ) do
-                if channel[k] == nil then
-                    channel[k] = v
-                end
-            end
-            channel.needsData = nil
-        end
+        local channel = table.Copy( bc.teamOverload.defaultChannel )
+        channel.name = chanName
         channel.displayName = teamName
 
-        if not channel.dataChanged then channel.dataChanged = {} end
+        bc.channels.add( channel )
 
         net.Receive( "BC_TM", function()
 
