@@ -23,7 +23,7 @@ bc.sidePanel.players.template = {
         extra = "Open a private channel with this player",
         onClick = function( data )
             channel = bc.private.createChannel( data.ply )
-            if not bc.channels.isOpen( channel ) then
+            if not bc.channels.isOpen( channel.name ) then
                 bc.private.openChannel( channel )
             end
             bc.channels.focus( channel.name )

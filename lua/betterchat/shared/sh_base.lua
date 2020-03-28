@@ -15,6 +15,7 @@ make players closable
 Tab in custom player command moves to next box
 make it clear that "mute" means "ulx mute", not ignore
 add ignore to context menu
+group rename print
 
 joining after bots
 	[ERROR] addons/betterchat/lua/betterchat/client/sidepanel/panels/players.lua:30: attempt to call method 'SteamID' (a nil value)
@@ -66,10 +67,6 @@ if SERVER then
 
         ULib.clientRPC( plys, "bc.sidePanel.players.generateEntry", ply )
         ULib.clientRPC( plys, "hook.Run", "BC_playerConnect", ply )
-
-        if bc.giphy.enabled then
-            ULib.clientRPC( ply, "bc.images.enableGiphy" )
-        end
     end )
 
     hook.Add( "PlayerDisconnected", "BC_plyLeave", function( ply )

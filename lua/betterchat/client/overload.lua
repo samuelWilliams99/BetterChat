@@ -1,4 +1,4 @@
-bc.overload = {}
+bc.overload = bc.overload or {}
 
 function bc.overload.overload()
     if bc.overload.overloaded then return end
@@ -58,7 +58,7 @@ function bc.overload.overload()
     o.plyMeta = FindMetaTable( "Player" )
     o.plyChatPrint = o.plyMeta.ChatPrint
     function o.plyMeta:ChatPrint( str )
-        bc.formatting.print( printBlue, str )
+        bc.formatting.print( bc.defines.colors.printBlue, str )
 
         o.plyChatPrint( self, str )
     end

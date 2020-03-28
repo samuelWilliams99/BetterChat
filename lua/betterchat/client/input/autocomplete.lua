@@ -210,14 +210,7 @@ function getSimilarNames( str )
 end
 
 function getSimilarEmotes( str )
-    local longEmotes = {}
-    for k, v in pairs( bc.images.emoteLookup.list ) do
-        if v[1] == ":" and v[#v] == ":" then
-            table.insert( longEmotes, v )
-        end
-    end
-
-    local out = getSimilarStrings( str, longEmotes )
+    local out = getSimilarStrings( str, bc.images.emoteLookup.long )
 
     table.sort( out, function( a, b )
         if bc.autoComplete.emoteUsage[a] == bc.autoComplete.emoteUsage[b] or not bc.settings.getValue( "acUsage" ) then

@@ -134,4 +134,39 @@ bc.defines.networkStrings = {
     "BC_sendULXCommands", "BC_userRankChange", -- Ulx
     "BC_sendGroups", "BC_updateGroup", "BC_newGroup", "BC_groupAccept", "BC_leaveGroup", "BC_deleteGroup", -- Groups
     "BC_forwardMessage", "BC_sayOverload", "BC_sendGif", "BC_playerDisconnected", -- Misc
- }
+}
+
+local function getReadOnly( t, name )
+    local rawMt = debug.getmetatable( t )
+    if rawMt.__readOnly then
+        return t
+    end
+    name = name or "unknown"
+    local out = {}
+    local mt = table.Copy( getmetatable( t ) )
+    mt.__index = function( tab, k )
+        return t[k]
+    end
+    mt.__newindex = function( tab, k, v )
+        if not rawequal( tab, out ) then
+            rawset(tab, k, v)
+            return
+        end
+        if v ~= t[k] then
+            error( "Something attempted to set field " .. k .. " on " .. name .. " to " .. tostring( v ) )
+        end
+    end
+    mt.__metatable = getmetatable( t )
+    mt.__readOnly = true
+    setmetatable( out, mt )
+    return out
+end
+
+local function makeContentReadOnly( tab )
+    for k, v in pairs( tab ) do
+        tab[k] = getReadOnly( v, k )
+    end
+end
+
+makeContentReadOnly( bc.defines.colors )
+makeContentReadOnly( bc.defines.theme )

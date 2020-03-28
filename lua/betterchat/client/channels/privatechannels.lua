@@ -140,7 +140,7 @@ hook.Add( "BC_preInitPanels", "BC_privateAddHooks", function()
         local plySettings = bc.sidePanel.players.settings[getSteamID( ply )]
 
         if not plySettings or plySettings.ignore == 0 then
-            if not bc.channels.isOpen( chan ) then
+            if not bc.channels.isOpen( chan.name ) then
                 bc.private.openChannel( chan )
             end
 

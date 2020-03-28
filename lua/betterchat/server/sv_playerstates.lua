@@ -66,7 +66,7 @@ local function accessChange( id, ... )
         ply = ULib.getPlyByID( id )
     end
     timer.Simple( 0.1, function() --Delay the message as ULibUserGroupChange is called before permission changes
-        net.SendEmpty( "BC_userRankChange", ply )
+        net.SendEmpty( "BC_userRankChange" )
     end )
 end
 

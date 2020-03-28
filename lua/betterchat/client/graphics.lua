@@ -15,7 +15,7 @@ function bc.graphics.build()
     g.font = "BC_default"
     g.minSize = { x = 400, y = 250 }
     
-    g.originalSize = { x = 550, y = 301 }
+    g.originalSize = { x = 600, y = 300 }
     g.size = table.Copy( bc.data.size or g.originalSize )
 
     g.originalFramePos = { x = 38, y = ScrH() - g.size.y - 150 }

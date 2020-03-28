@@ -1,6 +1,8 @@
 bc.giphy = bc.giphy or {}
 bc.giphy.counts = bc.giphy.counts or {}
+bc.giphy.lastUses = bc.giphy.lastUses or {}
 bc.giphy.lastResetHour = bc.giphy.lastResetHour or -1
+bc.giphy.cooldown = 10
 
 -- Single think hook call so http is ready
 hook.Once( "Think", function()
@@ -12,6 +14,12 @@ hook.Once( "Think", function()
             print( "[BetterChat] No valid Giphy API key found in bc_server_giphykey, giphy command disabled. Generate an app key from https://developers.giphy.com/ to use this feature." )
         end
     end )
+end )
+
+hook.Add( "BC_playerReady", "BC_enableGiphy", function( ply )
+    if bc.giphy.enabled then
+        ULib.clientRPC( ply, "bc.images.enableGiphy" )
+    end
 end )
 
 local function escape( s )
@@ -42,13 +50,17 @@ function bc.giphy.getGiphyURL( query, cb )
         limit = 1
     } ), function( body, _, _, code )
         local data = util.JSONToTable( body )
-        if data and data.data and #data.data > 0 then
-            cb( true, data.data[1].images.fixed_height.url )
+        if data and data.data then
+            if #data.data > 0 then
+                cb( true, data.data[1].images.fixed_height.url )
+            else
+                cb( false, "No gifs found using query \"" .. query .. "\"" )
+            end
         else
             cb( false )
         end
     end, function( ... )
-        cb( false, ... )
+        cb( false )
     end )
 end
 
@@ -59,6 +71,7 @@ net.Receive( "BC_sendGif", function( len, ply )
         return ULib.clientRPC( ply, "bc.channels.message", channel, bc.defines.colors.red, "You don't have permission to use !giphy" )
     end
 
+    -- Reset counts on new hour
     local curDateTime = os.date( "*t", os.time() )
     local hour = curDateTime.hour
     if hour ~= bc.giphy.lastResetHour then
@@ -66,6 +79,18 @@ net.Receive( "BC_sendGif", function( len, ply )
         bc.giphy.counts = {}
     end
 
+    -- Check cooldown
+    local lastUsed = bc.giphy.lastUses[ply:SteamID()] or 0
+    local cTime = CurTime()
+    if cTime - lastUsed < bc.giphy.cooldown then
+        local secondsLeft = math.ceil( bc.giphy.cooldown - ( cTime - lastUsed ) )
+        return ULib.clientRPC( ply, "bc.channels.message", channel, bc.defines.colors.red,
+            "You're making requests too quickly! Please wait " .. secondsLeft ..
+            " second" .. ( secondsLeft ~= 1 and "s" or "" ) .. " before making another request." )
+    end
+    bc.giphy.lastUses[ply:SteamID()] = cTime
+
+    -- Check quota
     local curCount = bc.giphy.counts[ply:SteamID()] or 0
     local maxCount = bc.settings.getServerValue( "giphyHourlyLimit" )
     bc.giphy.counts[ply:SteamID()] = curCount + 1
@@ -75,6 +100,7 @@ net.Receive( "BC_sendGif", function( len, ply )
             ". Your quota will reset in approximately " .. ( 60 - curDateTime.min ) .. " minute(s)." )
     end
 
+    -- Make the request
     local str = net.ReadString()
     local channel = net.ReadString()
     if string.match( str, "^[%w_%. %-]+$" ) then
@@ -88,7 +114,7 @@ net.Receive( "BC_sendGif", function( len, ply )
                 net.WriteString( str )
                 net.Send( recips )
             else
-                ULib.clientRPC( ply, "bc.channels.message", channel, bc.defines.colors.red, "Giphy query failed, server wide hourly limit may have been reached" )
+                ULib.clientRPC( ply, "bc.channels.message", channel, bc.defines.colors.red, data or "Giphy query failed, server wide hourly limit may have been reached" )
             end
         end )
     else

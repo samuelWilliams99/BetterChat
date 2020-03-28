@@ -251,7 +251,7 @@ function RICHERTEXT:Init()
 
     self.textColor = Color( 255, 255, 255, 255 )
     self.clickable = nil
-    self.tabSize = 70
+    self.tabSize = 40
 
     self.ready = true
 end
@@ -792,7 +792,7 @@ function RICHERTEXT:AddLabel()
         label.textBold = self.textBold
         addLabelPaint( label )
     end
-    label:SetTextColor( self.textColor )
+    label:SetTextColor( table.Copy( self.textColor ) )
     label:SetText( "" )
     label.rawText = ""
     label.rawTextIdx = idx
@@ -835,10 +835,11 @@ end
 function RICHERTEXT:scrollToBottom( hideBtn )
     if not self:IsReady() then return end
     local id = "richTextScrollBottom - " .. self.id
-    if timer.Exists( id ) then timer.Destroy( id ) end
-    timer.Create( id, 0.05, 1, function()
+    if timer.Exists( id ) then timer.Remove( id ) end
+    timer.Create( id, 0.1, 1, function()
         if not self.scrollPanel then return end
         local bar = self.scrollPanel:GetVBar()
+        self.scrollPanel:GetCanvas():InvalidateLayout( true ) -- Even with the delay, it may not have resized itself
         bar:AnimateTo( self.scrollPanel:GetCanvas():GetTall(), 0.2 )
     end )
     if hideBtn then

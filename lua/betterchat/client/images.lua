@@ -322,8 +322,8 @@ end
 
 function bc.images.generateSpriteLookups()
     local lookup = {}
-    local nameList = {}
-    local emotes = {}
+    local short = {}
+    local long = {}
 
     bc.autoComplete = bc.autoComplete or {}
     bc.autoComplete.emoteUsage = bc.autoComplete.emoteUsage or {}
@@ -335,9 +335,10 @@ function bc.images.generateSpriteLookups()
             table.insert( names, ":" .. sprite.name .. ":" )
 
             for l, name in pairs( names ) do
-                table.insert( nameList, name )
                 if name[1] ~= ":" or name[#name] ~= ":" then
-                    table.insert( emotes, name )
+                    table.insert( short, name )
+                else
+                    table.insert( long, name )
                 end
                 usage[name] = usage[name] or 0
                 lookup[name] = { sheet = sheet, idx = i }
@@ -345,14 +346,14 @@ function bc.images.generateSpriteLookups()
         end
     end
 
-    table.sort( nameList, function( a, b )
+    table.sort( short, function( a, b )
         return #a > #b
     end )
 
     bc.images.emoteLookup = {
         lookup = lookup,
-        list = nameList,
-        emotes = emotes
+        short = short,
+        long = long
     }
 end
 

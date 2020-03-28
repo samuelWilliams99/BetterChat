@@ -242,8 +242,7 @@ end
 
 function bc.group.deleteGroup( group )
     if not bc.group.allowed() then return end
-    -- table.RemoveByMember would work here
-    table.RemoveByMember( bc.group.groups, "id", group.id )
+    table.removeByMember( bc.group.groups, "id", group.id )
     
     local chan = bc.channels.getChannel( "Group - " .. group.id )
     if chan then

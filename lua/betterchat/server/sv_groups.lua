@@ -135,13 +135,13 @@ function bc.group.groupRankChange( group, sId, old, new, members )
         if new == 2 then
             table.insert( msg, " has left the group." )
         else
-            table.insert( msg, " has become an admin!" )
+            table.insert( msg, " has become an admin of this group!" )
         end
     else
         if new == 2 then
             table.insert( msg, " has left the group." )
         else
-            table.insert( msg, " is no longer an admin." )
+            table.insert( msg, " is no longer an admin of this group." )
         end
     end
 

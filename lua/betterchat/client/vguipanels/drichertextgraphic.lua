@@ -34,7 +34,9 @@ function RTG:UpdateColor()
         local a = self:GetAlpha()
         self.graphic:RunJavascript( [[
 			var element = document.getElementsByTagName("img")[0]
-			element.style.opacity = ]] .. ( a / 255 ) .. ";" )
+            if (element) {
+			element.style.opacity = ]] .. ( a / 255 ) .. [[;
+        }]] )
     end
 end
 

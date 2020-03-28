@@ -171,6 +171,15 @@ function table.keyFromMember( tab, member, value )
     return nil
 end
 
+function table.removeByMember( tab, member, value )
+    for k, v in pairs( tab ) do
+        if not istable( v ) then continue end
+        if v[member] == value then
+            return table.remove( tab, k )
+        end
+    end
+end
+
 if CLIENT then
     -- Why isn't this a thing?
     function input.GetKeyEnum( keyCode )

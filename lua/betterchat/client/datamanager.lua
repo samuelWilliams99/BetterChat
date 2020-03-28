@@ -90,11 +90,11 @@ function bc.data.loadData()
     bc.autoComplete = { cmds = {}, emoteUsage = {} }
 
     if data.cmdUsage then
-        table.Merge( bc.autoComplete.cmds, data.cmdUsage )
+        bc.autoComplete.cmds = data.cmdUsage
     end
 
     if data.emoteUsage then
-        table.Merge( bc.autoComplete.emoteUsage, data.emoteUsage )
+        bc.autoComplete.emoteUsage = data.emoteUsage
     end
 end
 

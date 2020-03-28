@@ -59,7 +59,7 @@ function f.formatText( text, defaultColor, ply )
         end
     end
 
-    tab = f.formatSpecialWords( text, tab )
+    tab = f.formatSpecialWords( text, tab, ply )
 
     tab = f.formatCustomColor( tab, defaultColor, ply )
 
@@ -79,9 +79,7 @@ function f.formatCustomColor( tab, currentColor, ply )
     local out = {}
     local canUse = bc.settings.isAllowed( ply, "bc_color" )
     for k, v in ipairs( tab ) do
-        if type( v ) == "table" and v.defaultColor then
-            table.insert( out, currentColor )
-        elseif type( v ) == "string" and canUse then
+        if type( v ) == "string" and canUse then
             local ret
             ret, currentColor = f.formatCustomColorSingle( v, currentColor )
             table.Add( out, ret )
@@ -147,85 +145,85 @@ function f.formatCustomColorSingle( text, currentColor )
     return out, currentColor
 end
 
+local longEmotePattern = "(\\?)(:[%w]+:)"
+
+local function pushEmote( tab, str, pattern, padSpace )
+    local searchStr = padSpace and " " .. str .. " " or str
+    local s, e, slash, name = string.find( searchStr, pattern )
+    if not s then return false, str end
+    if padSpace then
+        e = e - 2
+    end
+    slash = slash == "\\" -- Make slash into a boolean
+
+    local data = bc.images.emoteLookup.lookup[name]
+    if not slash and data then
+        table.insert( tab, string.sub( str, 1, s - 1 ) )
+        table.insert( tab, {
+            formatter = true,
+            type = "image",
+            sheet = data.sheet,
+            idx = data.idx,
+            text = name
+        } )
+        str = string.sub( str, e + 1 )
+    else
+        table.insert( tab, string.sub( str, 1, s - 1 ) .. name )
+        str = string.sub( str, e + 1 )
+    end
+    return true, str
+end
+
 function f.formatEmotes( tab )
-    local madeChange = true
-    local loopCounter = 1
-    -- i hate this whole section, surely can be written better
-    -- cleaned up a bit, still needs rewriting, cba
     if not bc.images.emoteLookup then
         return tab
     end
-
-    while madeChange do
-        madeChange = false
-        loopCounter = loopCounter + 1
-        if loopCounter > 30 then
-            MsgC( bc.defines.colors.red, "[BetterChat] A message with too many images has been prevented from rendering fully to prevent lag" )
-            break
+    local longEmoted = {}
+    for k, v in pairs( tab ) do
+        if type( v ) ~= "string" then
+            table.insert( longEmoted, v )
+            continue
         end
-        local newTab = {}
-        for k, v in pairs( tab ) do
+        local str = v
+        local success
+        
+        while true do
+            success, str = pushEmote( longEmoted, str, longEmotePattern )
+            if not success then break end
+        end
+        if #str > 0 then
+            table.insert( longEmoted, str )
+        end
+    end
+
+    if not bc.settings.getValue( "convertEmotes" ) then
+        return longEmoted
+    end
+
+    local out = longEmoted
+    for j, emote in pairs( bc.images.emoteLookup.short ) do
+        local tmpOut = {}
+        for k, v in pairs( out ) do
             if type( v ) ~= "string" then
-                table.insert( newTab, v )
+                table.insert( tmpOut, v )
                 continue
             end
+            local str = v
+            local success
 
-            local inpStr = v
-
-            local found = true
-            while found do
-                found = false
-                for l = 1, #bc.images.emoteLookup.list do
-                    local str = bc.images.emoteLookup.list[l]
-
-                    local s, e = string.find( inpStr, str, 1, true )
-                    if not s then continue end
-
-                    local isShort = str[1] ~= ":" or str[#str] ~= ":"
-
-                    if isShort then
-                        if not bc.settings.getValue( "convertEmotes" ) then continue end
-                        if s > 1 then
-                            if s > 2 then
-                                if inpStr[s - 1] ~= " " then
-                                    if not ( inpStr[s - 1] == "\\" and inpStr[s - 2] == " " ) then continue end
-                                end
-                            else
-                                if inpStr[s - 1] ~= " " and inpStr[s - 1] ~= "\\" then continue end
-                            end
-                        end
-                        if e < #inpStr and inpStr[e + 1] ~= " " then continue end
-                    end
-
-                    found = true
-
-                    -- push string start to s
-                    -- push image table
-                    -- set string to e to end
-
-                    if s > 1 and inpStr[s - 1] == "\\" then
-                        table.insert( newTab, string.sub( inpStr, 1, s - 2 ) )
-                        table.insert( newTab, { formatter = true, type = "text", text = string.sub( inpStr, s, e ) } )
-                    else
-                        table.insert( newTab, string.sub( inpStr, 1, s - 1 ) )
-                        local data = bc.images.emoteLookup.lookup[str]
-                        table.insert( newTab, { formatter = true, type = "image", sheet = data.sheet, idx = data.idx, text = str } )
-                    end
-                    inpStr = string.sub( inpStr, e + 1, #inpStr )
-
-                    madeChange = true
-                    break
-                end
-
+            local pattern = " (\\?)(" .. string.PatternSafe( emote ) .. ") "
+            while true do
+                success, str = pushEmote( tmpOut, str, pattern, true )
+                if not success then break end
             end
-
-            if #inpStr > 0 then
-                table.insert( newTab, inpStr )
+            if #str > 0 then
+                table.insert( tmpOut, str )
             end
         end
-        tab = newTab
+
+        out = tmpOut
     end
-    return tab
+    return out
 end
 
 local function backTrackModifier( tab, state, key )
@@ -282,14 +280,6 @@ function f.formatModifiers( tab, ply )
     } )
     return newTab
 end
-
-
---[[
-*italics*
-**bold**
-__underline__
-~~strike~~
-]]
 
 local modifierKeyMap = {
     ["~~"] = "strike",
@@ -354,81 +344,46 @@ function f.formatModifiersSingle( txt, state, allowed )
     return out
 end
 
-local function getSpecialWord( text, start )
-    local minS = #text + 1, #text + 1
-    local col, name = nil, nil
-    for k, v in pairs( player.GetAll() ) do
-        s, e = string.find( string.lower( text ), string.lower( v:GetName() ), start, true )
-        if s and s <= minS then
-            if s == minS then
-                if e < minE then continue end
-            end
-            minS = s
-            minE = e
-            col = team.GetColor( v:Team() )
-            name = v
-        end
+function f.formatSpecialWords( text, tab, sender )
+    local patterns = {}
+    local players = player.GetAll()
+    local prePattern = "[ '\"%*_~]"
+    local postPatternPly = "[ '\"!%?%*_~s:]"
+    local postPatternCol = "[ '\"!%?%*_~]"
+    for k, v in pairs( players ) do
+        table.insert( patterns, prePattern .. v:GetName():lower():PatternSafe() .. postPatternPly )
     end
+
+    local colorNames = table.GetKeys( bc.defines.colors )
     if bc.settings.getValue( "formatColors" ) then
-        for k, v in pairs( bc.defines.colors ) do
-            k = chatHelper.camelToSpace( k )
-            s, e = string.find( string.lower( text ), string.lower( k ), start, true )
-            if s and s <= minS then
-                if s == minS then
-                    if e <= minE then continue end
-                end
-                minS = s
-                minE = e
-                col = v
-                name = string.sub( text, s, e )
-            end
+        for k, colorName in ipairs( colorNames ) do
+            colorName = chatHelper.camelToSpace( colorName )
+            table.insert( patterns, prePattern .. colorName:lower():PatternSafe() .. postPatternCol )
         end
     end
-    if minS == #text + 1 then
-        return nil, nil
-    end
-    return minS, minE, col, name
-end
+    while true do
+        local i, s, e = firstMatch( " " .. text:lower() .. " ", unpack( patterns ) )
+        if i == -1 then
+            break
+        end
+        e = e - 2
 
--- for player names, colours and colourModifiers ([#ff0000])
-function f.formatSpecialWords( text, tab )
-    tab = table.Copy( tab )
-    local s, e, v, n = getSpecialWord( text )
-    while e do
-        if s > 1 then
-            local prevChar = text[s - 1]
-            if not table.HasValue( { " ", "'", "\"", "*", "_", "~" }, prevChar ) then
-                s, e, v, n = getSpecialWord( text, e + 1 )
-                continue
+        local insertVals = {}
+        if i <= #players then
+            local ply = players[i]
+            if ply == LocalPlayer() and sender == LocalPlayer() then
+                table.insert( insertVals, { formatter = true, type = "escape" } ) --escape pop from ply name
             end
+            table.insert( insertVals, ply )
+        else
+            local colorName = colorNames[i - #players]
+            local col = bc.defines.colors[colorName]
+            insertVals = { { formatter = true, type = "text", text = string.sub( text, s, e ), color = col } }
         end
-        if e < #text then
-            local nextChar = text[e + 1]
-            if not table.HasValue( { " ", "'", "!", "?", "*", "_", "~" }, nextChar ) then
-                if text[e + 1] ~= "s" and text[s - 1] ~= "\"" and text[e + 1] ~= ":" then
-                    s, e, v, n = getSpecialWord( text, e + 1 )
-                    continue
-                elseif e < #text - 1 and bc.util.isLetter( text[e + 2] ) then
-                    s, e, v, n = getSpecialWord( text, e + 1 )
-                    continue
-                end
-            end
-
-        end
-        table.insert( tab, string.sub( text, 0, s - 1 ) )
-        if type( n ) == "string" then
-            table.insert( tab, v )
-        end
-        if n == LocalPlayer() and ply == LocalPlayer() then
-            table.insert( tab, { formatter = true, type = "escape" } ) --escape pop from ply name
-        end
-        table.insert( tab, n )
-
-        table.insert( tab, { defaultColor = true } )
-        text = string.sub( text, e + 1, -1 )
-        s, e, v, n = getSpecialWord( text )
+        table.insert( tab, string.sub( text, 1, s - 1 ) )
+        table.Add( tab, insertVals )
+        text = string.sub( text, e + 1 )
     end
-
     if #text > 0 then
         table.insert( tab, text )
     end
@@ -541,7 +496,7 @@ function f.onPlayerSayHook( ... )
         end
     end
 
-    ply, text, teamChat, dead, pre, col1, col2 = ... -- pre, col1 and col2 are supplied by DarkRP
+    local ply, text, teamChat, dead, pre, col1, col2 = ... -- pre, col1 and col2 are supplied by DarkRP
 
     local maxLen = bc.settings.getServerValue( "maxLength" )
     if #text > maxLen then

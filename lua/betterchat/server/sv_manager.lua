@@ -1,4 +1,6 @@
-bc.manager = {}
+bc.manager = bc.manager or {}
+bc.manager.overload = bc.manager.overload or {}
+local o = bc.manager.overload
 
 include( "sv_logsmessages.lua" )
 include( "sv_playerstates.lua" )
@@ -37,27 +39,27 @@ function MsgAll( ... )
     Msg( ... )
 end
 
-local oldPrintMessage = PrintMessage
+o.PrintMessage = o.PrintMessage or PrintMessage
 function PrintMessage( type, message )
     if type == HUD_PRINTTALK then
-        ULib.clientRPC( nil, "bc.formatting.print", printBlue, message )
+        ULib.clientRPC( nil, "bc.formatting.print", bc.defines.colors.printBlue, message )
     end
-    oldPrintMessage( type, message )
+    o.PrintMessage( type, message )
 end
 
 local plyMeta = FindMetaTable( "Player" )
-local oldPlyPrintMessage = plyMeta.PrintMessage
+o.PlyPrintMessage = o.PlyPrintMessage or plyMeta.PrintMessage
 function plyMeta:PrintMessage( type, message )
     if type == HUD_PRINTTALK then
-        ULib.clientRPC( self, "bc.formatting.print", printBlue, message )
+        ULib.clientRPC( self, "bc.formatting.print", bc.defines.colors.printBlue, message )
     end
-    oldPlyPrintMessage( self, type, message )
+    o.PlyPrintMessage( self, type, message )
 end
 
-local oldChatPrint = plyMeta.ChatPrint
+o.ChatPrint = o.ChatPrint or plyMeta.ChatPrint
 function plyMeta:ChatPrint( msg )
-    ULib.clientRPC( self, "bc.formatting.print", printBlue, msg )
-    oldChatPrint( self, msg )
+    ULib.clientRPC( self, "bc.formatting.print", bc.defines.colors.printBlue, msg )
+    o.ChatPrint( self, msg )
 end
 -- end
 

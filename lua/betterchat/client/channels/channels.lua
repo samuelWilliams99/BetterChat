@@ -440,8 +440,16 @@ function bc.channels.messageDirect( channel, controller, ... )
                     if obj.font then
                         richText:SetFont( obj.font )
                     end
+                    if obj.color then
+                        richText:InsertColorChange( obj.color )
+                    end
                     richText:AppendText( obj.text )
-                    richText:SetFont( channel.font )
+                    if obj.font then
+                        richText:SetFont( channel.font )
+                    end
+                    if obj.color then
+                        richText:InsertColorChange( prevCol )
+                    end
                 elseif obj.type == "decoration" then
                     richText:SetDecorations( obj.bold, obj.italic, obj.underline, obj.strike )
                 elseif obj.type == "themeColor" then
@@ -630,7 +638,7 @@ function bc.channels.open( name )
                 channel = bc.private.createChannel( ply )
 
                 if not bc.channels.isOpen( channel.name ) then
-                    bc.private.openChannel( channel.name )
+                    bc.private.openChannel( channel )
                 end
                 bc.channels.focus( channel.name )
             elseif dataType == "Link" then
@@ -654,7 +662,7 @@ function bc.channels.open( name )
                         channel = bc.private.createChannel( ply )
 
                         if not bc.channels.isOpen( channel.name ) then
-                            bc.private.openChannel( channel.name )
+                            bc.private.openChannel( channel )
                         end
                         bc.channels.focus( channel.name )
                     end )
