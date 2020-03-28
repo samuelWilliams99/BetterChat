@@ -1,45 +1,3 @@
-function bc.sidePanel.renderSettingFuncs.color( sPanel, panel, data, y, w, h, setting )
-    local curCol = data[setting.value]
-    local width = setting.overrideWidth or bc.sidePanel.defaultWidth
-    local allowedAlpha = setting.allowAlpha
-
-    local button = vgui.Create( "DColorButton", panel )
-
-    button:SetDisabled( setting.disabled or false )
-
-    local bw, bh = width, 18
-    button:SetSize( bw, bh )
-    button:SetPos( w - bw, y - 2 )
-    button:SetFont( "BC_monospaceSmall" )
-    button:SetTooltip( setting.extra )
-    button:SetColor( data[setting.value], true )
-
-    function button:Paint( w, h )
-        local col = self:GetColor()
-        draw.RoundedBox( 2, 0, 0, w, h, bc.defines.colors.black )
-        draw.RoundedBox( 2, 1, 1, w - 2, h - 2, col )
-        draw.DrawText( self:GetText(), self:GetFont(), w / 2, h / 4, bc.defines.theme.buttonTextFocused, TEXT_ALIGN_CENTER )
-        return true
-    end
-    function button:DoClick()
-        CloseDermaMenus()
-        openColorMixer( data, setting )
-    end
-
-    function button:Think()
-        self:SetColor( data[setting.value], true )
-        local col = data[setting.value]
-        self:SetText( chatHelper.padString( col.r, 3, nil, true ) ..
-            "|" .. chatHelper.padString( col.g, 3, nil, true ) ..
-            "|" .. chatHelper.padString( col.b, 3, nil, true ) ..
-            ( allowedAlpha and ( "|" .. chatHelper.padString( col.a, 3, nil, true ) ) or "" )
-        )
-        self:SetCursor( self:GetDisabled() and "no" or "Hand" )
-    end
-
-    return bw
-end
-
 local function openColorMixer( data, setting )
     local btnH = 20
     local w, h = 267, 186 + btnH
@@ -119,4 +77,46 @@ local function openColorMixer( data, setting )
         end
         mixerFrame:Remove()
     end
+end
+
+function bc.sidePanel.renderSettingFuncs.color( sPanel, panel, data, y, w, h, setting )
+    local curCol = data[setting.value]
+    local width = setting.overrideWidth or bc.sidePanel.defaultWidth
+    local allowedAlpha = setting.allowAlpha
+
+    local button = vgui.Create( "DColorButton", panel )
+
+    button:SetDisabled( setting.disabled or false )
+
+    local bw, bh = width, 18
+    button:SetSize( bw, bh )
+    button:SetPos( w - bw, y - 2 )
+    button:SetFont( "BC_monospaceSmall" )
+    button:SetTooltip( setting.extra )
+    button:SetColor( data[setting.value], true )
+
+    function button:Paint( w, h )
+        local col = self:GetColor()
+        draw.RoundedBox( 2, 0, 0, w, h, bc.defines.colors.black )
+        draw.RoundedBox( 2, 1, 1, w - 2, h - 2, col )
+        draw.DrawText( self:GetText(), self:GetFont(), w / 2, h / 4, bc.defines.theme.buttonTextFocused, TEXT_ALIGN_CENTER )
+        return true
+    end
+    function button:DoClick()
+        CloseDermaMenus()
+        openColorMixer( data, setting )
+    end
+
+    function button:Think()
+        self:SetColor( data[setting.value], true )
+        local col = data[setting.value]
+        self:SetText( chatHelper.padString( col.r, 3, nil, true ) ..
+            "|" .. chatHelper.padString( col.g, 3, nil, true ) ..
+            "|" .. chatHelper.padString( col.b, 3, nil, true ) ..
+            ( allowedAlpha and ( "|" .. chatHelper.padString( col.a, 3, nil, true ) ) or "" )
+        )
+        self:SetCursor( self:GetDisabled() and "no" or "Hand" )
+    end
+
+    return bw
 end

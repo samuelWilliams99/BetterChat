@@ -268,7 +268,7 @@ if CLIENT then
             local var = CreateClientConVar( val, def )
             if setting.min or setting.max then
                 cvars.AddChangeCallback( val, function( cv, old, new )
-                    if new > ( setting.max or 1000000000 ) or new < ( setting.min or 0 ) then
+                    if type( new ) ~= "number" or new > ( setting.max or 1000000000 ) or new < ( setting.min or 0 ) then
                         cv:SetInt( old )
                     end
                 end )
