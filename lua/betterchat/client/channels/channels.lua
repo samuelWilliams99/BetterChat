@@ -558,10 +558,19 @@ function bc.channels.add( data )
         return bc.channels.channels[idx]
     end
     if not data.displayName then data.displayName = data.name end
+    bc.channels.rememberDefaults( data )
     bc.data.loadChannel( data )
     bc.sidePanel.channels.applyDefaults( data )
     table.insert( bc.channels.channels, data )
     return data
+end
+
+function bc.channels.rememberDefaults( data )
+    data.defaults = data.defaults or {}
+    for k, v in pairs( data ) do
+        if k == "defaults" then continue end
+        data.defaults[k] = v
+    end
 end
 
 function bc.channels.remove( name )

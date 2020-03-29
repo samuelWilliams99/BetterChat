@@ -62,7 +62,12 @@ local function openColorMixer( data, setting )
     defaultBtn:SetSize( 87, btnH - 2 )
     defaultBtn:SetPos( w / 2 - 40, h - btnH )
     function defaultBtn:DoClick()
-        mixer:SetColor( table.Copy( setting.default ) )
+        if data.defaults and data.defaults[setting.value] then
+            mixer:SetColor( table.Copy( data.defaults[setting.value] ) )
+        else
+            mixer:SetColor( table.Copy( setting.default ) )
+        end
+
     end
 
     local confirmBtn = vgui.Create( "DButton", mixerFrame )

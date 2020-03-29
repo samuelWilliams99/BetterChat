@@ -8,6 +8,9 @@ local function saveFromTemplate( src, data, template )
         if v.preSave then
             value = v.preSave( src )
         end
+        if IsColor( value ) then
+            value = { r = value.r, g = value.g, b = value.b, a = value.a }
+        end
         data[v.value] = value
     end
 end
