@@ -16,26 +16,41 @@ Tab in custom player command moves to next box
 make it clear that "mute" means "ulx mute", not ignore
 add ignore to context menu
 group rename print
+swtich private and admin channels to use psay and asay internally
 
-joining after bots
-	[ERROR] addons/betterchat/lua/betterchat/client/sidepanel/panels/players.lua:30: attempt to call method 'SteamID' (a nil value)
-  1. fn - addons/betterchat/lua/betterchat/client/sidepanel/panels/players.lua:30
-   2. func - addons/ulib-master/lua/ulib/client/cl_util.lua:22
-    3. unknown - lua/includes/extensions/net.lua:32
+chat cooldown - sounds like a fair bit of work, especially when other addons already do it
+	maybe call onchat with generic ply/message to trigger it?
 
-	chat cooldown - sounds like a fair bit of work, especially when other addons already do it
-		maybe call onchat with generic ply/message to trigger it?
+global settings menu
+    using utility menu is shit
+    make my own menu
+    make it a Spanner icon
+    change Open channel button to be "+", put this icon next to it
 
-	resize/move
-		button at top right to edit box
-        Fades to white showing areas to drag
-            middle = move
-            edges/corners = resize
-        little "Done" button
+redo emotes
+    Emotes should be downloaded after join, in background
+        hosted by the server, not external
+    Support adding separate emotes, store data about custom on server
+    Adding new emotes should be done in game, via link to image and names def
+        server takes link to image, downloads images to it's data folder, uses that to serve to clients
+        on the new global settings menu
+    option to serve emotes on external server
+        figure something out for this
 
-	test darkrp - l o l
+animated text would be cool, another modifier like &&rainbow&&, %%pulsing%%, etc.
 
-    maybe a little "creator of betterchat" in my sidepanel?
+redo autocomplete to be nicer, vertical design (below?), show the emote next to emote name, profile pic next to player name, something generic for ulx commands
+
+resize/move
+	button at top right to edit box
+    Fades to white showing areas to drag
+        middle = move
+        edges/corners = resize
+    little "Done" button
+
+test darkrp - l o l
+
+maybe a cheeky little "creator of betterchat" in my sidepanel?
 ]]
 
 include( "betterchat/shared/sh_defines.lua" )

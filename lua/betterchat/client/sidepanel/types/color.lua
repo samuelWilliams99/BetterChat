@@ -32,7 +32,7 @@ local function openColorMixer( data, setting )
     mixer:SetPos( 2, 2 )
     mixer:SetSize( w - 4, h - 4 - btnH )
     mixer:SetColor( table.Copy( data[setting.value] ) )
-    mixer:SetPalette( false )         --Show/hide the palette           DEF:true
+    mixer:SetPalette( false )
     mixer:SetAlphaBar( data.allowedAlpha )
 
     local lastDown = false
