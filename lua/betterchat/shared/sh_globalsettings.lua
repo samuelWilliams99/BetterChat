@@ -264,12 +264,17 @@ if CLIENT then
             else
                 def = setting.default
             end
+
             if type( def ) == "boolean" then def = def and 1 or 0 end
             local var = CreateClientConVar( val, def )
+
             if setting.min or setting.max then
                 cvars.AddChangeCallback( val, function( cv, old, new )
+                    old = tonumber( old )
+                    new = tonumber( new )
+                    if old == new then return end
                     if type( new ) ~= "number" or new > ( setting.max or 1000000000 ) or new < ( setting.min or 0 ) then
-                        cv:SetInt( old )
+                        var:SetInt( old )
                     end
                 end )
             end
