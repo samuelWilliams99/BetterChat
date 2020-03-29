@@ -28,6 +28,7 @@ function bc.sidePanel.renderSettingFuncs.options( sPanel, panel, data, y, w, h, 
     comboBox.data = data
     comboBox.val = setting.value
     comboBox.setting = setting
+    comboBox.prevOptionValue = val
 
     function comboBox:Think()
         if self:IsMenuOpen() and not self.Menu.paintSet then
@@ -37,17 +38,29 @@ function bc.sidePanel.renderSettingFuncs.options( sPanel, panel, data, y, w, h, 
                 if not bc.base.isOpen then
                     self:GetParent():CloseMenu()
                 end
-                if ( !self:GetPaintBackground() ) then return end
+                if not self:GetPaintBackground() then return end
 
                 derma.SkinHook( "Paint", "Menu", self, w, h )
                 return true
             end
+        end
+        if self.prevOptionValue ~= self.data[self.val] then
+            for k = 1, #setting.optionValues do
+                local v = setting.optionValues[k]
+                if self.data[self.val] == v then
+                    idx = k
+                end
+            end
+            comboBox:ChooseOption( setting.options[idx], idx )
+
+            self.prevOptionValue = self.data[self.val] 
         end
     end
 
     function comboBox:OnSelect( idx, name, val )
         local changed = self.data[self.val] ~= val
         self.data[self.val] = val
+        self.prevOptionValue = val
 
         if changed then
             if setting.onChange then setting.onChange( data ) end

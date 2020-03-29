@@ -14,7 +14,15 @@ bc.sidePanel.players.template = {
         preSave = function( data )
             if data.ignore == 1 then return 0 end
             return data.ignore
-        end
+        end,
+        contextMenu = {
+            onClick = function( data )
+                data.ignore = data.ignore == 0 and 1 or 0
+            end,
+            getText = function( data )
+                return data.ignore == 0 and "Ignore" or "Unignore"
+            end
+        }
     },
     {
         name = "Private message",
@@ -146,19 +154,25 @@ bc.sidePanel.players.template = {
 }
 
 hook.Add( "BC_playerRightClick", "BC_addPlySettings", function( ply, menu )
-    for k, v in pairs( bc.sidePanel.players.template ) do
-        if v.addToPlayerContext and v.type == "button" then
+    local data = bc.sidePanel.players.settings[ply:SteamID()]
+    if not data then return end
+    for k, setting in pairs( bc.sidePanel.players.template ) do
+        if setting.contextMenu then
+            if not bc.sidePanel.players.canAddSetting( ply, setting ) then continue end
 
-            if not bc.sidePanel.players.canAddSetting( ply, v ) then continue end
+            menu:AddOption( setting.contextMenu.getText( data ), function()
+                setting.contextMenu.onClick( data )
+            end )
+        elseif setting.addToPlayerContext and setting.type == "button" then
 
-            local d = bc.sidePanel.players.settings[ply:SteamID()]
-            if not d then continue end
-            local name = v.name
-            if v.toggle then
-                name = d[v.value] and v.toggleName or v.name
+            if not bc.sidePanel.players.canAddSetting( ply, setting ) then continue end
+
+            local name = setting.name
+            if setting.toggle then
+                name = data[setting.value] and setting.toggleName or setting.name
             end
             menu:AddOption( name, function()
-                v.onClick( d, v )
+                setting.onClick( data, setting )
             end )
         end
     end

@@ -668,6 +668,10 @@ function bc.channels.open( name )
                 m:AddOption( "Copy SteamID", function()
                     SetClipboardText( dataArg )
                 end )
+                m:AddOption( "Copy SteamID64", function()
+                    SetClipboardText( util.SteamIDTo64( dataArg ) )
+                end )
+                
                 local ply = player.GetBySteamID( dataArg )
                 if ply and bc.private.canMessage( ply ) then
                     m:AddOption( "Open Private Channel", function()
