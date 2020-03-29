@@ -216,6 +216,12 @@ hook.Add( "BC_keyCodeTyped", "BC_sendMessageHook", function( code, ctrl, shift )
             if tabs[index] then
                 psheet:SetActiveTab( tabs[index] )
             end
+        elseif code == KEY_W and ctrl then
+            local channel = bc.channels.getActiveChannel()
+            
+            if not channel.disallowClose then
+                bc.channels.close( channel.name )
+            end
         end
     end
 end )
