@@ -8,7 +8,7 @@ bc.sidePanel.channels.template = {
         extra = "Set the name displayed for this tab in chat. Maximum of 16 characters",
         shouldSave = true,
         onChange = function( data ) -- for groups
-            if string.Left( data.name, 8 ) == "Group - " then
+            if data.group then
                 data.group.name = data.displayName
                 net.Start( "BC_updateGroup" )
                 net.WriteUInt( data.group.id, 16 )

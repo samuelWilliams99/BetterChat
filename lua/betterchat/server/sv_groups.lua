@@ -145,8 +145,10 @@ function bc.group.groupRankChange( group, sId, old, new, members )
         end
     end
 
-    members = members or bc.group.getGroupMembers( group )
-    members = bc.group.removeInvalidMembers( members )
+    if not members then
+        members = bc.group.getGroupMembers( group )
+        members = bc.group.removeInvalidMembers( members )
+    end
     ULib.clientRPC( members, "bc.channels.message", "Group - " .. group.id, unpack( msg ) )
 end
 
@@ -168,8 +170,9 @@ function bc.group.generateMemberData( group )
     return data
 end
 
-function bc.group.handleGroupRankChanges( old, new )
+function bc.group.handleGroupChanges( old, new, sendPly )
     local members = bc.group.getGroupMembers( new )
+    members = bc.group.removeInvalidMembers( members )
     local oldMemberData = bc.group.generateMemberData( old )
     local newMemberData = bc.group.generateMemberData( new )
 
@@ -180,6 +183,11 @@ function bc.group.handleGroupRankChanges( old, new )
 
     for k, v in pairs( newMemberData ) do
         bc.group.groupRankChange( new, k, 2, v, members )
+    end
+
+    if old.name ~= new.name then
+        local msg = { { formatter = true, type = "escape" }, sendPly, bc.defines.colors.printYellow, " renamed the group to ", bc.manager.themeColor( "group" ), new.name }
+        ULib.clientRPC( members, "bc.channels.message", "Group - " .. new.id, unpack( msg ) )
     end
 end
 
@@ -258,7 +266,7 @@ net.Receive( "BC_updateGroup", function( len, ply )
         if #group.members == 0 then
             table.remove( bc.group.groups, k )
         else
-            bc.group.handleGroupRankChanges( oldGroup, group )
+            bc.group.handleGroupChanges( oldGroup, group, ply )
         end
 
         bc.group.saveGroups()
