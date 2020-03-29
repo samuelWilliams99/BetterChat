@@ -408,9 +408,8 @@ function bc.channels.messageDirect( channel, controller, ... )
 
     if channel.showTimestamps then
         table.insert( data, 1, bc.defines.theme.timeStamps )
-        local timeData = string.FormattedTime( os.time() )
-        timeData.h = timeData.h % 24
-        table.insert( data, 2, string.format( "%02i:%02i", timeData.h, timeData.m ) .. " - " )
+        local timeData = os.date("*t")
+        table.insert( data, 2, string.format( "%02i:%02i", timeData.hour, timeData.min ) .. " - " )
         table.insert( data, 3, bc.defines.colors.white )
     end
 
