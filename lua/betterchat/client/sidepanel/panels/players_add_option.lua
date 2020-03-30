@@ -31,6 +31,7 @@ function bc.sidePanel.players.addCustomSetting( ply )
         local x, y = surface.GetTextSize( txt )
         if x > self:GetWide() - 10 then return true end
     end
+    name:RequestFocus()
 
     local nameErrorLabel = vgui.Create( "DLabel", frame )
     nameErrorLabel:SetText( "Name already taken" )
@@ -65,6 +66,14 @@ function bc.sidePanel.players.addCustomSetting( ply )
     command:SetPos( 80 + 15 + 15, 60 )
     command:SetSize( sx - 110 - 20, 20 )
     command:SetTooltip( "Command to be run. [$name] will be replaced with player name, [$id] will be replaced with steam ID" )
+
+    -- Tab from name to command
+    function name:OnKeyCodeTyped( c )
+        if c == KEY_TAB then
+            command:RequestFocus()
+            return true
+        end
+    end
 
     --Command options
     local commandOptionsLabel = vgui.Create( "DLabel", frame )

@@ -208,6 +208,13 @@ hook.Add( "BC_playerReady", "BC_sendGroups", function( ply )
 end )
 
 net.Receive( "BC_newGroup", function( len, ply )
+    local n = 0
+    for k, group in pairs( bc.group.groups ) do
+        if table.HasValue( group.members, ply:SteamID() ) then
+            n = n + 1
+        end
+    end
+    if n >= 5 then return end
     local g = bc.group.newGroup( ply, "New Group" )
     bc.group.sendGroupData( g, nil, true )
 end )
