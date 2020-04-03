@@ -51,6 +51,17 @@ function bc.sidePanel.players.generateEntry( ply )
 
     local p = bc.sidePanel.createChild( "Player", ply:SteamID() )
     local w, h = p:GetSize()
+
+    -- My credit :D
+    if ply:SteamID64() == "76561198053582133" then
+        local creditLabel = vgui.Create( "DLabel", p )
+        creditLabel:SetText( "Creator of BetterChat!" )
+        creditLabel:SizeToContents()
+        local textW, textH = creditLabel:GetTextSize()
+        creditLabel:SetPos( w - textW - 28, -2 )
+        creditLabel:SetTextColor( bc.defines.theme.betterChat )
+    end
+
     local avatar = vgui.Create( "AvatarImageCircle", p )
     avatar:SetSize( 64, 64 )
     avatar:SetPos( 4, 4 )
