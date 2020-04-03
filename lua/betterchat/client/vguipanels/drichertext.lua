@@ -121,8 +121,8 @@ function RICHERTEXT:Init()
                 self.scrollToBottomBtn:Hide()
             end
         end
-        if self.STBButtonAnim == 0 then self.STBHide = false end
-        self.scrollToBottomBtn.m_Image:SetImageColor( Color( 255, 255, 255, self.STBHide and 0 or self.STBButtonAnim * 2.55 ) )
+        
+        self.scrollToBottomBtn.m_Image:SetImageColor( Color( 255, 255, 255, self.STBButtonAnim * 2.55 ) )
 
         if self.lastScroll ~= scrollBar.Scroll then
             local sPanel = self.scrollPanel
@@ -151,6 +151,7 @@ function RICHERTEXT:Init()
     self.scrollToBottomBtn:SetImage( "icons/triple_arrows.png" )
     self.scrollToBottomBtn.Paint = nil
     self.scrollToBottomBtn:SetSize( 32, 32 )
+    self.scrollToBottomBtn:Hide()
     function self.scrollToBottomBtn:DoClick()
         this:scrollToBottom()
     end
@@ -832,7 +833,7 @@ function RICHERTEXT:AddLabel()
     return label
 end
 
-function RICHERTEXT:scrollToBottom( hideBtn )
+function RICHERTEXT:scrollToBottom()
     if not self:IsReady() then return end
     local id = "richTextScrollBottom - " .. self.id
     if timer.Exists( id ) then timer.Remove( id ) end
@@ -842,9 +843,6 @@ function RICHERTEXT:scrollToBottom( hideBtn )
         self.scrollPanel:GetCanvas():InvalidateLayout( true ) -- Even with the delay, it may not have resized itself
         bar:AnimateTo( self.scrollPanel:GetCanvas():GetTall(), 0.2 )
     end )
-    if hideBtn then
-        self.STBHide = true
-    end
 end
 
 function RICHERTEXT:IsReady()
