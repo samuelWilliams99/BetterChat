@@ -1,10 +1,5 @@
 bc.admin = {}
 
-net.Receive( "BC_AM", function( len, ply )
-    local text = net.ReadString()
-    bc.admin.sendAdmin( ply, text )
-end )
-
 function bc.admin.sendAdmin( ply, text )
     bc.logs.sendLogConsole( "Admin", ply, ": ", text )
 

@@ -130,7 +130,7 @@ bc.defines.giphyCommand = "!giphy"
 
 bc.defines.networkStrings = {
     "BC_chatOpenState", "BC_sendPlayerState", "BC_playerReady", "BC_disable", -- Chat states
-    "BC_PM", "BC_AM", "BC_GM", "BC_TM", "BC_LM", -- Messages (Private, Admin, Group, Team)
+    "BC_PM", "BC_AM", "BC_GM", "BC_TM", "BC_LM", -- Messages (Private, Admin, Group, Team, Logs)
     "BC_sendULXCommands", "BC_userRankChange", -- Ulx
     "BC_sendGroups", "BC_updateGroup", "BC_newGroup", "BC_groupAccept", "BC_leaveGroup", "BC_deleteGroup", -- Groups
     "BC_forwardMessage", "BC_sayOverload", "BC_sendGif", "BC_playerDisconnected", -- Misc

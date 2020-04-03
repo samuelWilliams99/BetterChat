@@ -52,7 +52,7 @@ local function DarkRP_PM( ply, args )
     end
 
     if target then
-        bc.private.sendPrivate( ply, ply, target, msg )
+        bc.private.sendPrivate( ply, ply, target, msg, true )
         bc.private.sendPrivate( target, ply, ply, msg )
     else
         DarkRP.notify( ply, 1, 4, DarkRP.getPhrase( "could_not_find", tostring( name ) ) )
@@ -69,12 +69,4 @@ hook.Add( "PostGamemodeLoaded", "BC_RPOverload", function()
             DarkRP.defineChatCommand( "pm", DarkRP_PM, 1.5 )
         end
     end
-end )
-
-net.Receive( "BC_PM", function( len, ply )
-    --Add ulx mute checking
-    local targ = net.ReadEntity()
-    local text = net.ReadString()
-
-    bc.private.sendPrivate( ply, ply, targ, text )
 end )

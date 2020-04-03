@@ -3,9 +3,7 @@ bc.admin.defaultChannel = {
     name = "Admin",
     icon = "shield.png",
     send = function( self, txt )
-        net.Start( "BC_AM" )
-        net.WriteString( txt )
-        net.SendToServer()
+        RunConsoleCommand( "ulx", "asay", txt )
     end,
     doPrints = false,
     addNewLines = true,
