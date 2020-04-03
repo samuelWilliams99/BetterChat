@@ -852,7 +852,15 @@ function RICHERTEXT:IsReady()
 end
 
 function RICHERTEXT:addNewLines( txt ) -- Goes through big bit of text, puts in new lines when needed to avoid overspill. returns table of lines and "\n"s
+    local line = self.lines[#self.lines] or {}
+    local lastElement = line[#line]
+
     local offsetX = self.offset.x
+
+    if lastElement then
+        offsetX = offsetX + getElementSizeX( lastElement )
+    end
+
     local limitX = self:GetWide() - 50
     local data = string.Explode( " ", txt )
     local out = {}
@@ -869,6 +877,7 @@ function RICHERTEXT:addNewLines( txt ) -- Goes through big bit of text, puts in 
                 k = k - 1
                 offsetX = 0
             else
+                -- 20 = guess for minimum characters needed to fill a whole line. to save a little performance
                 for l = 20, #word do
                     local str = string.Left( word, l )
                     local sizeX = getFrom( 1, surface.GetTextSize( str ) )
@@ -973,7 +982,6 @@ function RICHERTEXT:AppendTextNoTab( txt ) --This func cannot handle tabs
             curText = "" -- Reset curText buffer
         else
             curText = curText .. char
-
         end
     end
     if #curText > 0 then -- If no newline at end, buffer will still have text
