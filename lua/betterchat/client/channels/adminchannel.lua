@@ -31,6 +31,7 @@ end
 
 hook.Add( "BC_makeChannelButtons", "BC_makeAdminButton", function( menu )
     if not bc.admin.buttonEnabled then return end
+    if bc.channels.isOpen( "Admin" ) then return end
     menu:AddOption( "Admin", function()
         local chan = bc.channels.getChannel( "Admin" )
         if not chan then return end

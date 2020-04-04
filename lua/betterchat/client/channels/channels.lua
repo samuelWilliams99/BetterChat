@@ -78,21 +78,30 @@ hook.Add( "BC_preInitPanels", "BC_initChannels", function()
     end
 
     local btn = vgui.Create( "DButton", d.chatFrame )
-    btn:SetPos( g.size.x - 50 - 33, 5 )
-    btn:SetSize( 50, 19 )
-    btn:SetTextColor( bc.defines.theme.buttonTextFocused )
-    btn:SetText( "Open" )
+    btn:SetSize( 18, 18 )
+    btn:SetText( "" )
     function btn:Paint( w, h )
-        draw.RoundedBox( 0, 0, 0, w, h, bc.defines.theme.foreground )
+        --draw.RoundedBox( 0, 0, 0, w, h, bc.defines.theme.foreground )
+        local plusThickness = 2
+        local plusMargin = 3
+        -- V line of plus
+        draw.RoundedBox( 0, ( w - plusThickness ) / 2, plusMargin, plusThickness, h - ( 2 * plusMargin ), bc.defines.theme.buttonTextFocused )
+        -- H line of plus
+        draw.RoundedBox( 0, plusMargin, ( h - plusThickness ) / 2, w - ( 2 * plusMargin ), plusThickness, bc.defines.theme.buttonTextFocused )
     end
     function btn:DoClick()
         local menu = DermaMenu()
         hook.Run( "BC_makeChannelButtons", menu )
         menu:Open()
     end
+
     local oldLayout = btn.PerformLayout or function() end
     function btn:PerformLayout()
-        self:SetPos( g.size.x - 50 - 33, 5 )
+        local tabs = d.psheet.tabScroller.Panels
+        local rightTab = tabs[#tabs]
+        local x = rightTab:GetPos()
+        x = x + rightTab:GetWide()
+        self:SetPos( x + 4, 6 )
         oldLayout( self )
     end
 
@@ -101,6 +110,11 @@ hook.Add( "BC_preInitPanels", "BC_initChannels", function()
     d.psheet.tabScroller:DockMargin( 3, 0, 88, 0 )
 
 end )
+
+function bc.channels.updateButtonPosition()
+    bc.graphics.derma.psheet.tabScroller:InvalidateLayout( true )
+    bc.graphics.derma.channelButton:InvalidateLayout( true )
+end
 
 local function updateRPListener()
     if not DarkRP then return end
@@ -239,6 +253,12 @@ hook.Add( "BC_keyCodeTyped", "BC_sendMessageHook", function( code, ctrl, shift )
             if not channel.disallowClose then
                 bc.channels.close( channel.name )
             end
+        elseif code == KEY_O and ctrl then
+            local menu = DermaMenu()
+            hook.Run( "BC_makeChannelButtons", menu )
+            local w, h = bc.graphics.derma.channelButton:GetSize()
+            local x, y = bc.graphics.derma.channelButton:LocalToScreen( w / 2, h / 2 )
+            menu:Open( x, y )
         end
     end
 end )
@@ -566,6 +586,7 @@ function bc.channels.close( name )
     end
 
     bc.data.saveData()
+    bc.channels.updateButtonPosition()
 end
 
 local function openLink( url )
@@ -799,6 +820,7 @@ function bc.channels.open( name )
         if self:GetText() ~= self.data.displayName then
             self:SetText( self.data.displayName )
             self:GetPropertySheet().tabScroller:InvalidateLayout( true ) -- to make the tabs resize correctly
+            bc.channels.updateButtonPosition()
         end
     end
     function v.Tab:DoRightClick()
@@ -844,6 +866,8 @@ function bc.channels.open( name )
                                                                 -- Waiting to first paint can cause issues
 
     bc.data.saveData()
+    bc.channels.updateButtonPosition()
+
     if data.postAdd then data.postAdd( data, panel ) end
 
     for k, v in pairs( bc.sidePanel.channels.template ) do

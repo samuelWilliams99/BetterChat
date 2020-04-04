@@ -97,6 +97,7 @@ hook.Add( "BC_initPanels", "BC_initAddMainChannels", function()
 end )
 
 local function channelButton( menu, chanName )
+    if bc.channels.isOpen( chanName ) then return end
     menu:AddOption( chanName, function()
         local chan = bc.channels.getChannel( chanName )
         if not chan then return end

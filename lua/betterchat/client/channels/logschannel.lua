@@ -27,6 +27,7 @@ end
 
 hook.Add( "BC_makeChannelButtons", "BC_makeLogsButton", function( menu )
     if not bc.logs.buttonEnabled then return end
+    if bc.channels.isOpen( "Logs" ) then return end
     menu:AddOption( "Logs", function()
         local chan = bc.channels.getChannel( "Logs" )
         if not chan then return end

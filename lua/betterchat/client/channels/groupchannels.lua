@@ -121,8 +121,10 @@ hook.Add( "BC_makeChannelButtons", "BC_makeGroupButton", function( menu )
     end
 
     for k, group in pairs( bc.group.groups ) do
+        local chanName = "Group - " .. group.id
+        if bc.channels.isOpen( chanName ) then continue end
         subMenu:AddOption( group.name, function()
-            local chan = bc.channels.getChannel( "Group - " .. group.id )
+            local chan = bc.channels.getChannel( chanName )
             if not chan then
                 chan = bc.group.createChannel( group )
             end

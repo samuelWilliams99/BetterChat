@@ -5,6 +5,18 @@ bc.group.cooldowns = {}
 -- Stops game-crashing spam
 local GROUP_MESSAGE_COOLDOWN = 0.1
 
+local function pastCooldown( ply )
+    local lastMessage = bc.group.cooldowns[ply]
+    local cTime = CurTime()
+
+    if lastMessage and cTime - lastMessage < GROUP_MESSAGE_COOLDOWN then
+        return false
+    end
+    bc.group.cooldowns[ply] = cTime
+
+    return true
+end
+
 local function joinTables( a, b )
     local aCopy = table.Copy( a )
     for k, val in pairs( b ) do
@@ -225,13 +237,7 @@ net.Receive( "BC_newGroup", function( len, ply )
 end )
 
 net.Receive( "BC_GM", function( len, ply )
-    local lastMessage = bc.group.cooldowns[ply]
-    local cTime = CurTime()
-
-    if lastMessage and cTime - lastMessage < GROUP_MESSAGE_COOLDOWN then
-        return
-    end
-    bc.group.cooldowns[ply] = cTime
+    if not pastCooldown( ply ) then return end
 
     local groupID = net.ReadUInt( 16 )
     local msg = net.ReadString()
@@ -255,6 +261,8 @@ net.Receive( "BC_GM", function( len, ply )
 end )
 
 net.Receive( "BC_updateGroup", function( len, ply )
+    if not pastCooldown( ply ) then return end
+    
     local groupID = net.ReadUInt( 16 )
     local newData = net.ReadString()
     for k, group in pairs( bc.group.groups ) do
@@ -265,7 +273,9 @@ net.Receive( "BC_updateGroup", function( len, ply )
 
         local oldGroup = table.Copy( group )
 
-        bc.group.groups[k] = util.JSONToTable( newData )
+        local groupTable = util.JSONToTable( newData )
+        if not groupTable then return end
+        bc.group.groups[k] = groupTable
         group = bc.group.groups[k]
 
         for k, v in pairs( group.invites ) do
