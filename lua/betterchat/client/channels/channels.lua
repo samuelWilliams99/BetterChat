@@ -122,16 +122,34 @@ local function updateRPListener()
     end )
 end
 
-hook.Add( "BC_postInitPanels", "BC_postInitChannels", function()
-    for k, channel in pairs( bc.channels.channels ) do
+function bc.channels.openSaved()
+    bc.data.setSavingEnabled( false )
+
+    local channels = {}
+    if bc.data.openChannels and bc.settings.getValue( "saveOpenChannels" ) then
+        for k, chanName in pairs( bc.data.openChannels ) do
+            local channel = bc.channels.getOrCreate( chanName )
+            if channel then table.insert( channels, channel ) end
+        end
+    else
+        channels = table.filter( bc.channels.channels, function( channel ) return channel.openOnStart end )
+    end
+
+    for k, channel in pairs( channels ) do
         local shouldOpen = channel.openOnStart
         if type( shouldOpen ) == "function" then
             shouldOpen = shouldOpen()
         end
-        if shouldOpen then
+
+        if shouldOpen ~= false then
             bc.channels.open( channel.name )
         end
     end
+    bc.data.setSavingEnabled( true )
+end
+
+hook.Add( "BC_postInitPanels", "BC_postInitChannels", function()
+    bc.channels.openSaved()
 
     --[[
 	The only way I can change the "Some people can hear you..." from DarkRP is to create a ChatReceiver
@@ -142,7 +160,6 @@ hook.Add( "BC_postInitPanels", "BC_postInitChannels", function()
     bc.channels.wackyString = "┘♣├ôÒ"
 
     updateRPListener()
-
 end )
 
 hook.Add( "BC_channelChanged", "BC_changeRPListener", function()
@@ -505,7 +522,7 @@ function bc.channels.messageDirect( channel, controller, ... )
     end
 
     if channel.onMessage then
-        channel.onMessage()
+        channel:onMessage( data )
     end
 end
 
@@ -547,6 +564,8 @@ function bc.channels.close( name )
     if nextChannel then
         bc.channels.focus( nextChannel )
     end
+
+    bc.data.saveData()
 end
 
 local function openLink( url )
@@ -652,7 +671,7 @@ function bc.channels.open( name )
                 channel = bc.private.createChannel( ply )
 
                 if not bc.channels.isOpen( channel.name ) then
-                    bc.private.openChannel( channel )
+                    bc.channels.open( channel.name )
                 end
                 bc.channels.focus( channel.name )
             elseif dataType == "Link" then
@@ -680,7 +699,7 @@ function bc.channels.open( name )
                         channel = bc.private.createChannel( ply )
 
                         if not bc.channels.isOpen( channel.name ) then
-                            bc.private.openChannel( channel )
+                            bc.channels.open( channel.name )
                         end
                         bc.channels.focus( channel.name )
                     end )
@@ -824,6 +843,7 @@ function bc.channels.open( name )
     v.Tab:GetPropertySheet().tabScroller:InvalidateLayout( true ) -- Force the Tab size to be correct instantly
                                                                 -- Waiting to first paint can cause issues
 
+    bc.data.saveData()
     if data.postAdd then data.postAdd( data, panel ) end
 
     for k, v in pairs( bc.sidePanel.channels.template ) do
@@ -836,14 +856,21 @@ function bc.channels.open( name )
         v.Tab:Hide()
     end
 
+    if data.replicateAll then
+        for k, v in ipairs( bc.mainChannels.allHistory or {} ) do
+            bc.channels.messageDirect( data.name, { controller = true, doSound = false }, unpack( v ) )
+        end
+        bc.channels.scrollToBottom( data.name, true )
+        return
+    end
+
     if not data.hideInitMessage and bc.settings.getValue( "printChannelEvents" ) then
         local chanName = data.hideRealName and data.displayName or data.name
 
         local function createdPrint()
-            if not data.replicateAll then
-                bc.channels.messageDirect( data.name, bc.defines.colors.printBlue, "Channel ",
-                    bc.defines.theme.channels, chanName, bc.defines.colors.printBlue, " created." )
-            end
+            bc.channels.messageDirect( data.name, bc.defines.colors.printBlue, "Channel ",
+                bc.defines.theme.channels, chanName, bc.defines.colors.printBlue, " created." )
+            
             if data.name ~= "All" then
                 bc.channels.messageDirect( "All", bc.defines.colors.printBlue, "Channel ",
                     bc.defines.theme.channels, chanName, bc.defines.colors.printBlue, " created." )
@@ -900,10 +927,22 @@ function bc.channels.hidePSheet()
     end
 end
 
-function bc.channels.getAndOpen( chanName )
+function bc.channels.scrollToBottom( chanName, instant )
     local chan = bc.channels.getChannel( chanName )
 
     if not chan or not bc.channels.isOpen( chanName ) then
+        return
+    end
+
+    local rt = bc.channels.panels[chanName].text
+
+    rt:scrollToBottom( instant )
+end
+
+function bc.channels.getOrCreate( chanName )
+    local chan = bc.channels.getChannel( chanName )
+
+    if not chan then
         local dashPos = string.find( chanName, " - ", 1, true )
         if not dashPos then
             return bc.channels.getChannel( "All" )
@@ -920,7 +959,7 @@ function bc.channels.getAndOpen( chanName )
                     found = true
                     local chan = bc.group.createChannel( v )
                     if not chan then continue end
-                    bc.channels.open( chan.name )
+                    return chan
                 end
             end
             if not found then return end
@@ -928,11 +967,19 @@ function bc.channels.getAndOpen( chanName )
             local sId = nameArg
             local ply = player.GetBySteamID( sId )
             if not ply then return nil end
-            bc.private.openChannel( bc.private.createChannel( ply ) )
+            return bc.private.createChannel( ply )
         else
             return bc.channels.getChannel( "All" )
         end
     end
 
+    return chan
+end
+
+function bc.channels.getAndOpen( chanName )
+    local chan = bc.channels.getOrCreate( chanName )
+    if not chan then return nil end
+
+    bc.channels.open( chan.name )
     return chan
 end

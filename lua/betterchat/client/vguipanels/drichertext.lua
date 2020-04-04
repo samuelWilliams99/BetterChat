@@ -833,10 +833,22 @@ function RICHERTEXT:AddLabel()
     return label
 end
 
-function RICHERTEXT:scrollToBottom()
+function RICHERTEXT:scrollToBottom( noAnim )
     if not self:IsReady() then return end
     local id = "richTextScrollBottom - " .. self.id
     if timer.Exists( id ) then timer.Remove( id ) end
+
+    if noAnim then
+        local bar = self.scrollPanel:GetVBar()
+        self:InvalidateLayout( true )
+        self.scrollPanel:GetCanvas():InvalidateLayout( true )
+        local offset = self.scrollPanel:GetCanvas():GetTall() - self.scrollPanel:GetTall()
+        bar:SetScroll( offset )
+
+        return
+    end
+
+    
     timer.Create( id, 0.1, 1, function()
         if not self.scrollPanel then return end
         local bar = self.scrollPanel:GetVBar()

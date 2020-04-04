@@ -33,6 +33,13 @@ bc.settings.clientTemplate = {
         default = false,
     },
     {
+        name = "Save open channels on exit",
+        value = "saveOpenChannels",
+        type = "boolean",
+        extra = "Should channels from your previous session be re-opened on join",
+        default = true,
+    },
+    {
         name = "Display suggestions",
         value = "acDisplay",
         type = "boolean",

@@ -297,7 +297,12 @@ hook.Add( "PlayerBindPress", "BC_overrideChatBind", function( ply, bind, pressed
         return
     end
 
-    local succ, err = pcall( function( chan ) bc.base.open( chan ) end, chan )
+    local succ, err = pcall( function() 
+        if chan == "Team" and not DarkRP then
+            bc.channels.open( "Team" )
+        end
+        bc.base.open( chan )
+    end )
     if not succ then
         print( "Chatbox not initialized, disabling." )
         bc.base.enabled = false

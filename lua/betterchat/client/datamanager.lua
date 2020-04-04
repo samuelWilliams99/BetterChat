@@ -1,4 +1,5 @@
 bc.data = {}
+bc.data.savingEnabled = true
 
 local function saveFromTemplate( src, data, template )
     for k, v in pairs( template ) do
@@ -26,7 +27,13 @@ local function loadFromTemplate( data, dest, template )
     end
 end
 
+function bc.data.setSavingEnabled( val )
+    bc.data.savingEnabled = val
+end
+
 function bc.data.saveData()
+    if not bc.data.savingEnabled then return end
+
     local data = {}
     data.channelSettings = bc.data.channels or {}
     data.playerSettings = bc.data.players or {}
@@ -53,6 +60,10 @@ function bc.data.saveData()
         local cmdUsage = table.filter( bc.autoComplete.cmds, function( x ) return x > 0 end )
         data.cmdUsage = table.Merge( table.Copy( bc.autoComplete.disabledCmds or {} ), cmdUsage )
         data.emoteUsage = table.filter( bc.autoComplete.emoteUsage, function( x ) return x > 0 end )
+    end
+
+    if bc.settings.getValue( "saveOpenChannels" ) then
+        data.openChannels = bc.channels.openChannels
     end
 
     file.Write( "bc_data_cl.txt", util.TableToJSON( data ) )
@@ -89,6 +100,8 @@ function bc.data.loadData()
     bc.data.channels = data.channelSettings or {}
 
     bc.data.players = data.playerSettings or {}
+
+    bc.data.openChannels = data.openChannels
 
     bc.autoComplete = { cmds = {}, emoteUsage = {} }
 

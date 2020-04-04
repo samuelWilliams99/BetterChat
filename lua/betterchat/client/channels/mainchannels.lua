@@ -1,3 +1,6 @@
+bc.mainChannels = {}
+bc.mainChannels.allHistory = {}
+
 local function useOverload()
     return bc.settings.getObject( "maxLength", true ).default ~= bc.settings.getServerValue( "maxLength" )
 end
@@ -26,6 +29,7 @@ local function teamSend( self, txt )
 end
 
 hook.Add( "BC_initPanels", "BC_initAddMainChannels", function()
+    bc.mainChannels.allHistory = {}
     bc.channels.add( {
         name = "All",
         icon = "world.png",
@@ -35,6 +39,12 @@ hook.Add( "BC_initPanels", "BC_initAddMainChannels", function()
         addNewLines = true,
         trim = true,
         disabledSettings = { "relayAll", "openKey", "replicateAll", "showAllPrefix" },
+        onMessage = function( self, data )
+            table.insert( bc.mainChannels.allHistory, data )
+            if #bc.mainChannels.allHistory > 15 then
+                table.remove( bc.mainChannels.allHistory, 1 )
+            end
+        end,
         tickMode = 2,
         popMode = 2,
         openOnStart = true,
@@ -48,8 +58,6 @@ hook.Add( "BC_initPanels", "BC_initAddMainChannels", function()
         send = globalSend,
         trim = true,
         addNewLines = true,
-        openOnStart = true,
-        disallowClose = true,
         position = 2,
     } )
     if not DarkRP then
@@ -57,6 +65,7 @@ hook.Add( "BC_initPanels", "BC_initAddMainChannels", function()
             name = "Team",
             icon = "group.png",
             send = teamSend,
+            trim = true,
             onMessage = function()
                 bc.private.lastMessaged = nil
             end,
@@ -68,10 +77,39 @@ hook.Add( "BC_initPanels", "BC_initAddMainChannels", function()
                 table.insert( tab, idx + 1, "(TEAM) " )
             end,
             openOnStart = true,
-            disallowClose = true,
             textEntryColor = bc.defines.theme.teamTextEntry,
             replicateAll = true,
             position = 3,
         } )
     end
+    bc.channels.add( {
+        name = "Prints",
+        icon = "application_xp_terminal.png",
+        addNewLines = true,
+        doPrints = true,
+        position = 100,
+        noSend = true,
+        tickMode = 2,
+        popMode = 2,
+        disabledSettings = { "doPrints", "relayAll", "replicateAll", "showAllPrefix", "showImages", "showGifs" },
+        showTimestamps = true,
+    } )
+end )
+
+local function channelButton( menu, chanName )
+    menu:AddOption( chanName, function()
+        local chan = bc.channels.getChannel( chanName )
+        if not chan then return end
+
+        bc.channels.open( chanName )
+        bc.channels.focus( chanName )
+    end )
+end
+
+hook.Add( "BC_makeChannelButtons", "BC_makeMainButtons", function( menu )
+    channelButton( menu, "Players" )
+    if not DarkRP then
+        channelButton( menu, "Team" )
+    end
+    channelButton( menu, "Prints" )
 end )

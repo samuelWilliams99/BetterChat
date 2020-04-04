@@ -163,6 +163,10 @@ function bc.group.onReceiveGroups()
             end
         end
     end
+
+    if bc.data.openChannels then
+        bc.channels.openSaved()
+    end
 end
 
 function bc.group.onUpdate()

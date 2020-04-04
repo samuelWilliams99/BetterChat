@@ -34,7 +34,6 @@ bc.private.defaultChannel = {
     tickMode = 2,
     popMode = 0,
     hideRealName = true,
-    hideInitMessage = true,
     runCommandSeparately = true,
     hideChatText = true,
     position = 4,
@@ -47,6 +46,7 @@ function bc.private.allowed( ply )
 end
 
 function bc.private.canMessage( ply )
+    if ply == LocalPlayer() then return false end
     return bc.private.allowed() and bc.private.allowed( ply )
 end
 
@@ -124,7 +124,7 @@ net.Receive( "BC_PM", function( len )
 
     if not plySettings or plySettings.ignore == 0 then
         if not bc.channels.isOpen( chan.name ) then
-            bc.private.openChannel( chan )
+            bc.channels.open( chan.name )
         end
 
         local tab = table.Add( {
@@ -153,11 +153,4 @@ function bc.private.createChannel( ply )
     
     bc.channels.add( channel )
     return channel
-end
-
-function bc.private.openChannel( channel )
-    if not channel then return end
-    bc.channels.open( channel.name )
-    bc.channels.messageDirect( "All", { isController = true, doSound = false }, bc.defines.colors.printBlue, "Private channel with ", channel.ply, " has been opened." )
-    bc.channels.messageDirect( channel, { isController = true, doSound = false }, bc.defines.colors.printBlue, "This is a private channel with ", channel.ply, ". Any messages posted here will not affect Expression2 or Starfall chips." )
 end

@@ -12,7 +12,6 @@ bc.logs.defaultChannel = {
     openOnStart = function()
         return bc.logs.allowed()
     end,
-    runCommandSeparately = true,
     showTimestamps = true,
     position = 7,
 }

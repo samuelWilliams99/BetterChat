@@ -116,9 +116,11 @@ concommand.Add( "bc_removesavedata", function()
     bc.data.deleteSaveData()
     if bc.base.enabled then
         bc.base.disable( true )
-        bc.base.enable()
     end
-    chat.AddText( bc.defines.theme.betterChat, "BetterChat ", bc.defines.colors.printBlue, "data has been deleted." )
+    RunConsoleCommand( "bc_reload" )
+    timer.Simple( 0.2, function()
+        chat.AddText( bc.defines.theme.betterChat, "BetterChat", bc.defines.colors.printBlue, " has successfully been restored to factory settings." )
+    end )
 end )
 
 bc.base.enabled = true
@@ -148,7 +150,7 @@ function bc.base.enable()
 
     -- Wait for other prints
     timer.Simple( 0, function()
-        bc.channels.message( nil, bc.defines.theme.betterChat, "BetterChat", bc.defines.colors.printBlue, " initialisation complete." )
+        bc.channels.message( nil, { controller = true, doSound = false }, bc.defines.theme.betterChat, "BetterChat", bc.defines.colors.printBlue, " initialisation complete." )
     end )
     bc.base.initializing = false
     bc.base.close()

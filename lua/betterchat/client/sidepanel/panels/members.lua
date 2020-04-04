@@ -138,6 +138,7 @@ function bc.sidePanel.members.generateMenu( panel, group )
     local lastRole = panel.data[sortedIds[1]]
     for k, id in ipairs( sortedIds ) do
         local role = panel.data[id]
+        local plySettings = bc.sidePanel.players.settings[id] or {}
         local setting
         if role < 2 then
             setting = table.Copy( bc.sidePanel.members.template.member )
@@ -145,12 +146,12 @@ function bc.sidePanel.members.generateMenu( panel, group )
         else
             if not isAdmin then continue end
             setting = table.Copy( bc.sidePanel.members.template.nonMember )
-            setting.disabled = ( group.invites[id] or not bc.sidePanel.players.settings[id].isChatEnabled ) and true or false
+            setting.disabled = ( group.invites[id] or not plySettings.isChatEnabled ) and true or false
             setting.text = setting.disabled and ( group.invites[id] and "Invited" or "Disabled" ) or "Invite"
         end
         local ply = player.GetBySteamID( id )
         if ply then
-            local chatEnabled = bc.sidePanel.players.settings[id] and bc.sidePanel.players.settings[id].isChatEnabled or false
+            local chatEnabled = bc.sidePanel.players.settings[id] and plySettings.isChatEnabled or false
             if not chatEnabled then
                 setting.nameColor = bc.defines.colors.red
                 setting.extra = setting.extra .. ". This person currently has BetterChat disabled"
