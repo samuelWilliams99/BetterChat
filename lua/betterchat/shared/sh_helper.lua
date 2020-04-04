@@ -132,7 +132,7 @@ end
 
 function table.filterSelf( tab, f )
     for k, v in pairs( tab ) do
-        if not f( v ) then
+        if not f( v, k ) then
             tab[k] = nil
         end
     end
@@ -178,6 +178,16 @@ function table.removeByMember( tab, member, value )
             return table.remove( tab, k )
         end
     end
+end
+
+function table.unique( tab )
+    local out = {}
+    for k, v in pairs( tab ) do
+        if not table.HasValue( out, v ) then
+            table.insert( out, v )
+        end
+    end
+    return out
 end
 
 if CLIENT then

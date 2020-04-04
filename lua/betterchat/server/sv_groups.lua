@@ -30,7 +30,12 @@ end
 function bc.group.saveGroups()
     local data = table.Copy( bc.group )
     for k, v in pairs( data.groups ) do
-        v.invites = nil
+        data.groups[k] = {
+            members = v.members,
+            admins = v.admins,
+            id = v.id,
+            name = v.name
+        }
     end
     data.cooldowns = nil
     file.Write( "bc_group_data_sv.txt", util.TableToJSON( data ) )
@@ -50,6 +55,14 @@ function bc.group.loadGroups()
     bc.group.groups = data.groups
     bc.group.inviteExpires = data.inviteExpires or 60
     bc.group.groupIDCounter = data.groupIDCounter
+end
+
+function bc.group.get( groupID )
+    for k, group in pairs( bc.group.groups ) do
+        if group.id == groupID then
+            return group, k
+        end
+    end
 end
 
 function bc.group.newGroup( owner, name )
@@ -124,7 +137,12 @@ function bc.group.handleInvites( group )
                     colour = bc.defines.colors.green,
                 }
             )
+
+            local groupID = group.id
             timer.Simple( bc.group.inviteExpires + 0.5, function()
+                local group = bc.group.get( groupID )
+                if not group then return end
+                
                 bc.group.handleInvites( group )
                 bc.group.sendGroupData( group )
                 bc.group.saveGroups()
@@ -208,6 +226,41 @@ function bc.group.handleGroupChanges( old, new, sendPly )
     end
 end
 
+function bc.group.sanitiseGroup( group, oldGroup )
+    -- Remove new members, thats illegal
+    for k, id in pairs( group.members ) do
+        if not table.HasValue( oldGroup.members, id ) then
+            table.remove( group.members, k )
+        end
+    end
+
+    -- Remove non-member admins, like what the fuk, rude
+    for k, id in pairs( group.admins ) do
+        if not table.HasValue( group.members, id ) then
+            table.remove( group.admins, k )
+        end
+    end
+
+    -- Remove non-strings
+    table.filterSelf( group.admins, isstring )
+    table.filterSelf( group.members, isstring )
+
+    -- Remove duplicates
+    group.admins = table.unique( group.admins )
+    group.members = table.unique( group.members )
+
+
+    -- Remove non-valid ids
+    table.filterSelf( group.invites, function( value, id ) return player.GetBySteamID( id ) end )
+
+    -- Check name
+    if #group.name < 1 or #group.name > 16 then
+        group.name = oldGroup.name
+    end
+
+    group.id = oldGroup.id
+end
+
 bc.group.loadGroups()
 
 concommand.Add( "bc_loadgroups", function()
@@ -241,23 +294,20 @@ net.Receive( "BC_GM", function( len, ply )
 
     local groupID = net.ReadUInt( 16 )
     local msg = net.ReadString()
-    for k, group in pairs( bc.group.groups ) do
-        if group.id == groupID then
-            if table.HasValue( group.members, ply:SteamID() ) then
-                local members = bc.group.getGroupMembers( group )
 
-                bc.logs.sendLog( bc.defines.channelTypes.GROUP, "Group " .. group.id .. " - " .. group.name, ply, ": ", msg )
+    local group = bc.group.get( groupID )
+    if not group then return end
+    if not table.HasValue( group.members, ply:SteamID() ) then return end
 
-                net.Start( "BC_GM" )
-                net.WriteUInt( groupID, 16 )
-                net.WriteEntity( ply )
-                net.WriteString( msg )
-                net.Send( members )
+    local members = bc.group.getGroupMembers( group )
 
-            end
-            break
-        end
-    end
+    bc.logs.sendLog( bc.defines.channelTypes.GROUP, "Group " .. group.id .. " - " .. group.name, ply, ": ", msg )
+
+    net.Start( "BC_GM" )
+    net.WriteUInt( groupID, 16 )
+    net.WriteEntity( ply )
+    net.WriteString( msg )
+    net.Send( members )
 end )
 
 net.Receive( "BC_updateGroup", function( len, ply )
@@ -265,106 +315,109 @@ net.Receive( "BC_updateGroup", function( len, ply )
     
     local groupID = net.ReadUInt( 16 )
     local newData = net.ReadString()
-    for k, group in pairs( bc.group.groups ) do
-        if group.id ~= groupID then continue end
-        if not table.HasValue( group.admins, ply:SteamID() ) then break end
 
-        local oldMembers = bc.group.getGroupMembers( group )
+    local group, k = bc.group.get( groupID )
+    if not group then return end
 
-        local oldGroup = table.Copy( group )
+    if not table.HasValue( group.admins, ply:SteamID() ) then return end
 
-        local groupTable = util.JSONToTable( newData )
-        if not groupTable then return end
-        bc.group.groups[k] = groupTable
-        group = bc.group.groups[k]
+    local oldMembers = bc.group.getGroupMembers( group )
 
-        for k, v in pairs( group.invites ) do
-            local invTime = oldGroup.invites[k]
-            if invTime and invTime + bc.group.inviteExpires > CurTime() then
-                group.invites[k] = invTime
-            end
+    local oldGroup = table.Copy( group )
+
+    local groupTable = util.JSONToTable( newData )
+    if not groupTable then return end
+    bc.group.groups[k] = groupTable
+    group = bc.group.groups[k]
+
+    bc.group.sanitiseGroup( group, oldGroup )
+
+    for k, v in pairs( group.invites ) do
+        local invTime = oldGroup.invites[k]
+        if invTime and invTime + bc.group.inviteExpires > CurTime() then
+            group.invites[k] = invTime
         end
-
-        local newMembers = bc.group.getGroupMembers( group )
-
-        local members = joinTables( oldMembers, newMembers ) --This means players removed and players added both are updated of the change
-
-        bc.group.handleInvites( group )
-
-        bc.group.sendGroupData( group, members )
-
-        if #group.members == 0 then
-            table.remove( bc.group.groups, k )
-        else
-            bc.group.handleGroupChanges( oldGroup, group, ply )
-        end
-
-        bc.group.saveGroups()
-        break
     end
+
+    local newMembers = bc.group.getGroupMembers( group )
+
+    local members = joinTables( oldMembers, newMembers ) --This means players removed and players added both are updated of the change
+
+    bc.group.handleInvites( group )
+
+    bc.group.sendGroupData( group, members )
+
+    if #group.members == 0 then
+        table.remove( bc.group.groups, k )
+    else
+        bc.group.handleGroupChanges( oldGroup, group, ply )
+    end
+
+    bc.group.saveGroups()
+
 end )
 
 net.Receive( "BC_deleteGroup", function( len, ply )
     local groupID = net.ReadUInt( 16 )
     local newData = net.ReadString()
-    for k, group in pairs( bc.group.groups ) do
-        if group.id ~= groupID then continue end
-        if not table.HasValue( group.admins, ply:SteamID() ) then break end
-        local oldMembers = bc.group.getGroupMembers( group )
-        group.members = {}
-        group.admins = {}
-        group.invites = {}
-        bc.group.sendGroupData( group, oldMembers )
-        table.remove( bc.group.groups, k )
-        bc.group.saveGroups()
-    end
+
+    local group, k = bc.group.get( groupID )
+    if not group then return end
+    if not table.HasValue( group.admins, ply:SteamID() ) then return end
+
+    local oldMembers = bc.group.getGroupMembers( group )
+    group.members = {}
+    group.admins = {}
+    group.invites = {}
+    bc.group.sendGroupData( group, oldMembers )
+
+    table.remove( bc.group.groups, k )
+    bc.group.saveGroups()
 end )
 
 net.Receive( "BC_leaveGroup", function( len, ply )
     local groupID = net.ReadUInt( 16 )
-    for k, group in pairs( bc.group.groups ) do
-        if group.id ~= groupID then continue end
-        if not table.HasValue( group.members, ply:SteamID() ) then break end
 
-        local oldMembers = bc.group.getGroupMembers( group )
+    local group, k = bc.group.get( groupID )
+    if not group then return end
+    if not table.HasValue( group.members, ply:SteamID() ) then return end
 
-        table.RemoveByValue( group.members, ply:SteamID() )
-        table.RemoveByValue( group.admins, ply:SteamID() )
+    local oldMembers = bc.group.getGroupMembers( group )
 
-        bc.group.sendGroupData( group, oldMembers )
+    table.RemoveByValue( group.members, ply:SteamID() )
+    table.RemoveByValue( group.admins, ply:SteamID() )
 
-        if #group.members == 0 then
-            table.remove( bc.group.groups, k )
-        else
-            bc.group.groupRankChange( group, ply:SteamID(), 1, 2 )
-        end
+    bc.group.sendGroupData( group, oldMembers )
 
-        bc.group.saveGroups()
+    if #group.members == 0 then
+        table.remove( bc.group.groups, k )
+    else
+        bc.group.groupRankChange( group, ply:SteamID(), 1, 2 )
     end
+
+    bc.group.saveGroups()
 end )
 
 net.Receive( "BC_groupAccept", function( len, ply )
     local groupID = net.ReadUInt( 16 )
     local sId = ply:SteamID()
 
-    for k, group in pairs( bc.group.groups ) do
-        if group.id ~= groupID then continue end
+    local group = bc.group.get( groupID )
+    if not group then return end
 
-        local t = group.invites[sId]
-        if t and t > 0 and ( ( t + bc.group.inviteExpires ) > CurTime() ) then
-            local oldMembers = bc.group.getGroupMembers( group )
-            table.insert( group.members, sId )
-            group.invites[sId] = nil
-            bc.group.sendGroupData( group, oldMembers )
-            bc.group.sendGroupData( group, { ply }, true )
-            bc.group.saveGroups()
+    local t = group.invites[sId]
+    if t and t > 0 and ( ( t + bc.group.inviteExpires ) > CurTime() ) then
+        local oldMembers = bc.group.getGroupMembers( group )
+        table.insert( group.members, sId )
+        group.invites[sId] = nil
+        bc.group.sendGroupData( group, oldMembers )
+        bc.group.sendGroupData( group, { ply }, true )
+        bc.group.saveGroups()
 
-            bc.group.groupRankChange( group, ply:SteamID(), 2, 1 )
-        else
-            group.invites[sId] = nil
-            ULib.clientRPC( ply, "bc.channels.message", "All",
-                bc.defines.colors.printYellow, "Sorry, this invite has expired or is no longer valid." )
-        end
-        break
+        bc.group.groupRankChange( group, ply:SteamID(), 2, 1 )
+    else
+        group.invites[sId] = nil
+        ULib.clientRPC( ply, "bc.channels.message", "All",
+            bc.defines.colors.printYellow, "Sorry, this invite has expired or is no longer valid." )
     end
 end )
