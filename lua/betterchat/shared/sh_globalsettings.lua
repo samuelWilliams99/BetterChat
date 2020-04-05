@@ -254,6 +254,23 @@ function bc.settings.isAllowed( ply, perm )
 end
 
 if CLIENT then
+    function bc.settings.getDefault( setting )
+        local val = "bc_" .. setting.value
+        local def
+        if ConVarExists( val .. "_default" ) then
+            if setting.type == "boolean" then
+                def = GetConVar( val .. "_default" ):GetBool()
+            elseif setting.type == "number" then
+                def = GetConVar( val .. "_default" ):GetInt()
+            end
+        else
+            def = setting.default
+        end
+
+        if type( def ) == "boolean" then def = def and 1 or 0 end
+        return def
+    end
+
     hook.Add( "BC_initPanels", "BC_initClientConvars", function()
         for k, setting in pairs( bc.settings.clientTemplate ) do
             local val = "bc_" .. setting.value
@@ -261,18 +278,7 @@ if CLIENT then
             if setting.type == "button" then continue end
             if ConVarExists( val ) then continue end
 
-            local def
-            if ConVarExists( val .. "_default" ) then
-                if setting.type == "boolean" then
-                    def = GetConVar( val .. "_default" ):GetBool()
-                elseif setting.type == "number" then
-                    def = GetConVar( val .. "_default" ):GetInt()
-                end
-            else
-                def = setting.default
-            end
-
-            if type( def ) == "boolean" then def = def and 1 or 0 end
+            local def = bc.settings.getDefault( setting )
             local var = CreateClientConVar( val, def )
 
             if setting.min or setting.max then
@@ -330,6 +336,19 @@ if CLIENT then
             end
         end )
     end )
+
+    function bc.settings.revertToDefaults()
+        for k, setting in pairs( bc.settings.clientTemplate ) do
+            local val = "bc_" .. setting.value
+
+            if setting.type == "button" then continue end
+
+            local cv = GetConVar( val )
+            if not cv then continue end
+
+            cv:Revert()
+        end
+    end
 
 end
 
