@@ -239,6 +239,16 @@ if SERVER then
     for _, perm in pairs( bc.settings.ulxPermissions ) do
         ULib.ucl.registerAccess( "ulx bc_" .. perm.value, perm.defaultAccess, perm.extra, "BetterChat" )
     end
+
+    hook.Add( "Initialize", "BC_handleChatTime", function()
+        -- Gmod implements 0.5s delay by default, but this chat bypasses it
+        -- It is too risky to allow 0s delay, spam can crash clients
+        -- It's for your own good!
+        local chattimeConvar = GetConVar( "ulx_chattime" )
+        if chattimeConvar and chattimeConvar:GetFloat() == 0 then
+            chattimeConvar:SetFloat( 0.5 )
+        end
+    end )
 end
 
 function bc.settings.isAllowed( ply, perm )

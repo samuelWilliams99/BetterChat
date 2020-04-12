@@ -1,31 +1,17 @@
 bc.mainChannels = {}
 bc.mainChannels.allHistory = {}
 
-local function useOverload()
-    return bc.settings.getObject( "maxLength", true ).default ~= bc.settings.getServerValue( "maxLength" )
-end
-
 local function globalSend( self, txt )
-    if useOverload() then
-        net.Start( "BC_sayOverload" )
-        net.WriteBool( false )
-        net.WriteBool( not LocalPlayer():Alive() )
-        net.WriteString( txt )
-        net.SendToServer()
-    else
-        RunConsoleCommand( "say", txt )
-    end
+    net.Start( "BC_sayOverload" )
+    net.WriteBool( false )
+    net.WriteString( txt )
+    net.SendToServer()
 end
 local function teamSend( self, txt )
-    if useOverload() then
-        net.Start( "BC_sayOverload" )
-        net.WriteBool( true )
-        net.WriteBool( not LocalPlayer():Alive() )
-        net.WriteString( txt )
-        net.SendToServer()
-    else
-        RunConsoleCommand( "say_team", txt )
-    end
+    net.Start( "BC_sayOverload" )
+    net.WriteBool( true )
+    net.WriteString( txt )
+    net.SendToServer()
 end
 
 hook.Add( "BC_initPanels", "BC_initAddMainChannels", function()

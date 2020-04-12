@@ -38,9 +38,3 @@ function bc.logs.sendLogPlayers( channelType, channel, ... )
     net.WriteTable( { ... } )
     net.Send( plys )
 end
-
-hook.Add( "PlayerSay", "BC_logTeam", function( ply, text, t )
-    if t then
-        bc.logs.sendLog( bc.defines.channelTypes.TEAM, "Team - " .. team.GetName( ply:Team() ), ply, ": ", text )
-    end
-end, HOOK_MONITOR_HIGH )

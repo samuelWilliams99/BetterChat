@@ -9,28 +9,73 @@ include( "sv_adminmessages.lua" )
 include( "sv_groups.lua" )
 include( "sv_giphy.lua" )
 
-net.Receive( "BC_sayOverload", function( len, ply )
-    local isTeam = net.ReadBool()
-    local isDead = net.ReadBool()
-    local msg = net.ReadString()
-    local recips = isTeam and team.GetPlayers( ply:Team() ) or player.GetAll()
+if not DarkRP then
+    local function playerSayInit()
+        bc.util.replaceHookTable( "PlayerSay" )
 
+        hook.Add( "BC_Pre_PlayerSay", "bc_playerSayTrim", function( ply, msg, ... )
+            msg = bc.manager.trimMessage( msg )
+            return bc.util.HOOK_ALTER, ply, msg, ...
+        end )
+
+        hook.Add( "BC_Post_PlayerSay", "bc_playerSaySend", function( hookArgs, returnArgs )
+            local ply, msg, isTeam = unpack( hookArgs )
+            if returnArgs[1] ~= nil then
+                msg = returnArgs[1]
+            end
+
+            if not msg or msg == "" then return "" end
+
+            local recips = isTeam and team.GetPlayers( ply:Team() ) or player.GetAll()
+
+            net.Start( "BC_sayOverload" )
+            net.WriteEntity( ply )
+            net.WriteBool( isTeam )
+            net.WriteString( msg )
+            net.Send( recips )
+
+            if isTeam then
+                bc.logs.sendLog( bc.defines.channelTypes.TEAM, "Team - " .. team.GetName( ply:Team() ), ply, ": ", msg )
+            else
+                bc.logs.sendLogConsole( "Global", ply, ": ", msg )
+            end
+
+            return ""
+        end )
+    end
+
+    if GAMEMODE then
+        playerSayInit()
+    else
+        hook.Once( "OnGamemodeLoaded", playerSayInit )
+    end
+else
+    -- Wait for darkrp to make its stuff
+    hook.Add( "Initialize", "BC_replacePlayerSay", function()
+        -- Wrap it up, neatly :)
+        local oldPlayerSay = GAMEMODE.PlayerSay
+        function GAMEMODE:PlayerSay( ply, msg, isTeam )
+            msg = bc.manager.trimMessage( msg )
+            -- DarkRP's PlayerSay always returns "", so no need to worry about networking messages here
+            oldPlayerSay( GAMEMODE, ply, msg, isTeam )
+            return ""
+        end
+    end )
+end
+
+function bc.manager.trimMessage( msg )
     local maxLen = bc.settings.getServerValue( "maxLength" )
     if #msg > maxLen then
         msg = string.sub( msg, 1, maxLen )
     end
+    return msg
+end
 
-    local ret = hook.Run( "PlayerSay", ply, msg, isTeam )
-    if ret ~= nil then msg = ret end
+net.Receive( "BC_sayOverload", function( len, ply )
+    local isTeam = net.ReadBool()
+    local msg = net.ReadString()
 
-    if not msg or msg == "" then return end
-
-    net.Start( "BC_sayOverload" )
-    net.WriteEntity( ply )
-    net.WriteBool( isTeam )
-    net.WriteBool( isDead )
-    net.WriteString( msg )
-    net.Send( recips )
+    hook.Run( "PlayerSay", ply, msg, isTeam )
 end )
 
 -- Overloads
@@ -122,6 +167,10 @@ function bc.manager.getClients( chanName, sender )
         end
     end
     return {}
+end
+
+function bc.manager.canMessage( ply )
+    return hook.GetULibTable().PlayerSay[1].ulxPlayerSay.fn( ply ) ~= ""
 end
 
 hook.Add( "BC_playerReady", "BC_sendCommandsInit", function( ply )

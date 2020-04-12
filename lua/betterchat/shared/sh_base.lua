@@ -118,7 +118,7 @@ concommand.Add( "bc_removesavedata", function()
     if bc.base.enabled then
         bc.base.disable( true )
     end
-    
+
     RunConsoleCommand( "bc_reload" )
     timer.Simple( 0.2, function()
         chat.AddText( bc.defines.theme.betterChat, "BetterChat", bc.defines.colors.printBlue, " has successfully been restored to factory settings." )

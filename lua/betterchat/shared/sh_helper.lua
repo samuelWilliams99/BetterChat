@@ -300,11 +300,12 @@ end
 
 local hookCounter = 0
 function hook.Once( event, f )
+    if type( f ) ~= "function" then error( "Callback must be a function" ) end
     hookCounter = hookCounter + 1
     local id = "HOOKONCE" .. hookCounter
     hook.Add( event, id, function( ... )
-        f( ... )
         hook.Remove( event, id )
+        f( ... )
     end )
 end
 

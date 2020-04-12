@@ -15,7 +15,7 @@ local function cleanPanel( panel, w, h, padding )
 end
 
 local function cleanTab( data, first )
-    tab = data.Tab
+    local tab = data.Tab
     tab.first = first
     function tab:Paint( w, h )
         local a = self:IsActive()

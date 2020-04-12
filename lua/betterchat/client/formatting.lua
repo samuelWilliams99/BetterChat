@@ -469,7 +469,7 @@ end
 net.Receive( "BC_sayOverload", function()
     local ply = net.ReadEntity()
     local isTeam = net.ReadBool()
-    local isDead = net.ReadBool()
+    local isDead = ply and IsValid( ply ) and ( not ply:Alive() )
     local msg = net.ReadString()
     if not hook.Run( "OnPlayerChat", ply, msg, isTeam, isDead ) then return end
     if not bc.base.enabled then

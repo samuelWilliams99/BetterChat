@@ -1,21 +1,5 @@
 bc.group = {}
 bc.group.inviteExpires = 60
-bc.group.cooldowns = {}
-
--- Stops game-crashing spam
-local GROUP_MESSAGE_COOLDOWN = 0.1
-
-local function pastCooldown( ply )
-    local lastMessage = bc.group.cooldowns[ply]
-    local cTime = CurTime()
-
-    if lastMessage and cTime - lastMessage < GROUP_MESSAGE_COOLDOWN then
-        return false
-    end
-    bc.group.cooldowns[ply] = cTime
-
-    return true
-end
 
 local function joinTables( a, b )
     local aCopy = table.Copy( a )
@@ -37,7 +21,6 @@ function bc.group.saveGroups()
             name = v.name
         }
     end
-    data.cooldowns = nil
     file.Write( "bc_group_data_sv.txt", util.TableToJSON( data ) )
 end
 
@@ -290,7 +273,7 @@ net.Receive( "BC_newGroup", function( len, ply )
 end )
 
 net.Receive( "BC_GM", function( len, ply )
-    if not pastCooldown( ply ) then return end
+    if not bc.manager.canMessage( ply ) then return end
 
     local groupID = net.ReadUInt( 16 )
     local msg = net.ReadString()
@@ -311,7 +294,7 @@ net.Receive( "BC_GM", function( len, ply )
 end )
 
 net.Receive( "BC_updateGroup", function( len, ply )
-    if not pastCooldown( ply ) then return end
+    if not bc.manager.canMessage( ply ) then return end
     
     local groupID = net.ReadUInt( 16 )
     local newData = net.ReadString()

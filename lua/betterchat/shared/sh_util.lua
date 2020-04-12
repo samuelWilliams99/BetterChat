@@ -228,3 +228,99 @@ if CLIENT then
         MsgC( unpack( data ) )
     end
 end
+
+bc.util.hooks = {}
+bc.util.HOOK_ALTER = 0
+bc.util.HOOK_RETURN = 1
+
+local function makeHookWrapper( event )
+    return {
+        BC_GlobalPlayerSayManager = {
+            isstring = true,
+            fn = function( ... )
+                local data = { ... }
+
+                local preRes = { hook.Run( "BC_Pre_" .. event, unpack( data ) ) }
+                if #preRes > 0 then
+                    local returnType = table.remove( preRes, 1 )
+                    if returnType == bc.util.HOOK_ALTER then
+                        data = preRes
+                    elseif returnType == bc.util.HOOK_RETURN then
+                        return unpack( preRes )
+                    else
+                        return returnType, unpack( preRes )
+                    end
+                end
+
+                local res = { bc.util.runReplacedHook( event, unpack( data ) ) }
+
+                local postRes = { hook.Run( "BC_Post_" .. event, data, res ) }
+                if #postRes > 0 then
+                    res = postRes
+                end
+
+                return unpack( res )
+            end
+        }
+    }
+end
+
+function bc.util.replaceHookTable( event )
+    if bc.util.hooks[event] then return end
+    print( "[BetterChat] Overloading " .. event .. " hook tables" )
+    local uLibHookTbl = hook.GetULibTable()
+
+    -- Forces tables to exist
+    if not uLibHookTbl[event] then
+        hook.Add( event, "bc_TempHook", function() end )
+        hook.Remove( event, "bc_TempHook" )
+    end
+
+    local wrapper = makeHookWrapper( event )
+
+    bc.util.hooks[event] = uLibHookTbl[event]
+    uLibHookTbl[event] = {[-2]={}, [-1]={}, [0]=wrapper, [1]={}, [2]={}}
+
+    for i = -2, 2 do
+        local mt = {}
+        function mt:__index( k )
+            return bc.util.hooks[event][i][k]
+        end
+        function mt:__newindex( k, v )
+            bc.util.hooks[event][i][k] = v
+        end
+        setmetatable( uLibHookTbl[event][i], mt )
+    end
+end
+
+-- Code from https://github.com/TeamUlysses/ulib/blob/master/lua/ulib/shared/hook.lua
+function bc.util.runReplacedHook( event, ... )
+    local hookTbl = bc.util.hooks[event]
+    if hookTbl then
+        for i=-2, 2 do
+            for k, v in pairs( hookTbl[i] ) do
+                if ( v.isstring ) then
+                    local a, b, c, d, e, f = v.fn( ... )
+
+                    if ( a ~= nil and i > -2 and i < 2 ) then
+                        return a, b, c, d, e, f
+                    end
+                else
+                    if ( IsValid( k ) ) then
+                        local a, b, c, d, e, f = v.fn( k, ... )
+
+                        if ( a ~= nil and i > -2 and i < 2 ) then
+                            return a, b, c, d, e, f
+                        end
+                    else
+                        hookTbl[i][k] = nil
+                    end
+                end
+            end
+        end
+    end
+
+    if GAMEMODE and GAMEMODE[event] then
+        return GAMEMODE[event]( GAMEMODE, ... )
+    end
+end
