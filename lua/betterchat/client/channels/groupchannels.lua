@@ -36,12 +36,15 @@ bc.group.defaultChannel = {
             end
         end
         function membersBtn:Paint( w, h )
+            if not panel.doPaint then return end
             local animState = bc.sidePanel.panels["Group Members"].animState
             self:SetColor( chatHelper.lerpCol( bc.defines.theme.groupMembers, bc.defines.theme.groupMembersFocused, animState ) )
             surface.SetMaterial( bc.defines.materials.groupBW )
             surface.SetDrawColor( self:GetColor() )
             surface.DrawTexturedRect( 0, 0, w, h )
         end
+
+
     end,
     runCommandSeparately = true,
     hideChatText = true,

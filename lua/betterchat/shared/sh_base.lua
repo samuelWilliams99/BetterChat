@@ -136,7 +136,7 @@ hook.Add( "InitPostEntity", "BC_loaded", function()
     else
         chat.AddText( bc.defines.theme.betterChat, "BetterChat ", bc.defines.colors.printBlue, "is currently disabled. Go to Q->Options->BetterChat (or run bc_enable) to enable it." )
     end
-end )
+end, HOOK_MONITOR_HIGH )
 
 bc.sidePanel.players.parse()
 
@@ -196,9 +196,6 @@ function bc.base.open( selectedTab )
 
     hook.Run( "StartChat" )
     bc.base.isOpen = true
-    net.Start( "BC_chatOpenState" )
-    net.WriteBool( true )
-    net.SendToServer()
 end
 
 function bc.base.close()
@@ -206,19 +203,37 @@ function bc.base.close()
     bc.overload.old.Close()
 
     bc.base.lastChannel = ( bc.channels.getActiveChannel() or {} ).name
+    bc.input.historyIndex = 0
+    bc.input.historyInput = ""
 
     bc.graphics.hide()
 
     hook.Run( "FinishChat" )
     bc.base.isOpen = false
-    net.Start( "BC_chatOpenState" )
-    net.WriteBool( false )
-    net.SendToServer()
 
     -- Clear the text entry
     hook.Run( "ChatTextChanged", "" )
 end
 
+hook.Add( "StartChat", "BC_startChat", function()
+    bc.base.sendOpenState( true )
+end )
+
+hook.Add( "FinishChat", "BC_finishChat", function()
+    bc.base.sendOpenState( false )
+end )
+
+function bc.base.sendOpenState( state )
+    net.Start( "BC_chatOpenState" )
+    net.WriteBool( state )
+    net.SendToServer()
+end
+
 function bc.base.setPlayersOpen( ply, val )
     bc.base.playersOpen[ply] = val
+end
+
+local plyMeta = FindMetaTable( "Player" )
+function plyMeta:IsTyping()
+    return bc.base.playersOpen[self]
 end

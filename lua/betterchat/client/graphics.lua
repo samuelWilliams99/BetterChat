@@ -14,7 +14,7 @@ function bc.graphics.build()
 
     g.font = "BC_default"
     g.minSize = { x = 400, y = 250 }
-    
+
     g.originalSize = { x = 600, y = 300 }
     g.size = table.Copy( bc.data.size or g.originalSize )
 
@@ -96,6 +96,9 @@ function bc.graphics.build()
         draw.RoundedBox( 0, 5, h - 26, w - 42, 21, col )
         --right bg
         draw.RoundedBox( 0, w - 30, h - 31, 30, 31, bc.defines.theme.background )
+
+        --anything else
+        hook.Run( "BC_framePaint", self, w, h )
 
     end
     d.chatFrame.doPaint = true
@@ -202,6 +205,7 @@ function bc.graphics.build()
         local chan = bc.channels.getActiveChannel()
         if not chan then return end
         text:SetDisabled( chan.noSend )
+        text:SetCursor( chan.noSend and "no" or "beam" )
         text:SetTooltip( chan.noSend and "This channel does not allow messages to be sent" or nil )
     end )
 
@@ -250,7 +254,7 @@ end
 hook.Add( "PlayerButtonDown", "BC_buttonDown", function( ply, keyCode )
     if not bc.base.enabled or ply ~= LocalPlayer() then return end
 
-    for k, v in pairs( bc.channels.channels ) do
+    for k, v in pairs( bc.channels.channels or {} ) do
         if v.openKey and v.openKey == keyCode then
             bc.base.open( v.name )
             return
@@ -297,7 +301,7 @@ hook.Add( "PlayerBindPress", "BC_overrideChatBind", function( ply, bind, pressed
         return
     end
 
-    local succ, err = pcall( function() 
+    local succ, err = pcall( function()
         if chan == "Team" and not DarkRP then
             bc.channels.open( "Team" )
         end

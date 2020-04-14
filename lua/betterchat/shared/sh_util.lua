@@ -1,4 +1,4 @@
-bc.util = {}
+bc.util = bc.util or {}
 
 -- Can a player run a command on a person (via ULX)
 function bc.util.canRunULX( cmd, target, ply )
@@ -229,13 +229,13 @@ if CLIENT then
     end
 end
 
-bc.util.hooks = {}
+bc.util.hooks = bc.util.hooks or {}
 bc.util.HOOK_ALTER = 0
 bc.util.HOOK_RETURN = 1
 
 local function makeHookWrapper( event )
     return {
-        BC_GlobalPlayerSayManager = {
+        BC_GlobalHookManager = {
             isstring = true,
             fn = function( ... )
                 local data = { ... }
@@ -267,7 +267,7 @@ end
 
 function bc.util.replaceHookTable( event )
     if bc.util.hooks[event] then return end
-    print( "[BetterChat] Overloading " .. event .. " hook tables" )
+    print( "[BetterChat] Overloading " .. event .. " hook table" )
     local uLibHookTbl = hook.GetULibTable()
 
     -- Forces tables to exist
@@ -293,6 +293,15 @@ function bc.util.replaceHookTable( event )
     end
 end
 
+function bc.util.undoReplaceHookTable( event )
+    if not bc.util.hooks[event] then return end -- Not replaced
+    print( "[BetterChat] Undoing " .. event .. " hook table overload" )
+
+    local uLibHookTbl = hook.GetULibTable()
+    uLibHookTbl[event] = bc.util.hooks[event]
+    bc.util.hooks[event] = nil
+end
+
 -- Code from https://github.com/TeamUlysses/ulib/blob/master/lua/ulib/shared/hook.lua
 function bc.util.runReplacedHook( event, ... )
     local hookTbl = bc.util.hooks[event]
@@ -300,16 +309,22 @@ function bc.util.runReplacedHook( event, ... )
         for i=-2, 2 do
             for k, v in pairs( hookTbl[i] ) do
                 if ( v.isstring ) then
-                    local a, b, c, d, e, f = v.fn( ... )
+                    local success, a, b, c, d, e, f = xpcall( v.fn, function( e )
+                        print( "Error in " .. event .. ", " .. k .. ": " .. tostring( a ) )
+                        print( debug.traceback() )
+                    end, ... )
 
-                    if ( a ~= nil and i > -2 and i < 2 ) then
+                    if success and a ~= nil and i > -2 and i < 2 then
                         return a, b, c, d, e, f
                     end
                 else
                     if ( IsValid( k ) ) then
-                        local a, b, c, d, e, f = v.fn( k, ... )
+                        local success, a, b, c, d, e, f = xpcall( v.fn, function( e )
+                            print( "Error in " .. event .. ", " .. k .. ": " .. tostring( a ) )
+                            print( debug.traceback() )
+                        end, ... )
 
-                        if ( a ~= nil and i > -2 and i < 2 ) then
+                        if success and a ~= nil and i > -2 and i < 2 then
                             return a, b, c, d, e, f
                         end
                     else
@@ -323,4 +338,15 @@ function bc.util.runReplacedHook( event, ... )
     if GAMEMODE and GAMEMODE[event] then
         return GAMEMODE[event]( GAMEMODE, ... )
     end
+end
+
+function bc.util.you( ply )
+    ply = ply or LocalPlayer()
+    return {
+        formatter = true,
+        type = "clickable",
+        signal = "Player-" .. ply:SteamID(),
+        text = "You",
+        color = bc.defines.colors.ulxYou
+    }
 end

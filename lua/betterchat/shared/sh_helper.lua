@@ -312,12 +312,25 @@ end
 function hook.When( cond, f )
     hookCounter = hookCounter + 1
     local id = "HOOKWHEN" .. hookCounter
-    hook.Add( "Think", id, function()
+    hook.Add( "Think", id, function( ... )
         if cond() then
             hook.Remove( "Think", id )
-            f()
+            f( ... )
         end
     end )
+end
+
+function hook.First( events, f )
+    hookCounter = hookCounter + 1
+    local id = "HOOKFIRST" .. hookCounter
+    for _, event in pairs( events ) do
+        hook.Add( event, id, function( ... )
+            for _, otherEvent in pairs( events ) do
+                hook.Remove( otherEvent, id )
+            end
+            f( event, ... )
+        end )
+    end
 end
 
 function net.SendEmpty( id, ply )

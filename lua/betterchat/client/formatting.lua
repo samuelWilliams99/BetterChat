@@ -3,7 +3,7 @@ local f = bc.formatting
 
 function f.formatMessage( ply, text, dead, defaultColor, dontRecolorColon, data )
 
-    local text = table.concat( string.Explode( "\t[\t]+", text, true ), "\t" )
+    text = table.concat( string.Explode( "\t[\t]+", text, true ), "\t" )
 
     local tab = {}
     defaultColor = defaultColor or bc.defines.colors.white
@@ -49,13 +49,13 @@ function f.formatText( text, defaultColor, ply )
 
     -- Make ulx commands grey
     if text[1] == "!" and text[2] ~= "!" and bc.settings.getValue( "colorCmds" ) then
-        local s, e = string.find( text, " ", nil, true )
-        if not e then e = #text + 1 end
-        if e ~= 2 then
+        local spacePos = string.find( text, " ", nil, true )
+        if not spacePos then spacePos = #text + 1 end
+        if spacePos ~= 2 then
             table.insert( tab, bc.defines.theme.commands )
-            table.insert( tab, string.sub( text, 0, e - 1 ) )
+            table.insert( tab, string.sub( text, 0, spacePos - 1 ) )
             table.insert( tab, defaultColor )
-            text = string.sub( text, e, -1 )
+            text = string.sub( text, spacePos, -1 )
         end
     end
 
@@ -186,7 +186,7 @@ function f.formatEmotes( tab )
         end
         local str = v
         local success
-        
+
         while true do
             success, str = pushEmote( longEmoted, str, longEmotePattern )
             if not success then break end
@@ -432,38 +432,40 @@ function f.convertLinks( v )
 end
 
 function f.defaultFormatMessage( ply, text, teamChat, dead, col1, col2, data )
-    local tab, madeChange = hook.Run( "BC_getDefaultTab", unpack( data ) )
-    if tab and madeChange then
-        return tab
-    else
-        tab = {}
-        if dead then
-            table.insert( tab, bc.defines.colors.red )
-            table.insert( tab, "*DEAD* " )
+    if data then
+        local tab, madeChange = hook.Run( "BC_getDefaultTab", unpack( data ) )
+        if tab and madeChange then
+            return tab
         end
-
-        if teamChat then
-            table.insert( tab, bc.defines.colors.teamGreen )
-            table.insert( tab, "(TEAM) " )
-        end
-
-        if type( ply ) == "Player" and ply:IsValid() then
-            table.insert( tab, GAMEMODE:GetTeamColor( ply ) )
-            table.insert( tab, ply )
-            table.insert( tab, bc.defines.colors.white )
-        elseif type( ply ) == "Entity" and not ply:IsValid() then
-            table.insert( tab, bc.defines.colors.printBlue )
-            table.insert( tab, "Console" )
-            table.insert( tab, bc.defines.colors.white )
-        else
-            table.insert( tab, col1 )
-            table.insert( tab, ply )
-            table.insert( tab, col2 )
-        end
-        table.insert( tab, ": " .. text )
-
-        return tab
     end
+
+    local tab = {}
+    if dead then
+        table.insert( tab, bc.defines.colors.red )
+        table.insert( tab, "*DEAD* " )
+    end
+
+    if teamChat then
+        table.insert( tab, bc.defines.colors.teamGreen )
+        table.insert( tab, "(TEAM) " )
+    end
+
+    if type( ply ) == "Player" and ply:IsValid() then
+        table.insert( tab, GAMEMODE:GetTeamColor( ply ) )
+        table.insert( tab, ply )
+        table.insert( tab, bc.defines.colors.white )
+    elseif type( ply ) == "Entity" and not ply:IsValid() then
+        table.insert( tab, bc.defines.colors.printBlue )
+        table.insert( tab, "Console" )
+        table.insert( tab, bc.defines.colors.white )
+    else
+        table.insert( tab, col1 )
+        table.insert( tab, ply )
+        table.insert( tab, col2 )
+    end
+    table.insert( tab, ": " .. text )
+
+    return tab
 end
 
 net.Receive( "BC_sayOverload", function()
@@ -471,63 +473,52 @@ net.Receive( "BC_sayOverload", function()
     local isTeam = net.ReadBool()
     local isDead = ply and IsValid( ply ) and ( not ply:Alive() )
     local msg = net.ReadString()
-    if not hook.Run( "OnPlayerChat", ply, msg, isTeam, isDead ) then return end
-    if not bc.base.enabled then
-        chat.AddText( unpack( f.defaultFormatMessage( ply, msg, isTeam, isDead ) ) )
-    end
+    hook.Run( "OnPlayerChat", ply, msg, isTeam, isDead )
 end )
 
-function f.onPlayerSayHook( ... )
-    for priority = -2, 2 do
-        for k, v in pairs( bc.overload.hooks.OnPlayerChat ) do
-            if type( v ) == "function" then
-                v = {
-                    [0] = { fn = v }
-                }
-            end
-            if not v[priority] then continue end
-            local success, ret = xpcall( v[priority].fn, function( e )
-                print( "Error in OnPlayerChat hook: " .. k )
-                print( e )
-            end, ... )
-            if success and ret ~= nil then
-                return ret
-            end
+-- Should be OnGamemodeLoaded, but that isn't called in non dedicated servers (single or p2p), so fallback on Initialize
+hook.First( { "Initialize", "OnGamemodeLoaded" }, function()
+    print( "[BetterChat] Replacing base OnPlayerChat" )
+    f.oldOnPlayerChat = f.oldOnPlayerChat or ( GAMEMODE.OnPlayerChat or function() end )
+    function GAMEMODE:OnPlayerChat( ply, text, teamChat, dead, pre, col1, col2 )
+        if not bc.base.enabled then
+            return f.oldOnPlayerChat( GAMEMODE, ply, text, teamChat, dead, pre, col1, col2 )
         end
+
+        local args = { ply, text, teamChat, dead, pre, col1, col2 }
+
+        local maxLen = bc.settings.getServerValue( "maxLength" )
+        if #text > maxLen then
+            text = string.sub( text, 1, maxLen )
+        end
+
+        local plyValid = ply and ply:IsValid()
+        if plyValid and bc.sidePanel.players.settings[ply:SteamID()] and bc.sidePanel.players.settings[ply:SteamID()].ignore ~= 0 then return true end
+
+        local tab
+        if pre then
+            tab = f.formatMessage( ply, text, false, col2, true, args )
+            tab[2] = { formatter = true, type = "escape" }
+            tab[3] = {
+                formatter = true,
+                type = plyValid and "clickable" or "text",
+                signal = "Player-" .. ( plyValid and ply:SteamID() or "" ),
+                text = pre,
+                color = col1
+            }
+        else
+            tab = f.formatMessage( ply, text, dead )
+        end
+
+        bc.channels.message( { ( teamChat and not DarkRP ) and "Team" or "Players" }, unpack( tab ) )
+
+        if bc.overload.old.AddText then
+            bc.overload.old.AddText( unpack( f.defaultFormatMessage( pre or ply, text, teamChat, pre and false or dead, col1, col2, args ) ) ) --Keep old chat up to date
+        end
+
+        return true
     end
-
-    local ply, text, teamChat, dead, pre, col1, col2 = ... -- pre, col1 and col2 are supplied by DarkRP
-
-    local maxLen = bc.settings.getServerValue( "maxLength" )
-    if #text > maxLen then
-        text = string.sub( text, 1, maxLen )
-    end
-
-    local plyValid = ply and ply:IsValid()
-    if plyValid and bc.sidePanel.players.settings[ply:SteamID()] and bc.sidePanel.players.settings[ply:SteamID()].ignore ~= 0 then return true end
-
-    local tab
-    if pre then
-        tab = f.formatMessage( ply, text, false, col2, true, { ... } )
-        tab[2] = { formatter = true, type = "escape" }
-        tab[3] = {
-            formatter = true,
-            type = ( plyValid and "clickable" or "text" ),
-            signal = "Player-" .. ( plyValid and ply:SteamID() or "" ),
-            text = pre,
-            color = col1
-        }
-    else
-        tab = f.formatMessage( ply, text, dead )
-    end
-
-    bc.channels.message( { ( teamChat and not DarkRP ) and "Team" or "Players" }, unpack( tab ) )
-
-    if bc.overload.old.AddText then
-        bc.overload.old.AddText( unpack( f.defaultFormatMessage( pre or ply, text, teamChat, pre and false or dead, col1, col2, { ... } ) ) ) --Keep old chat up to date
-    end
-    return true
-end
+end )
 
 function f.print( ... )
     local data = { ... }

@@ -120,7 +120,7 @@ function bc.sidePanel.renderSettingFuncs.color( sPanel, panel, data, y, w, h, se
             "|" .. chatHelper.padString( col.b, 3, nil, true ) ..
             ( allowedAlpha and ( "|" .. chatHelper.padString( col.a, 3, nil, true ) ) or "" )
         )
-        self:SetCursor( self:GetDisabled() and "no" or "Hand" )
+        self:SetCursor( self:GetDisabled() and "no" or "hand" )
     end
 
     return bw

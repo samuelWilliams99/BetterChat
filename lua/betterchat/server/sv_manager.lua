@@ -9,8 +9,8 @@ include( "sv_adminmessages.lua" )
 include( "sv_groups.lua" )
 include( "sv_giphy.lua" )
 
-if not DarkRP then
-    local function playerSayInit()
+hook.Add( "Initialize", "BC_playerSayInit", function()
+    if not DarkRP then
         bc.util.replaceHookTable( "PlayerSay" )
 
         hook.Add( "BC_Pre_PlayerSay", "bc_playerSayTrim", function( ply, msg, ... )
@@ -42,26 +42,21 @@ if not DarkRP then
 
             return ""
         end )
-    end
-
-    if GAMEMODE then
-        playerSayInit()
     else
-        hook.Once( "OnGamemodeLoaded", playerSayInit )
-    end
-else
-    -- Wait for darkrp to make its stuff
-    hook.Add( "Initialize", "BC_replacePlayerSay", function()
-        -- Wrap it up, neatly :)
+        -- Dark RP already does all the hook handling, just wrap up what they have
         local oldPlayerSay = GAMEMODE.PlayerSay
         function GAMEMODE:PlayerSay( ply, msg, isTeam )
             msg = bc.manager.trimMessage( msg )
+            if isTeam then
+                -- Get fucked other groups
+                return ""
+            end
             -- DarkRP's PlayerSay always returns "", so no need to worry about networking messages here
             oldPlayerSay( GAMEMODE, ply, msg, isTeam )
             return ""
         end
-    end )
-end
+    end
+end )
 
 function bc.manager.trimMessage( msg )
     local maxLen = bc.settings.getServerValue( "maxLength" )
@@ -170,7 +165,11 @@ function bc.manager.getClients( chanName, sender )
 end
 
 function bc.manager.canMessage( ply )
-    return hook.GetULibTable().PlayerSay[1].ulxPlayerSay.fn( ply ) ~= ""
+    local ulxPlayerSay = hook.GetULibTable().PlayerSay[1].ulxPlayerSay
+    if type( ulxPlayerSay ) == "table" then
+        ulxPlayerSay = ulxPlayerSay.fn
+    end
+    return ulxPlayerSay( ply ) ~= ""
 end
 
 hook.Add( "BC_playerReady", "BC_sendCommandsInit", function( ply )

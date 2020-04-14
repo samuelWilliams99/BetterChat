@@ -8,7 +8,6 @@ include( "betterchat/client/channels/teamoverload.lua" )
 
 bc.channels = bc.channels or {}
 bc.channels.panels = bc.channels.panels or {}
-bc.channels.openChannels = bc.channels.openChannels or {}
 
 -- Changes arguments of AddSheet to AddSheet( label, panel, material, tabIndex )
 local function alterAddSheet( sheet )
@@ -50,6 +49,8 @@ end
 hook.Add( "BC_preInitPanels", "BC_initChannels", function()
     bc.channels.channels = {}
     bc.channels.openChannels = {}
+    bc.channels.lastMessageTime = 0
+
     local g = bc.graphics
     local d = g.derma
 
@@ -162,6 +163,21 @@ function bc.channels.openSaved()
     bc.data.setSavingEnabled( true )
 end
 
+function bc.channels.canMessage()
+    local cTime = CurTime()
+    local deltaTime = cTime - bc.channels.lastMessageTime
+
+    bc.channels.minDelay = GetConVar( "ulx_chattime" ):GetFloat()
+    local canMessage = deltaTime > bc.channels.minDelay
+
+    if canMessage then
+        bc.channels.lastMessageTime = cTime
+        return true
+    end
+
+    return false
+end
+
 hook.Add( "BC_postInitPanels", "BC_postInitChannels", function()
     bc.channels.openSaved()
 
@@ -186,18 +202,40 @@ hook.Add( "BC_channelChanged", "BC_changeRPListener", function()
     end
 end )
 
+hook.Add( "BC_framePaint", "BC_paintCooldown", function( panel, w, h )
+    if bc.channels.showCooldown then
+        local prog = ( CurTime() - bc.channels.lastMessageTime ) / bc.channels.minDelay
+        prog = math.Clamp( prog, 0, 1 )
+
+        draw.RoundedBox( 0, 5, h - 25 + prog * 21, w - 42, ( 1 - prog ) * 21, bc.defines.theme.textEntryCooldown )
+
+        if prog == 1 then
+            bc.channels.showCooldown = false
+        end
+    end
+end )
+
 hook.Add( "BC_keyCodeTyped", "BC_sendMessageHook", function( code, ctrl, shift )
     if code == KEY_ENTER then
-        local channel = bc.channels.getActiveChannel()
         local txt = bc.graphics.derma.textEntry:GetText()
+        local channel = bc.channels.getActiveChannel()
+
+        if #txt == 0 then
+            bc.base.close()
+            return true
+        end
+
+        if not bc.channels.canMessage() then
+            bc.channels.showCooldown = true
+            return
+        end
+
         bc.graphics.derma.textEntry:SetText( "" )
 
         local abort, dontClose = hook.Run( "BC_messageCanSend", channel, txt )
 
         if abort then
             if not dontClose then
-                bc.input.historyIndex = 0
-                bc.input.historyInput = ""
                 bc.base.close()
             end
             return
@@ -207,12 +245,8 @@ hook.Add( "BC_keyCodeTyped", "BC_sendMessageHook", function( code, ctrl, shift )
             txt = string.Trim( txt )
         end
 
-        if #txt > 0 then
-            channel.send( channel, txt )
-            table.insert( bc.input.history, txt )
-        end
-        bc.input.historyIndex = 0
-        bc.input.historyInput = ""
+        channel.send( channel, txt )
+        table.insert( bc.input.history, txt )
 
         hook.Run( "BC_messageSent", channel, txt )
         bc.base.close()
@@ -249,7 +283,7 @@ hook.Add( "BC_keyCodeTyped", "BC_sendMessageHook", function( code, ctrl, shift )
             end
         elseif code == KEY_W and ctrl then
             local channel = bc.channels.getActiveChannel()
-            
+
             if not channel.disallowClose then
                 bc.channels.close( channel.name )
             end

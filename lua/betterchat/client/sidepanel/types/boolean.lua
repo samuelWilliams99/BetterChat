@@ -40,7 +40,7 @@ function bc.sidePanel.renderSettingFuncs.boolean( sPanel, panel, data, y, w, h, 
         function checkBox:Think()
             self:SetValue( self.data[self.val] )
             self:SetDisabled( self.data[self.val] )
-            self:SetCursor( self.data[self.val] and "no" or "Hand" )
+            self:SetCursor( self.data[self.val] and "no" or "hand" )
         end
     end
 

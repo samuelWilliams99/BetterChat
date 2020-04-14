@@ -63,40 +63,6 @@ function bc.overload.overload()
         o.plyChatPrint( self, str )
     end
 
-    o.plyIsTyping = o.plyMeta.IsTyping
-    function o.plyMeta:IsTyping()
-        return bc.base.playersOpen[self]
-    end
-
-    o.hookAdd = hook.Add
-    bc.overload.hooks = { OnPlayerChat = table.Copy( hook.GetULibTable().OnPlayerChat or {} ) }
-    for k, v in pairs( hook.GetTable().OnPlayerChat or {} ) do
-        hook.Remove( "OnPlayerChat", k )
-    end
-    hook.Add( "OnPlayerChat", "BC_chatHook", function( ... )
-        if bc.formatting.onPlayerSayHook then
-            return bc.formatting.onPlayerSayHook( ... )
-        end
-    end )
-
-    -- DLib loves complaining about this, no other way to do it though
-    rawset( hook, "Add", function( event, id, func, ... )
-        if event == "OnPlayerChat" then
-            bc.overload.hooks.OnPlayerChat[id] = func
-        else
-            o.hookAdd( event, id, func, ... )
-        end
-    end )
-
-    o.hookRemove = hook.Remove
-    rawset( hook, "Remove", function( event, id )
-        if event == "OnPlayerChat" then
-            bc.overload.hooks.OnPlayerChat[id] = nil
-        else
-            o.hookRemove( event, id )
-        end
-    end )
-
     hook.Run( "BC_overload" )
 
     bc.overload.overloaded = true
@@ -111,20 +77,7 @@ function bc.overload.undo()
     chat.Open = o.Open
     chat.Close = o.Close
 
-    rawset( hook, "Add", o.hookAdd )
-    rawset( hook, "Remove", o.hookRemove )
-    hook.Remove( "OnPlayerChat", "BC_chatHook" )
-    for id, data in pairs( bc.overload.hooks.OnPlayerChat ) do
-        if type( fn ) == "table" then -- Ulib hooks have priority, must maintain that
-            for priority, d in pairs( fn ) do
-                hook.Add( "OnPlayerChat", id, d.fn, priority )
-            end
-        end
-    end
-    hook.GetTable().OnPlayerChat = table.Copy( bc.overload.hooks.OnPlayerChat )
-
     o.plyMeta.ChatPrint = o.plyChatPrint
-    o.plyMeta.IsTyping = o.plyIsTyping
     bc.overload.old = {}
     hook.Run( "BC_overloadUndo" )
     bc.overload.overloaded = false

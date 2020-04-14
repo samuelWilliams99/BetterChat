@@ -102,14 +102,25 @@ hook.Add( "PostGamemodeLoaded", "BC_RPAdminOverload", function()
 
                 local Team = ply:IsPlayer() and ply:Team() or 1
                 local Nick = ply:IsPlayer() and ply:Nick() or "Console"
-                local prefix = ( FAdmin.Access.PlayerHasPrivilege( ply, "AdminChat" ) or ply:IsAdmin() ) and "[Admin Chat] " or "[To admins] "
+                local prefix = ( bc.admin.allowed() or FAdmin.Access.PlayerHasPrivilege( ply, "AdminChat" ) ) and "[Admin Chat] " or "[To admins] "
 
                 chat.AddNonParsedText( bc.defines.colors.red, prefix, team.GetColor( Team ), Nick .. ": ", bc.defines.colors.white, text )
             else
-                local chan = bc.channels.getChannel( "Admin" )
+                if bc.admin.allowed() then
+                    local chan = bc.channels.getChannel( "Admin" )
 
-                local tab = bc.formatting.formatMessage( ply, text, not ply:Alive(), ply:IsAdmin() and bc.defines.colors.white or bc.defines.theme.admin )
-                bc.channels.message( { chan.name, "MsgC" }, unpack( tab ) )
+                    local tab = bc.formatting.formatMessage( ply, text, not ply:Alive(), bc.defines.colors.white )
+                    bc.channels.message( { chan.name, "MsgC" }, unpack( tab ) )
+                else
+                    local tab = {
+                        bc.util.you(),
+                        bc.defines.colors.printBlue,
+                        " to admins: ",
+                        bc.defines.theme.nonAdminText,
+                        text
+                    }
+                    bc.channels.message( { "All", "MsgC" }, unpack( tab ) )
+                end
             end
         end )
         DarkRP.addChatReceiver( "/adminhelp", "talk in Admin", function( ply, text )

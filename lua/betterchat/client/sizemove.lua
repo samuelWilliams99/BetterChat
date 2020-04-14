@@ -14,12 +14,20 @@ function bc.sizeMove.think()
     local d = g.derma
     if bc.sizeMove.dragging then
         local x, y = gui.MousePos()
-        d.frame:SetPos( x - bc.sizeMove.draggingOffset.x, y - bc.sizeMove.draggingOffset.y )
+        x = x - bc.sizeMove.draggingOffset.x
+        y = y - bc.sizeMove.draggingOffset.y
+        x = math.Clamp( x, 0, ScrW() - g.size.x )
+        y = math.Clamp( y, 0, ScrH() - g.size.y )
+
+        d.frame:SetPos( x, y )
         if not input.IsMouseDown( MOUSE_LEFT ) then
             bc.sizeMove.dragging = false
         end
     elseif bc.sizeMove.resizing then
         local x, y = gui.MousePos()
+        x = math.Clamp( x, 0, ScrW() )
+        y = math.Clamp( y, 0, ScrH() )
+
         local px, py = d.frame:GetPos()
         local rData = bc.sizeMove.resizingData
         local w, h = g.size.x, g.size.y
@@ -103,6 +111,8 @@ local function inDragCorner( elem )
 end
 
 local function inResizeEdge( elem )
+    -- Disabled until i can be bothered to work out how to do this properly
+    do return nil end
     local g = bc.graphics
     local x, y = elem:LocalCursorPos()
     local w, h = g.size.x, g.size.y
@@ -130,15 +140,15 @@ hook.Add( "VGUIMousePressed", "BC_sizeMoveMousePressed", function( self, keyCode
             bc.sizeMove.dragging = true
             bc.sizeMove.draggingOffset = { x = x, y = y }
         elseif keyCode == MOUSE_RIGHT then
-            local t = SysTime()
-            local diff = t - ( bc.base.lastRClick or 0 )
-            if diff < 0.5 then
-                bc.sizeMove.resize( g.originalSize.x, g.originalSize.y, true )
-                g.derma.frame:SetPos( g.originalFramePos.x, g.originalFramePos.y )
-            else
-                g.derma.frame:SetPos( g.originalFramePos.x, g.originalFramePos.y )
-            end
-            bc.base.lastRClick = t
+            -- local t = SysTime()
+            -- local diff = t - ( bc.base.lastRClick or 0 )
+            -- if diff < 0.5 then
+            --     bc.sizeMove.resize( g.originalSize.x, g.originalSize.y, true )
+            --     g.derma.frame:SetPos( g.originalFramePos.x, g.originalFramePos.y )
+            -- else
+            g.derma.frame:SetPos( g.originalFramePos.x, g.originalFramePos.y )
+            -- end
+            -- bc.base.lastRClick = t
         end
         return
     end

@@ -70,7 +70,7 @@ function bc.data.saveData()
 end
 
 function bc.data.loadChannel( chan )
-    if bc.data.channels[chan.name] then
+    if bc.data.channels and bc.data.channels[chan.name] then
         loadFromTemplate( bc.data.channels[chan.name], chan, bc.sidePanel.channels.template )
         bc.data.channels[chan.name] = nil
     end
@@ -78,7 +78,7 @@ end
 
 function bc.data.loadPlayer( data )
     local ply = data.ply
-    if bc.data.players[ply:SteamID()] then
+    if bc.data.players and bc.data.players[ply:SteamID()] then
         loadFromTemplate( data, bc.data.players[ply:SteamID()], bc.sidePanel.players.template )
         bc.data.players[ply:SteamID()] = nil
     end

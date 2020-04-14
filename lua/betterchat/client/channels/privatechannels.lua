@@ -1,5 +1,4 @@
 bc.private = {}
-local you
 
 bc.private.lastMessaged = nil
 bc.private.defaultChannel = {
@@ -23,9 +22,9 @@ bc.private.defaultChannel = {
             table.insert( tab, idx, self.ply )
             table.insert( tab, idx + 1, bc.defines.colors.printBlue )
             table.insert( tab, idx + 2, arrow )
-            table.insert( tab, idx + 3, you )
+            table.insert( tab, idx + 3, bc.util.you() )
         else --send
-            table.insert( tab, idx, you )
+            table.insert( tab, idx, bc.util.you() )
             table.insert( tab, idx + 1, bc.defines.colors.printBlue )
             table.insert( tab, idx + 2, arrow )
             table.insert( tab, idx + 3, self.ply )
@@ -76,16 +75,6 @@ hook.Add( "BC_userAccessChange", "BC_privateChannelCheck", function()
     end
 end )
 
-hook.Add( "BC_preInitPanels", "BC_privateAddHooks", function()
-    you = {
-        formatter = true,
-        type = "clickable",
-        signal = "Player-" .. LocalPlayer():SteamID(),
-        text = "You",
-        color = bc.defines.colors.ulxYou
-    }
-end )
-
 hook.Add( "BC_playerConnect", "BC_privateChannelPlayerReload", function( ply )
     if not bc.base.enabled then return end
     for k, v in pairs( bc.channels.channels ) do
@@ -107,7 +96,7 @@ net.Receive( "BC_PM", function( len )
             bc.defines.consolePlayer,
             bc.defines.theme.server,
             " to ",
-            you,
+            bc.util.you(),
             bc.defines.colors.white,
             ": "
         }, bc.formatting.formatText( text, nil, ply ) )

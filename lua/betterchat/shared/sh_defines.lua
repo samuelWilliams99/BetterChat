@@ -71,6 +71,8 @@ bc.defines.theme = {
     emoteAccent = Color( 65, 105, 225 ),
     dead = colors.red,
 
+    textEntryCooldown = Color( 150, 0, 0, 255 ),
+
     team = colors.teamGreen,
     teamTextEntry = Color( 100, 200, 100 ),
 

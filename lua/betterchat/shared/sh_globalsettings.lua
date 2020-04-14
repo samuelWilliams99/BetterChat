@@ -120,14 +120,14 @@ bc.settings.clientTemplate = {
         name = "Enable/Restart BetterChat",
         type = "button",
         extra = "Restart the entirety of BetterChat, this will remove all chat history.",
-        value = "restart"
+        value = "restart",
     },
     {
         name = "Reload all BetterChat Files",
         type = "button",
         extra = "A complete reload of all BetterChat files, as if you left and rejoined the game. Warning: This can lead to some unexpected behaviour",
         value = "reload",
-        requireConfirm = true
+        requireConfirm = true,
     },
     {
         name = "Factory Reset BetterChat",
@@ -140,7 +140,7 @@ bc.settings.clientTemplate = {
         name = "Revert to old chat",
         type = "button",
         extra = "Revert back to the default Garry's Mod chat, this chat can be re-enabled with bc_enablechat",
-        value = "disable"
+        value = "disable",
     }
 }
 
@@ -150,7 +150,7 @@ bc.settings.serverTemplate = {
         value = "replaceTeam",
         type = "boolean",
         extra = "Should BetterChat replace the team channel (This stops other addons like DarkRP overwriting/removing team chat)",
-        default = false
+        default = false,
     },
     {
         name = "Maximum message length",
@@ -158,12 +158,6 @@ bc.settings.serverTemplate = {
         type = "number",
         extra = "Maximum length of message",
         default = 126,
-        onChange = function( self, old, new )
-            if new ~= self.default and DarkRP then
-                print( "Custom message length not supported when using DarkRP, reverted to 126" )
-                return self.default
-            end
-        end
     },
     {
         name = "Giphy API Key",
@@ -181,14 +175,14 @@ bc.settings.serverTemplate = {
                     print( "[BetterChat] No valid Giphy API key found in bc_server_giphykey, giphy command disabled. Generate an app key from https://developers.giphy.com/ to use this feature." )
                 end
             end )
-        end
+        end,
     },
     {
         name = "Player gif hourly limit",
         value = "giphyHourlyLimit",
         type = "number",
         extra = "Maximum giphy calls a single player is allowed in 1 hour",
-        default = 10
+        default = 10,
     },
 }
 
@@ -232,7 +226,7 @@ bc.settings.ulxPermissions = {
         value = "strike",
         defaultAccess = ULib.ACCESS_ALL,
         extra = "Ability to use ~~strike~~ in chat",
-    }
+    },
 }
 
 if SERVER then
@@ -260,7 +254,7 @@ function bc.settings.isAllowed( ply, perm )
     if string.sub( perm, 1, 4 ) == "ulx " then
         perm = string.sub( perm, 5 )
     end
-    return ULib.ucl.query( ply, "ulx " .. perm )
+    return tobool( ULib.ucl.query( ply, "ulx " .. perm ) )
 end
 
 if CLIENT then
@@ -404,17 +398,19 @@ hook.Add( "BC_sharedInit", "BC_initServerConvars", function()
         local cvar = CreateConVar( "bc_server_" .. v.value, def, FCVAR_REPLICATED + FCVAR_ARCHIVE + FCVAR_PROTECTED )
         if not v.onChange then continue end
 
-        cvars.AddChangeCallback( "bc_server_" .. v.value, function( _, old, new )
-            local ret = v.onChange( v, old, new )
-            if ret ~= nil then
-                if v.type == "bool" then
-                    cvar:SetBool( ret )
-                elseif v.type == "number" then
-                    cvar:SetInt( ret )
-                elseif v.type == "string" then
-                    cvar:SetString( ret )
+        if SERVER then
+            cvars.AddChangeCallback( "bc_server_" .. v.value, function( _, old, new )
+                local ret = v.onChange( v, old, new )
+                if ret ~= nil then
+                    if v.type == "bool" then
+                        cvar:SetBool( ret )
+                    elseif v.type == "number" then
+                        cvar:SetInt( ret )
+                    elseif v.type == "string" then
+                        cvar:SetString( ret )
+                    end
                 end
-            end
-        end )
+            end )
+        end
     end
 end )

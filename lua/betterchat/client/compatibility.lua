@@ -5,9 +5,9 @@ hook.Add( "BC_overload", "BC_ATAG_chatOverload", function()
         if ATAG then
             print( "[BetterChat] Found ATAG, attempting overload" )
 
-            if bc.hookOverloads.OnPlayerChat.ATAG_ChatTags then
+            if hook.GetULibTable().OnPlayerChat[0].ATAG_ChatTags then
                 print( "[BetterChat] Found ATAG_ChatTags hook, overloading" )
-                bc.compatibility.atagHook = bc.hookOverloads.OnPlayerChat.ATAG_ChatTags
+                bc.compatibility.atagHook = hook.GetULibTable().OnPlayerChat[0].ATAG_ChatTags.fn
                 hook.Remove( "OnPlayerChat", "ATAG_ChatTags" )
             end
         end
@@ -33,9 +33,9 @@ local function captureAddText( f, ... )
 end
 
 hook.Add( "BC_getPreTab", "BC_ATAG_preTab", function( ply, msg, teamChat, dead, d )
-    if bc.overload.hooks.OnPlayerChat.ATAG_ChatTags then
+    if hook.GetULibTable().OnPlayerChat[0].ATAG_ChatTags then
         print( "[BetterChat] Found ATAG_ChatTags hook while processing message, overloading" )
-        bc.compatibility.atagHook = bc.overload.hooks.OnPlayerChat.ATAG_ChatTags
+        bc.compatibility.atagHook = hook.GetULibTable().OnPlayerChat[0].ATAG_ChatTags.fn
         hook.Remove( "OnPlayerChat", "ATAG_ChatTags" )
     end
     if not bc.compatibility.atagHook then return end
