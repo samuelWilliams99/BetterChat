@@ -283,7 +283,7 @@ function bc.util.replaceHookTable( event )
     local wrapper = makeHookWrapper( event )
 
     bc.util.hooks[event] = uLibHookTbl[event]
-    uLibHookTbl[event] = {[-2]={}, [-1]={}, [0]=wrapper, [1]={}, [2]={}}
+    uLibHookTbl[event] = { [ -2] = {}, [ -1] = {}, [0] = wrapper, [1] = {}, [2] = {} }
 
     for i = -2, 2 do
         local mt = {}
@@ -310,7 +310,7 @@ end
 function bc.util.runReplacedHook( event, ... )
     local hookTbl = bc.util.hooks[event]
     if hookTbl then
-        for i=-2, 2 do
+        for i = -2, 2 do
             for k, v in pairs( hookTbl[i] ) do
                 if ( v.isstring ) then
                     local success, a, b, c, d, e, f = xpcall( v.fn, function( e )

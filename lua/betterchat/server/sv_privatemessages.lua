@@ -23,7 +23,7 @@ end
 
 function bc.private.canMessage( from, to )
     if not bc.manager.canMessage( from ) then return false end
-    
+
     return bc.private.allowed( from ) and bc.private.allowed( to )
 end
 

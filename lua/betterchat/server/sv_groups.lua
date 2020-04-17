@@ -125,7 +125,7 @@ function bc.group.handleInvites( group )
             timer.Simple( bc.group.inviteExpires + 0.5, function()
                 local group = bc.group.get( groupID )
                 if not group then return end
-                
+
                 bc.group.handleInvites( group )
                 bc.group.sendGroupData( group )
                 bc.group.saveGroups()
@@ -295,7 +295,7 @@ end )
 
 net.Receive( "BC_updateGroup", function( len, ply )
     if not bc.manager.canMessage( ply ) then return end
-    
+
     local groupID = net.ReadUInt( 16 )
     local newData = net.ReadString()
 

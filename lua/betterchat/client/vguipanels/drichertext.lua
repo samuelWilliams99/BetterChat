@@ -121,7 +121,7 @@ function RICHERTEXT:Init()
                 self.scrollToBottomBtn:Hide()
             end
         end
-        
+
         self.scrollToBottomBtn.m_Image:SetImageColor( Color( 255, 255, 255, self.STBButtonAnim * 2.55 ) )
 
         if self.lastScroll ~= scrollBar.Scroll then
@@ -848,7 +848,7 @@ function RICHERTEXT:scrollToBottom( noAnim )
         return
     end
 
-    
+
     timer.Create( id, 0.1, 1, function()
         if not self.scrollPanel then return end
         local bar = self.scrollPanel:GetVBar()

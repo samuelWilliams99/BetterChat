@@ -529,7 +529,7 @@ function bc.channels.messageDirect( channel, controller, ... )
 
     if channel.showTimestamps then
         table.insert( data, 1, bc.defines.theme.timeStamps )
-        local timeData = os.date("*t")
+        local timeData = os.date( "*t" )
         table.insert( data, 2, string.format( "%02i:%02i", timeData.hour, timeData.min ) .. " - " )
         table.insert( data, 3, bc.defines.colors.white )
     end
@@ -798,7 +798,7 @@ function bc.channels.open( name )
                 m:AddOption( "Copy SteamID64", function()
                     SetClipboardText( util.SteamIDTo64( dataArg ) )
                 end )
-                
+
                 local ply = player.GetBySteamID( dataArg )
                 if ply and bc.private.canMessage( ply ) then
                     m:AddOption( "Open Private Channel", function()
@@ -982,7 +982,7 @@ function bc.channels.open( name )
         local function createdPrint()
             bc.channels.messageDirect( data.name, bc.defines.colors.printBlue, "Channel ",
                 bc.defines.theme.channels, chanName, bc.defines.colors.printBlue, " created." )
-            
+
             if data.name ~= "All" then
                 bc.channels.messageDirect( "All", bc.defines.colors.printBlue, "Channel ",
                     bc.defines.theme.channels, chanName, bc.defines.colors.printBlue, " created." )

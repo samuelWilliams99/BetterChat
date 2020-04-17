@@ -149,7 +149,7 @@ function bc.private.createChannel( ply )
     channel.ply = ply:IsValid() and ply or bc.defines.consolePlayer
     channel.plySID = getSteamID( ply )
     channel.displayName = getName( ply )
-    
+
     bc.channels.add( channel )
     return channel
 end

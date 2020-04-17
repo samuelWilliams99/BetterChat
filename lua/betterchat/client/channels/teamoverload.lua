@@ -123,4 +123,3 @@ hook.Add( "BC_initPanels", "BC_initAddTeamOverloadChannel", function()
         bc.teamOverload.disable()
     end
 end )
-

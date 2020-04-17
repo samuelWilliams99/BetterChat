@@ -252,7 +252,7 @@ end
 function bc.group.deleteGroup( group )
     if not bc.group.allowed() then return end
     table.removeByMember( bc.group.groups, "id", group.id )
-    
+
     local chan = bc.channels.get( "Group - " .. group.id )
     if chan then
         bc.channels.close( chan.name )

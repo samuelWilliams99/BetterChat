@@ -53,7 +53,7 @@ function bc.sidePanel.renderSettingFuncs.options( sPanel, panel, data, y, w, h, 
             end
             comboBox:ChooseOption( setting.options[idx], idx )
 
-            self.prevOptionValue = self.data[self.val] 
+            self.prevOptionValue = self.data[self.val]
         end
     end
 

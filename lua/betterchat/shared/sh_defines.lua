@@ -151,7 +151,7 @@ local function getReadOnly( t, name )
     end
     mt.__newindex = function( tab, k, v )
         if not rawequal( tab, out ) then
-            rawset(tab, k, v)
+            rawset( tab, k, v )
             return
         end
         if v ~= t[k] then
