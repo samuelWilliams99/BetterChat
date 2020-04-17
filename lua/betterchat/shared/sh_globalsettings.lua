@@ -40,6 +40,13 @@ bc.settings.clientTemplate = {
         default = true,
     },
     {
+        name = "Numbered channel shortcuts",
+        value = "channelNumShortcut",
+        type = "boolean",
+        extra = "Should the shortcuts CTRL+[0-9] change channel",
+        default = true,
+    },
+    {
         name = "Display suggestions",
         value = "acDisplay",
         type = "boolean",
@@ -151,6 +158,43 @@ bc.settings.serverTemplate = {
         type = "boolean",
         extra = "Should BetterChat replace the team channel (This stops other addons like DarkRP overwriting/removing team chat)",
         default = false,
+        onChange = function( self, old, new )
+            if old == new then return end -- Not really a change then is it
+
+            if new ~= "0" then
+                if bc.settings.getServerValue( "removeTeam" ) then
+                    print( "[BetterChat] Cannot replaceTeam while bc_server_removeTeam is true" )
+                    return old
+                end
+                ULib.clientRPC( bc.base.getEnabledPlayers(), "bc.teamOverload.enable" )
+            else
+                ULib.clientRPC( bc.base.getEnabledPlayers(), "bc.teamOverload.disable" )
+            end
+        end,
+    },
+    {
+        name = "Remove default team chat",
+        value = "removeTeam",
+        type = "boolean",
+        extra = "Should default team chat be disabled",
+        default = false,
+        onChange = function( self, old, new )
+            if old == new then return end -- Not really a change then is it
+
+            if new ~= "0" then
+                if bc.settings.getServerValue( "replaceTeam" ) then
+                    print( "[BetterChat] Cannot removeTeam while bc_server_replaceTeam is true" )
+                    return "0"
+                end
+                if DarkRP then
+                    print( "[BetterChat] Team is already removed in DarkRP" )
+                    return "0"
+                end
+                ULib.clientRPC( bc.base.getEnabledPlayers(), "bc.channels.close", "Team" )
+            else
+                ULib.clientRPC( bc.base.getEnabledPlayers(), "bc.channels.open", "Team" )
+            end
+        end,
     },
     {
         name = "Maximum message length",

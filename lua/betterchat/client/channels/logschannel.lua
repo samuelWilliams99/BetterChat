@@ -7,7 +7,7 @@ bc.logs.defaultChannel = {
     addNewLines = true,
     allFunc = function( self, tab, idx )
         table.insert( tab, idx, bc.defines.theme.logs )
-        table.insert( tab, idx + 1, "[LOGS] " )
+        table.insert( tab, idx + 1, "[" .. self.displayName .. "] " )
     end,
     openOnStart = function()
         return bc.logs.allowed()
@@ -28,8 +28,10 @@ end
 hook.Add( "BC_makeChannelButtons", "BC_makeLogsButton", function( menu )
     if not bc.logs.buttonEnabled then return end
     if bc.channels.isOpen( "Logs" ) then return end
-    menu:AddOption( "Logs", function()
-        local chan = bc.channels.getChannel( "Logs" )
+    local channel = bc.channels.get( "Logs" )
+
+    menu:AddOption( channel.displayName, function()
+        local chan = bc.channels.get( "Logs" )
         if not chan then return end
         if not bc.logs.allowed() then return end
 
@@ -47,7 +49,7 @@ net.Receive( "BC_LM", function()
     local channelName = net.ReadString()
     local data = net.ReadTable()
 
-    local chan = bc.channels.getChannel( "Logs" )
+    local chan = bc.channels.get( "Logs" )
     if not chan then return end
     if not bc.channels.isOpen( chan ) then return end
 
@@ -93,8 +95,10 @@ end )
 
 hook.Add( "BC_userAccessChange", "BC_logsChannelCheck", function()
     if bc.logs.allowed() then
-        bc.channels.open( "Logs" )
-        bc.logs.addButton()
+        if not bc.logs.buttonEnabled then
+            bc.channels.open( "Logs" )
+            bc.logs.addButton()
+        end
     else
         bc.channels.close( "Logs" )
         bc.logs.removeButton()

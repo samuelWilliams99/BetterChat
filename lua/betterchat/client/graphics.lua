@@ -1,8 +1,4 @@
--- Delete if already defined, for development
-if bc.graphics and bc.graphics.remove then
-    bc.graphics.remove()
-end
-bc.graphics = {}
+bc.graphics = bc.graphics or {}
 include( "betterchat/client/sizemove.lua" )
 
 function bc.graphics.build()
@@ -158,8 +154,8 @@ function bc.graphics.build()
     end
 
     function d.textEntry:OnKeyCodeTyped( code )
-        local ctrl = input.IsKeyDown( KEY_LCONTROL ) or input.IsKeyDown( KEY_RCONTROL )
-        local shift = input.IsKeyDown( KEY_LSHIFT ) or input.IsKeyDown( KEY_RSHIFT )
+        local ctrl = input.IsKeyDown( KEY_LCONTROL )
+        local shift = input.IsKeyDown( KEY_LSHIFT )
         if code == KEY_ESCAPE then
             return true
         end
@@ -286,13 +282,11 @@ hook.Add( "PlayerBindPress", "BC_overrideChatBind", function( ply, bind, pressed
             chan = bc.private.lastMessaged.name
             bc.private.lastMessaged = nil
         else
-            if DarkRP then
-                if bc.settings.getServerValue( "replaceTeam" ) then
-                    local t = chatHelper.teamName( LocalPlayer() )
-                    chan = "TeamOverload-" .. t
-                else
-                    return true
-                end
+            if bc.settings.getServerValue( "replaceTeam" ) then
+                local t = chatHelper.teamName( LocalPlayer() )
+                chan = "TeamOverload - " .. t
+            elseif DarkRP or bc.settings.getServerValue( "removeTeam" ) then
+                return true
             else
                 chan = "Team"
             end

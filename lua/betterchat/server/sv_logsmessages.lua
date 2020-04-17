@@ -11,7 +11,7 @@ function bc.logs.sendLogConsole( channel, ... )
         if type( v ) == "string" then
             table.insert( data, v )
         elseif type( v ) == "Player" then
-            table.insert( data, v:GetName() .. "~[" .. v:SteamID() .. "]" )
+            table.insert( data, v:Nick() .. "~[" .. v:SteamID() .. "]" )
         elseif type( v ) == "table" and v.text then
             table.insert( data, v.text )
         elseif type( v ) == "Entity" and v:EntIndex() == 0 then

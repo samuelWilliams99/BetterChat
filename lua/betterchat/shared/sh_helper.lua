@@ -190,6 +190,16 @@ function table.unique( tab )
     return out
 end
 
+function table.insertMany( tab, idx, many )
+    if not many then
+        many = idx
+        idx = #tab + 1
+    end
+    for k, v in ipairs( many ) do
+        table.insert( tab, idx + k - 1, v )
+    end
+end
+
 if CLIENT then
     -- Why isn't this a thing?
     function input.GetKeyEnum( keyCode )
@@ -343,6 +353,29 @@ function net.SendEmpty( id, ply )
         end
     else
         net.SendToServer()
+    end
+end
+
+local readFunctions = {
+    "Angle", "Bit", "Bool", "Color", "Data", "Double", "Entity",
+    "Float", "Header", "Int", "Matrix", "Normal", "String", "Table",
+    "Type", "UInt", "Vector"
+}
+function chatHelper.simulateNetReads( f, len, ply, args )
+    local oldReads = {}
+    for _, readName in pairs( readFunctions ) do
+        oldReads[readName] = net["Read" .. readName]
+        net["Read" .. readName] = function( ... )
+            if #args > 0 then
+                return table.remove( args, 1 )
+            else
+                return oldReads[readName]( ... )
+            end
+        end
+    end
+    pcall( f, len, ply )
+    for _, readName in pairs( readFunctions ) do
+        net["Read" .. readName] = oldReads[readName]
     end
 end
 

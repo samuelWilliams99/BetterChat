@@ -118,7 +118,7 @@ function bc.sidePanel.players.addCustomSetting( ply )
     playersList:SetMultiSelect( true )
     playersList:AddColumn( "Player" )
     for k, p in pairs( player.GetAll() ) do
-        local line = playersList:AddLine( p:GetName(), p:SteamID() )
+        local line = playersList:AddLine( p:Nick(), p:SteamID() )
         if p == LocalPlayer() then line:SetSelected( true ) end
         function line:OnMousePressed( button )
             if button == MOUSE_LEFT then
@@ -298,7 +298,7 @@ function bc.sidePanel.players.createCustomSetting( data, userMade )
         local cmdPlyExplode = string.Explode( "[$name]", setting.customCommand )
         local str = ""
 
-        local name = ply:GetName()
+        local name = ply:Nick()
         name = string.Explode( ";", name )[1]
         if data.config.trunc then
             name = string.Explode( " ", name )[1]

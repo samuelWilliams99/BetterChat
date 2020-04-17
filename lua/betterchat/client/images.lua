@@ -76,6 +76,10 @@ hook.Add( "BC_initPanels", "BC_initImages", function()
 
         if found then
             local data = util.JSONToTable( file.Read( jsonName, "GAME" ) )
+            if not data then
+                MsgC( bc.defines.colors.red, "[BetterChat] Sprite sheet descriptor \"" .. v .. "\" contains invalid json!\n" )
+                continue
+            end
             data.path = "spritesheets/" .. v
             table.insert( bc.images.emoteSheets, data )
             MsgC( bc.defines.colors.green, "[BetterChat] Added SpriteSheet \"" .. v .. "\".\n" )

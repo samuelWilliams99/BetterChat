@@ -13,9 +13,21 @@ hook.Add( "Initialize", "BC_playerSayInit", function()
     if not DarkRP then
         bc.util.replaceHookTable( "PlayerSay" )
 
-        hook.Add( "BC_Pre_PlayerSay", "bc_playerSayTrim", function( ply, msg, ... )
+        hook.Add( "BC_Pre_PlayerSay", "bc_playerSayTrim", function( ply, msg, isTeam, ... )
             msg = bc.manager.trimMessage( msg )
-            return bc.util.HOOK_ALTER, ply, msg, ...
+
+            if isTeam then
+                if bc.settings.getServerValue( "replaceTeam" ) then
+                    bc.manager.sendTeamOverload( ply, msg )
+                    return ""
+                end
+
+                if bc.settings.getServerValue( "removeTeam" ) then
+                    return ""
+                end
+            end
+
+            return bc.util.HOOK_ALTER, ply, msg, isTeam, ...
         end )
 
         hook.Add( "BC_Post_PlayerSay", "bc_playerSaySend", function( hookArgs, returnArgs )
@@ -48,6 +60,10 @@ hook.Add( "Initialize", "BC_playerSayInit", function()
         function GAMEMODE:PlayerSay( ply, msg, isTeam )
             msg = bc.manager.trimMessage( msg )
             if isTeam then
+                if bc.settings.getServerValue( "replaceTeam" ) then
+                    bc.manager.sendTeamOverload( ply, msg )
+                end
+
                 -- Get fucked other groups
                 return ""
             end
@@ -105,7 +121,7 @@ end
 
 function bc.manager.formatName( recip, ply )
     local plyColor = recip == ply and bc.defines.colors.ulxYou or team.GetColor( ply:Team() )
-    local plyName = recip == ply and "You" or ply:GetName()
+    local plyName = recip == ply and "You" or ply:Nick()
     return plyColor, plyName
 end
 
@@ -185,15 +201,13 @@ hook.Add( "BC_playerReady", "BC_sidePanelsInit", function( ply )
     end
 end )
 
-net.Receive( "BC_TM", function( len, ply )
+function bc.manager.sendTeamOverload( ply, msg )
+    if not bc.settings.getServerValue( "replaceTeam" ) then return end
+
+    msg = bc.manager.trimMessage( msg )
+
     local t = ply:Team()
-    local plys = {}
-    for k, v in pairs( player.GetAll() ) do
-        if t == v:Team() then
-            table.insert( plys, v )
-        end
-    end
-    local msg = net.ReadString()
+    local plys = team.GetPlayers( t )
 
     bc.logs.sendLog( bc.defines.channelTypes.TEAM, "Team - " .. team.GetName( t ), ply, ": ", msg )
 
@@ -201,4 +215,9 @@ net.Receive( "BC_TM", function( len, ply )
     net.WriteEntity( ply )
     net.WriteString( msg )
     net.Send( plys )
+end
+
+net.Receive( "BC_TM", function( len, ply )
+    local msg = net.ReadString()
+    bc.manager.sendTeamOverload( ply, msg )
 end )

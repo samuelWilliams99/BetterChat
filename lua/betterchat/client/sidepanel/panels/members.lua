@@ -77,7 +77,7 @@ function bc.sidePanel.members.generateMenu( panel, group )
                 elseif aPlyExists ~= bPlyExists then
                     return aPlyExists    -- put real player above offline
                 else
-                    return ( aPly:GetName() < bPly:GetName() ) -- sort by name
+                    return ( aPly:Nick() < bPly:Nick() ) -- sort by name
                 end
             else -- non members
                 return aInvited --Put invited over not invited
@@ -87,7 +87,7 @@ function bc.sidePanel.members.generateMenu( panel, group )
 
     panel.data.group = group
 
-    local channel = bc.channels.getChannel( "Group - " .. group.id )
+    local channel = bc.channels.get( "Group - " .. group.id )
 
     if not channel then return end
 
@@ -157,7 +157,7 @@ function bc.sidePanel.members.generateMenu( panel, group )
                 setting.extra = setting.extra .. ". This person currently has BetterChat disabled"
             end
 
-            setting.name = ply:GetName()
+            setting.name = ply:Nick()
 
         else
             setting.name = id

@@ -9,35 +9,29 @@ function f.formatMessage( ply, text, dead, defaultColor, dontRecolorColon, data 
     defaultColor = defaultColor or bc.defines.colors.white
     data = data or { ply, text, false, dead }
 
-    local preTab, lastCol = hook.Run( "BC_getPreTab", unpack( data ) )
-    if preTab then
-        table.Add( preTab, f.formatText( text, lastCol, ply ) )
-        tab = preTab
-        if data[3] then -- Teamchat
-            table.insert( preTab, 1, { controller = true, type = "noPrefix" } )
-        end
-    else
-        if dead then
-            table.insert( tab, bc.defines.theme.dead )
-            table.insert( tab, "*DEAD* " )
-        end
-
-        table.insert( tab, { formatter = true, type = "prefix" } )
-
-        if not ply:IsValid() then
-            table.insert( tab, bc.defines.theme.server )
-            table.insert( tab, "Server" )
-        else
-            table.insert( tab, { formatter = true, type = "escape" } ) --escape pop from ply name
-            table.insert( tab, ply )
-        end
-        table.insert( tab, dontRecolorColon and defaultColor or bc.defines.colors.white )
-        table.insert( tab, ": " )
-        table.insert( tab, defaultColor )
-
-        local messageTab = f.formatText( text, nil, ply )
-        table.Add( tab, messageTab )
+    if dead then
+        table.insert( tab, bc.defines.theme.dead )
+        table.insert( tab, "*DEAD* " )
     end
+
+    table.insert( tab, { formatter = true, type = "prefix" } )
+
+    if not ply:IsValid() then
+        table.insert( tab, bc.defines.theme.server )
+        table.insert( tab, "Server" )
+    else
+        table.insert( tab, {
+            formatter = true,
+            type = "sender",
+            ply = ply
+        } )
+    end
+    table.insert( tab, dontRecolorColon and defaultColor or bc.defines.colors.white )
+    table.insert( tab, ": " )
+    table.insert( tab, defaultColor )
+
+    local messageTab = f.formatText( text, nil, ply )
+    table.Add( tab, messageTab )
 
     return tab
 end
@@ -145,7 +139,7 @@ function f.formatCustomColorSingle( text, currentColor )
     return out, currentColor
 end
 
-local longEmotePattern = "(\\?)(:[%w]+:)"
+local longEmotePattern = "(\\?)(:[%w_]+:)"
 
 local function pushEmote( tab, str, pattern, padSpace )
     local searchStr = padSpace and " " .. str .. " " or str
@@ -252,7 +246,6 @@ local function getPlyModifiers( ply )
     return out
 end
 
-
 function f.formatModifiers( tab, ply )
     local newTab = {}
     local state = {
@@ -351,7 +344,7 @@ function f.formatSpecialWords( text, tab, sender )
     local postPatternPly = "[ '\"!%?%*_~s:]"
     local postPatternCol = "[ '\"!%?%*_~]"
     for k, v in pairs( players ) do
-        table.insert( patterns, prePattern .. v:GetName():lower():PatternSafe() .. postPatternPly )
+        table.insert( patterns, prePattern .. v:Nick():lower():PatternSafe() .. postPatternPly )
     end
 
     local colorNames = table.GetKeys( bc.defines.colors )
@@ -476,8 +469,15 @@ net.Receive( "BC_sayOverload", function()
     hook.Run( "OnPlayerChat", ply, msg, isTeam, isDead )
 end )
 
+local function extractDarkRPPrefix( pre, ply )
+    pre = string.Replace( pre, ply:Nick(), "" )
+    pre = string.Replace( pre, ply:SteamName(), "" )
+
+    return pre
+end
+
 -- Should be OnGamemodeLoaded, but that isn't called in non dedicated servers (single or p2p), so fallback on Initialize
-hook.First( { "Initialize", "OnGamemodeLoaded" }, function()
+hook.First( { "OnGamemodeLoaded", "Initialize" }, function()
     print( "[BetterChat] Replacing base OnPlayerChat" )
     f.oldOnPlayerChat = f.oldOnPlayerChat or ( GAMEMODE.OnPlayerChat or function() end )
     function GAMEMODE:OnPlayerChat( ply, text, teamChat, dead, pre, col1, col2 )
@@ -497,24 +497,17 @@ hook.First( { "Initialize", "OnGamemodeLoaded" }, function()
 
         local tab
         if pre then
+            local prefix = extractDarkRPPrefix( pre, ply )
             tab = f.formatMessage( ply, text, false, col2, true, args )
-            tab[2] = { formatter = true, type = "escape" }
-            tab[3] = {
-                formatter = true,
-                type = plyValid and "clickable" or "text",
-                signal = "Player-" .. ( plyValid and ply:SteamID() or "" ),
-                text = pre,
-                color = col1
-            }
+            if #prefix > 0 then
+                table.insert( tab, 1, col2 )
+                table.insert( tab, 2, prefix )
+            end
         else
             tab = f.formatMessage( ply, text, dead )
         end
 
-        bc.channels.message( { ( teamChat and not DarkRP ) and "Team" or "Players" }, unpack( tab ) )
-
-        if bc.overload.old.AddText then
-            bc.overload.old.AddText( unpack( f.defaultFormatMessage( pre or ply, text, teamChat, pre and false or dead, col1, col2, args ) ) ) --Keep old chat up to date
-        end
+        bc.channels.message( { ( teamChat and not DarkRP ) and "Team" or "Players", "MsgC" }, unpack( tab ) )
 
         return true
     end
@@ -531,7 +524,7 @@ function f.print( ... )
         else
             local isPly = false
             for i, ply in pairs( player.GetAll() ) do
-                if ply:GetName() == v and col == team.GetColor( ply:Team() ) then
+                if ply:Nick() == v and col == team.GetColor( ply:Team() ) then
                     data[k] = ply
                     isPly = true
                 end

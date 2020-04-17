@@ -22,8 +22,22 @@ hook.Add( "BC_initPanels", "BC_initSidePanelPlayers", function()
 end )
 
 net.Receive( "BC_userRankChange", function()
-    bc.base.close()
+    local openPanelPly
+    if bc.sidePanel.panels["Player"].isOpen then
+        local id = bc.sidePanel.panels["Player"].activePanel
+        openPanelPly = player.GetBySteamID( id )
+
+        if not openPanelPly then
+            bc.sidePanel.close( "Player", true )
+        end
+    end
+
     bc.sidePanel.players.removeAllEntries()
+    if openPanelPly then
+        bc.sidePanel.players.generateEntry( openPanelPly )
+        bc.sidePanel.open( "Player", openPanelPly:SteamID() )
+    end
+
     hook.Run( "BC_userAccessChange" )
 end )
 
@@ -43,7 +57,7 @@ function bc.sidePanel.players.generateEntry( ply )
         plySettings.ply = ply
         bc.data.loadPlayer( plySettings )
         bc.sidePanel.players.applyDefaults( plySettings )
-        
+
         bc.sidePanel.players.settings[ply:SteamID()] = plySettings
     else
         plySettings.ply = ply
@@ -98,14 +112,14 @@ function bc.sidePanel.players.generateEntry( ply )
     nameLabel.ownID = 1
     function nameLabel:Think()
         local plys = player.GetAll()
-        local GetName = getmetatable( plys[1] ).GetName
+        local Nick = FindMetaTable( "Player" ).Nick
         -- If players list has changed or any player names have changed
         -- Iterates players 3 times on think, maybe handle differently, by event or something
-        if not table.equalSeq( self.lp, plys ) or not table.equalSeq( table.map( plys, GetName ), self.Choices ) then
+        if not table.equalSeq( self.lp, plys ) or not table.equalSeq( table.map( plys, Nick ), self.Choices ) then
             self.lp = plys
             self:Clear()
             for k, p in pairs( player.GetAll() ) do
-                self:AddChoice( p:GetName(), p )
+                self:AddChoice( p:Nick(), p )
                 if p == ply then
                     self:ChooseOptionID( k )
                     self.ownID = k
@@ -124,7 +138,7 @@ function bc.sidePanel.players.generateEntry( ply )
     end
 
     function nameLabel:OnSelect( idx, value, data )
-        self:SetText( ply:GetName() )
+        self:SetText( ply:Nick() )
         local p = data
         local id = p:SteamID()
         if not bc.sidePanel.childExists( "Player", id ) then

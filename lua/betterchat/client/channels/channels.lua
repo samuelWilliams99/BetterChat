@@ -117,31 +117,16 @@ function bc.channels.updateButtonPosition()
     bc.graphics.derma.channelButton:InvalidateLayout( true )
 end
 
-local function updateRPListener()
-    if not DarkRP then return end
-
-    local c = bc.channels.getActiveChannel()
-
-    DarkRP.addChatReceiver( bc.channels.wackyString, "talk in " .. c.displayName, function( ply )
-        local chan = bc.channels.getActiveChannel()
-
-        if chan.group then
-            return table.HasValue( chan.group.members, ply:SteamID() )
-        elseif chan.plySID then
-            return chan.plySID == ply:SteamID()
-        elseif chan.name == "Admin" then
-            return ply:IsAdmin() or ( FAdmin and FAdmin.Access.PlayerHasPrivilege( ply, "AdminChat" ) )
-        else
-            return false
-        end
-    end )
-end
-
 function bc.channels.openSaved()
     bc.data.setSavingEnabled( false )
 
     local channels = {}
     if bc.data.openChannels and bc.settings.getValue( "saveOpenChannels" ) then
+        for k, channel in pairs( bc.channels.channels ) do
+            if channel.disallowClose and not table.HasValue( bc.data.openChannels, channel.name ) then
+                table.insert( bc.data.openChannels, channel.name )
+            end
+        end
         for k, chanName in pairs( bc.data.openChannels ) do
             local channel = bc.channels.getOrCreate( chanName )
             if channel then table.insert( channels, channel ) end
@@ -153,7 +138,7 @@ function bc.channels.openSaved()
     for k, channel in pairs( channels ) do
         local shouldOpen = channel.openOnStart
         if type( shouldOpen ) == "function" then
-            shouldOpen = shouldOpen()
+            shouldOpen = shouldOpen( channel )
         end
 
         if shouldOpen ~= false then
@@ -188,12 +173,9 @@ hook.Add( "BC_postInitPanels", "BC_postInitChannels", function()
 	So heres a wacky string that people probably wont ever type :)
 	]]
     bc.channels.wackyString = "┘♣├ôÒ"
-
-    updateRPListener()
 end )
 
 hook.Add( "BC_channelChanged", "BC_changeRPListener", function()
-    updateRPListener()
     local c = bc.channels.getActiveChannel()
     if c.hideChatText then
         hook.Run( "ChatTextChanged", bc.channels.wackyString )
@@ -274,7 +256,7 @@ hook.Add( "BC_keyCodeTyped", "BC_sendMessageHook", function( code, ctrl, shift )
             psheet:SetActiveTab( tabs[tabIdx] )
 
             return true
-        elseif code >= KEY_1 and code <= KEY_9 and ctrl then
+        elseif code >= KEY_1 and code <= KEY_9 and ctrl and bc.settings.getValue( "channelNumShortcut" ) then
             local psheet = bc.graphics.derma.psheet
             local index = code - 1
             local tabs = psheet.tabScroller.Panels
@@ -301,13 +283,14 @@ hook.Add( "BC_showChat", "BC_showChannelElements", function()
     bc.graphics.derma.psheet.tabScroller:Show()
     bc.graphics.derma.channelButton:Show()
     bc.channels.updateButtonPosition()
+    hook.Run( "BC_channelChanged" )
 end )
 hook.Add( "BC_hideChat", "BC_hideChannelElements", function()
     bc.graphics.derma.psheet.tabScroller:Hide()
     bc.graphics.derma.channelButton:Hide()
 end )
 
-function bc.channels.getChannel( chanName )
+function bc.channels.get( chanName )
     for k, v in pairs( bc.channels.channels ) do
         if v.name == chanName then
             return v
@@ -330,7 +313,7 @@ function bc.channels.getActiveChannel()
             name = v.Name
         end
     end
-    return bc.channels.getChannel( name )
+    return bc.channels.get( name )
 end
 
 function bc.channels.getActiveChannelIdx()
@@ -362,14 +345,20 @@ function bc.channels.message( channelNames, ... )
     local useEditFunc = true
 
     local data = { ... }
+    local controller
+
+    if type( data[1] ) == "table" and data[1].controller then
+        controller = table.remove( data, 1 )
+        if controller.noPrefix then
+            useEditFunc = false
+        end
+    end
+
     for k = 1, #data do
         local v = data[k]
         if type( v ) == "table" and v.formatter and v.type == "prefix" then
             editIdx = editIdx or k
             table.remove( data, editIdx )
-        elseif type( v ) == "table" and v.controller and v.type == "noPrefix" then
-            useEditFunc = false
-            table.remove( data, k )
         end
     end
 
@@ -379,6 +368,9 @@ function bc.channels.message( channelNames, ... )
 
     local channels = {}
 
+    local tickMode = 2
+    local popMode = 2
+
     for k = 1, #channelNames do
         local chanName = channelNames[k]
         if chanName == "MsgC" then
@@ -386,7 +378,7 @@ function bc.channels.message( channelNames, ... )
             continue
         end
 
-        local channel = bc.channels.getChannel( chanName )
+        local channel = bc.channels.get( chanName )
         if not channel then continue end
         if channel.relayAll then
             relayToAll = true
@@ -402,9 +394,19 @@ function bc.channels.message( channelNames, ... )
             useEditFunc = false
             continue
         end
+
+        if channel.tickMode < tickMode then tickMode = channel.tickMode end
+        if channel.popMode < popMode then popMode = channel.popMode end
+
         if channel.replicateAll then continue end
         table.insert( channels, channel )
     end
+
+    controller = controller or { controller = true }
+    controller.tickMode = tickMode
+    controller.popMode = popMode
+
+    table.insert( data, 1, controller )
 
     local dataAll = table.Copy( data )
 
@@ -432,16 +434,53 @@ function bc.channels.message( channelNames, ... )
     end
 end
 
-local function parseName( name )
+function bc.channels.parseName( name )
     name = string.Replace( name, "\n", "" )
     name = string.Replace( name, "\t", "" )
     return name
 end
 
+function bc.channels.fromSender( ply )
+    local out = {}
+    local senderData = bc.compatibility.getNameTable( ply )
+
+    for l, senderElem in pairs( senderData ) do
+        if type( senderElem ) == "Player" then
+            table.Add( out, {
+                { formatter = true, type = "escape" },
+                senderElem
+            } )
+        else
+            table.insert( out, senderElem )
+        end
+    end
+
+    return out
+end
+
+function bc.channels.preProcess( data )
+    local out = {}
+
+    for k, elem in pairs( data ) do
+        if type( elem ) == "table" and elem.formatter then
+            if elem.type == "sender" then
+                local senderData = bc.channels.fromSender( elem.ply )
+                table.insertMany( out, senderData )
+            else
+                table.insert( out, elem )
+            end
+        else
+            table.insert( out, elem )
+        end
+    end
+
+    return out
+end
+
 function bc.channels.messageDirect( channel, controller, ... )
     if not bc.base.ready then return end
     if type( channel ) == "string" then
-        channel = bc.channels.getChannel( channel )
+        channel = bc.channels.get( channel )
     end
 
     if not channel or not table.HasValue( bc.channels.openChannels, channel.name ) then return end
@@ -457,9 +496,17 @@ function bc.channels.messageDirect( channel, controller, ... )
     local data = { ... }
 
     local doSound = true
-    if type( controller ) == "table" and ( controller.isController or controller.controller ) then --if they gave a controller
+    local tickMode = channel.tickMode
+    local popMode = channel.popMode
+    if type( controller ) == "table" and controller.controller then --if they gave a controller
         if controller.doSound ~= nil then
             doSound = controller.doSound
+        end
+        if controller.tickMode ~= nil then
+            tickMode = controller.tickMode
+        end
+        if controller.popMode ~= nil then
+            popMode = controller.popMode
         end
     else
         table.insert( data, 1, controller )
@@ -470,13 +517,15 @@ function bc.channels.messageDirect( channel, controller, ... )
     local chanName = channel.name
 
     if doSound then
-        if channel.tickMode == 0 then
+        if tickMode == 0 then
             bc.formatting.triggerTick()
         end
-        if channel.popMode == 0 then
+        if popMode == 0 then
             bc.formatting.triggerPop()
         end
     end
+
+    data = bc.channels.preProcess( data )
 
     if channel.showTimestamps then
         table.insert( data, 1, bc.defines.theme.timeStamps )
@@ -548,19 +597,23 @@ function bc.channels.messageDirect( channel, controller, ... )
                 prevCol = obj
             end
         elseif type( obj ) == "Player" then --ply
-            local col = team.GetColor( obj:Team() )
-            richText:InsertColorChange( col.r, col.g, col.b, 255 )
-            richText:InsertClickableTextStart( "Player-" .. obj:SteamID() )
-            richText:AppendText( parseName( obj:Nick() ) )
-            richText:InsertClickableTextEnd()
-            richText:InsertColorChange( prevCol )
-            if obj == LocalPlayer() and not ignoreNext then
-                if doSound then
-                    if channel.tickMode == 1 then
-                        bc.formatting.triggerTick()
-                    end
-                    if channel.popMode == 1 then
-                        bc.formatting.triggerPop()
+            if not IsValid( obj ) then
+                richText:AppendText( tostring( obj ) )
+            else
+                local col = team.GetColor( obj:Team() )
+                richText:InsertColorChange( col.r, col.g, col.b, 255 )
+                richText:InsertClickableTextStart( "Player-" .. obj:SteamID() )
+                richText:AppendText( bc.channels.parseName( obj:Nick() ) )
+                richText:InsertClickableTextEnd()
+                richText:InsertColorChange( prevCol )
+                if obj == LocalPlayer() and not ignoreNext then
+                    if doSound then
+                        if tickMode == 1 then
+                            bc.formatting.triggerTick()
+                        end
+                        if popMode == 1 then
+                            bc.formatting.triggerPop()
+                        end
                     end
                 end
             end
@@ -987,7 +1040,7 @@ function bc.channels.hidePSheet()
 end
 
 function bc.channels.scrollToBottom( chanName, instant )
-    local chan = bc.channels.getChannel( chanName )
+    local chan = bc.channels.get( chanName )
 
     if not chan or not bc.channels.isOpen( chanName ) then
         return
@@ -999,12 +1052,12 @@ function bc.channels.scrollToBottom( chanName, instant )
 end
 
 function bc.channels.getOrCreate( chanName )
-    local chan = bc.channels.getChannel( chanName )
+    local chan = bc.channels.get( chanName )
 
     if not chan then
         local dashPos = string.find( chanName, " - ", 1, true )
         if not dashPos then
-            return bc.channels.getChannel( "All" )
+            return bc.channels.get( "All" )
         end
 
         local nameType = string.sub( chanName, 1, dashPos - 1 )
@@ -1028,7 +1081,7 @@ function bc.channels.getOrCreate( chanName )
             if not ply then return nil end
             return bc.private.createChannel( ply )
         else
-            return bc.channels.getChannel( "All" )
+            return bc.channels.get( "All" )
         end
     end
 

@@ -188,22 +188,26 @@ if CLIENT then
     function bc.util.msgC( ... )
         local data = { ... }
 
+        data = bc.channels.preProcess( data )
+
         local lastCol = bc.defines.colors.white
         local k = 1
         while k <= #data do
             local v = data[k]
             if type( v ) == "Player" then
                 table.remove( data, k )
-                table.insert( data, k, lastCol )
-                table.insert( data, k, v:Nick() )
-                table.insert( data, k, team.GetColor( v:Team() ) )
+                table.insertMany( data, k, {
+                    team.GetColor( v:Team() ),
+                    v:Nick(),
+                    lastCol
+                } )
                 k = k + 2
             elseif type( v ) == "table" then
-                if v.formatter or v.isController then
-                    if v.formatter and ( v.type == "image" or v.type == "clickable" ) then
+                if v.formatter or v.controller then
+                    if v.formatter and ( v.type == "image" or v.type == "clickable" or v.type == "text" ) then
                         if v.colour then v.color = v.colour end
                         data[k] = v.text
-                        if v.type == "clickable" and v.color then
+                        if ( v.type == "clickable" or v.type == "text" ) and v.color then
                             table.insert( data, k, v.color )
                             table.insert( data, k + 2, lastCol )
                             k = k + 2

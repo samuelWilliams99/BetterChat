@@ -24,5 +24,6 @@ runRecurse( "materials/icons", "png", resource.AddSingleFile )
 runRecurse( "resource/fonts", "ttf", resource.AddFile )
 runRecurse( "materials/spritesheets", "vmt", resource.AddFile )
 runRecurse( "materials/spritesheets", "png", resource.AddSingleFile )
+runRecurse( "materials/spritesheets", "json", resource.AddSingleFile )
 
 include( "betterchat/shared/sh_base.lua" )

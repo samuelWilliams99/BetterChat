@@ -204,7 +204,7 @@ end
 function getSimilarNames( str )
     local names = {}
     for k, ply in pairs( player.GetAll() ) do
-        table.insert( names, ply:GetName() )
+        table.insert( names, ply:Nick() )
     end
     return getSimilarStrings( str, names )
 end

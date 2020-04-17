@@ -14,6 +14,8 @@ local function teamSend( self, txt )
     net.SendToServer()
 end
 
+local serverSetting = bc.settings.getServerValue
+
 hook.Add( "BC_initPanels", "BC_initAddMainChannels", function()
     bc.mainChannels.allHistory = {}
     bc.channels.add( {
@@ -32,7 +34,7 @@ hook.Add( "BC_initPanels", "BC_initAddMainChannels", function()
             end
         end,
         tickMode = 2,
-        popMode = 2,
+        popMode = 1,
         openOnStart = true,
         disallowClose = true,
         relayAll = false,
@@ -43,31 +45,32 @@ hook.Add( "BC_initPanels", "BC_initAddMainChannels", function()
         icon = "group.png",
         send = globalSend,
         trim = true,
+        popMode = 2,
         addNewLines = true,
         position = 2,
     } )
-    if not DarkRP then
-        bc.channels.add( {
-            name = "Team",
-            icon = "group.png",
-            send = teamSend,
-            trim = true,
-            onMessage = function()
-                bc.private.lastMessaged = nil
-            end,
-            doPrints = true,
-            addNewLines = true,
-            disabledSettings = { "openKey" },
-            allFunc = function( self, tab, idx )
-                table.insert( tab, idx, bc.defines.theme.team )
-                table.insert( tab, idx + 1, "(TEAM) " )
-            end,
-            openOnStart = true,
-            textEntryColor = bc.defines.theme.teamTextEntry,
-            replicateAll = true,
-            position = 3,
-        } )
-    end
+    bc.channels.add( {
+        name = "Team",
+        icon = "group.png",
+        send = teamSend,
+        trim = true,
+        onMessage = function()
+            bc.private.lastMessaged = nil
+        end,
+        doPrints = true,
+        addNewLines = true,
+        disabledSettings = { "openKey" },
+        allFunc = function( self, tab, idx )
+            table.insert( tab, idx, bc.defines.theme.team )
+            table.insert( tab, idx + 1, "(" .. self.displayName .. ") " )
+        end,
+        openOnStart = function( self )
+            return bc.mainChannels.teamEnabled()
+        end,
+        textEntryColor = bc.defines.theme.teamTextEntry,
+        replicateAll = true,
+        position = 3,
+    } )
     bc.channels.add( {
         name = "Prints",
         icon = "application_xp_terminal.png",
@@ -82,10 +85,16 @@ hook.Add( "BC_initPanels", "BC_initAddMainChannels", function()
     } )
 end )
 
+function bc.mainChannels.teamEnabled()
+    return not ( DarkRP or serverSetting( "removeTeam" ) or serverSetting( "replaceTeam" ) )
+end
+
 local function channelButton( menu, chanName )
     if bc.channels.isOpen( chanName ) then return end
-    menu:AddOption( chanName, function()
-        local chan = bc.channels.getChannel( chanName )
+    local channel = bc.channels.get( chanName )
+
+    menu:AddOption( channel.displayName, function()
+        local chan = bc.channels.get( chanName )
         if not chan then return end
 
         bc.channels.open( chanName )
@@ -95,7 +104,7 @@ end
 
 hook.Add( "BC_makeChannelButtons", "BC_makeMainButtons", function( menu )
     channelButton( menu, "Players" )
-    if not DarkRP then
+    if bc.mainChannels.teamEnabled() then
         channelButton( menu, "Team" )
     end
     channelButton( menu, "Prints" )

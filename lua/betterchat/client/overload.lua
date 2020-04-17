@@ -1,5 +1,8 @@
 bc.overload = bc.overload or {}
 
+-- formatter types with "text" defined to be replaced with the raw text
+local textTypes = { "clickable", "image", "gif" }
+
 function bc.overload.overload()
     if bc.overload.overloaded then return end
     bc.overload.old = {}
@@ -10,7 +13,7 @@ function bc.overload.overload()
         -- Call the original function (replace some stuff)
         local data = { ... }
         for k, v in pairs( data ) do
-            if type( v ) == "table" and v.formatter and ( v.type == "clickable" or v.type == "image" or v.type == "gif" ) then
+            if type( v ) == "table" and v.formatter and table.HasValue( textTypes, v.type ) then
                 data[k] = v.text
             end
         end
@@ -41,7 +44,7 @@ function bc.overload.overload()
             if DarkRP then
                 if bc.settings.getServerValue( "replaceTeam" ) then
                     local t = chatHelper.teamName( LocalPlayer() )
-                    chan = "TeamOverload-" .. t
+                    chan = "TeamOverload - " .. t
                 else
                     return
                 end

@@ -8,7 +8,7 @@ bc.sidePanel.members.template = {
         default = 1,
         extra = "Set this player's role in the group",
         onChange = function( data )
-            local chan = bc.channels.getChannel( "Group - " .. data.group.id )
+            local chan = bc.channels.get( "Group - " .. data.group.id )
             if not chan then return end -- Shouldn't be able to edit this but u kno
 
             local oldGroup = data.group

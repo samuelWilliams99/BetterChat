@@ -212,7 +212,7 @@ function bc.sidePanel.players.parse()
                     end
                 end
 
-                table.insert( cmdCopy, data.ply:GetName() )
+                table.insert( cmdCopy, data.ply:Nick() )
 
                 if postArgs then
                     for l, w in pairs( postArgs ) do

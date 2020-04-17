@@ -9,7 +9,7 @@ bc.admin.defaultChannel = {
     addNewLines = true,
     allFunc = function( self, tab, idx )
         table.insert( tab, idx, bc.defines.theme.admin )
-        table.insert( tab, idx + 1, "(ADMIN) " )
+        table.insert( tab, idx + 1, "(" .. self.displayName .. ") " )
     end,
     openOnStart = function()
         return bc.admin.allowed()
@@ -32,8 +32,10 @@ end
 hook.Add( "BC_makeChannelButtons", "BC_makeAdminButton", function( menu )
     if not bc.admin.buttonEnabled then return end
     if bc.channels.isOpen( "Admin" ) then return end
-    menu:AddOption( "Admin", function()
-        local chan = bc.channels.getChannel( "Admin" )
+    local channel = bc.channels.get( "Admin" )
+
+    menu:AddOption( channel.displayName, function()
+        local chan = bc.channels.get( "Admin" )
         if not chan then return end
         if not bc.admin.allowed() then return end
 
@@ -42,7 +44,8 @@ hook.Add( "BC_makeChannelButtons", "BC_makeAdminButton", function( menu )
     end )
 end )
 
-function bc.admin.allowed()
+function bc.admin.allowed( ply )
+    if ply then return bc.settings.isAllowed( ply, "seeasay" ) end
     return bc.settings.isAllowed( "seeasay" )
 end
 
@@ -50,7 +53,7 @@ net.Receive( "BC_AM", function()
     if not bc.admin.allowed() then return end
     local ply = net.ReadEntity()
     local text = net.ReadString()
-    local chan = bc.channels.getChannel( "Admin" )
+    local chan = bc.channels.get( "Admin" )
 
     if not chan then return end
     if not chan.openOnMessage then return end
@@ -83,8 +86,10 @@ end )
 
 hook.Add( "BC_userAccessChange", "BC_adminChannelCheck", function()
     if bc.admin.allowed() then
-        bc.channels.open( "Admin" )
-        bc.admin.addButton()
+        if not bc.admin.buttonEnabled then
+            bc.channels.open( "Admin" )
+            bc.admin.addButton()
+        end
     else
         bc.channels.close( "Admin" )
         bc.admin.removeButton()
@@ -107,7 +112,7 @@ hook.Add( "PostGamemodeLoaded", "BC_RPAdminOverload", function()
                 chat.AddNonParsedText( bc.defines.colors.red, prefix, team.GetColor( Team ), Nick .. ": ", bc.defines.colors.white, text )
             else
                 if bc.admin.allowed() then
-                    local chan = bc.channels.getChannel( "Admin" )
+                    local chan = bc.channels.get( "Admin" )
 
                     local tab = bc.formatting.formatMessage( ply, text, not ply:Alive(), bc.defines.colors.white )
                     bc.channels.message( { chan.name, "MsgC" }, unpack( tab ) )
@@ -124,7 +129,7 @@ hook.Add( "PostGamemodeLoaded", "BC_RPAdminOverload", function()
             end
         end )
         DarkRP.addChatReceiver( "/adminhelp", "talk in Admin", function( ply, text )
-            return bc.admin.allowed()
+            return bc.admin.allowed( ply )
         end )
     end
 end )

@@ -127,7 +127,7 @@ hook.Add( "BC_makeChannelButtons", "BC_makeGroupButton", function( menu )
         local chanName = "Group - " .. group.id
         if bc.channels.isOpen( chanName ) then continue end
         subMenu:AddOption( group.name, function()
-            local chan = bc.channels.getChannel( chanName )
+            local chan = bc.channels.get( chanName )
             if not chan then
                 chan = bc.group.createChannel( group )
             end
@@ -195,7 +195,7 @@ function bc.group.onUpdate()
         table.insert( bc.group.groups, group )
     end
 
-    local chan = bc.channels.getChannel( "Group - " .. group.id )
+    local chan = bc.channels.get( "Group - " .. group.id )
     if chan then
         chan.group = group
         chan.displayName = group.name
@@ -228,7 +228,7 @@ function bc.group.onMessage()
     local ply = net.ReadEntity()
     local text = net.ReadString()
 
-    local chan = bc.channels.getChannel( "Group - " .. groupId )
+    local chan = bc.channels.get( "Group - " .. groupId )
     if not chan then
         for k, v in pairs( bc.group.groups ) do
             if v.id == groupId then
@@ -245,7 +245,7 @@ function bc.group.onMessage()
     bc.channels.open( chan.name )
 
     local tab = bc.formatting.formatMessage( ply, text, not ply:Alive() )
-    table.insert( tab, 1, { isController = true, doSound = ply ~= LocalPlayer() } )
+    table.insert( tab, 1, { controller = true, doSound = ply ~= LocalPlayer() } )
     bc.channels.message( { chan.name, "MsgC" }, unpack( tab ) )
 end
 
@@ -253,7 +253,7 @@ function bc.group.deleteGroup( group )
     if not bc.group.allowed() then return end
     table.removeByMember( bc.group.groups, "id", group.id )
     
-    local chan = bc.channels.getChannel( "Group - " .. group.id )
+    local chan = bc.channels.get( "Group - " .. group.id )
     if chan then
         bc.channels.close( chan.name )
         bc.channels.remove( chan.name )

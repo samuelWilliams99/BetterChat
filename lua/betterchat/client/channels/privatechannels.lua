@@ -16,10 +16,16 @@ bc.private.defaultChannel = {
     end,
     allFunc = function( self, tab, idx, isConsole )
         local sender = table.remove( tab, idx + 1 )
-        sender = sender.isConsole and bc.defines.consolePlayer or sender
+        sender = sender.isConsole and bc.defines.consolePlayer or sender.ply
         local arrow = isConsole and " to " or " → "
+
+        local selfPly = {
+            formatter = true,
+            type = "sender",
+            ply = self.ply
+        }
         if sender == self.ply then --Receive
-            table.insert( tab, idx, self.ply )
+            table.insert( tab, idx, selfPly )
             table.insert( tab, idx + 1, bc.defines.colors.printBlue )
             table.insert( tab, idx + 2, arrow )
             table.insert( tab, idx + 3, bc.util.you() )
@@ -27,7 +33,7 @@ bc.private.defaultChannel = {
             table.insert( tab, idx, bc.util.you() )
             table.insert( tab, idx + 1, bc.defines.colors.printBlue )
             table.insert( tab, idx + 2, arrow )
-            table.insert( tab, idx + 3, self.ply )
+            table.insert( tab, idx + 3, selfPly )
         end
     end,
     tickMode = 2,
@@ -61,7 +67,7 @@ local function getName( ply )
     if not ply:IsValid() then
         return "Server"
     else
-        return ply:GetName()
+        return ply:Nick()
     end
 end
 
@@ -104,7 +110,7 @@ net.Receive( "BC_PM", function( len )
         return
     end
 
-    local chan = bc.channels.getChannel( "Player - " .. getSteamID( ply ) )
+    local chan = bc.channels.get( "Player - " .. getSteamID( ply ) )
     if not chan then
         chan = bc.private.createChannel( ply )
     end
@@ -118,10 +124,14 @@ net.Receive( "BC_PM", function( len )
 
         local tab = table.Add( {
             {
-                isController = true,
+                controller = true,
                 doSound = ( ply == sender ) and ( ply ~= LocalPlayer() )
             },
-            sender:IsValid() and sender or bc.defines.consolePlayer,
+            sender:IsValid() and {
+                formatter = true,
+                type = "sender",
+                ply = sender
+            } or bc.defines.consolePlayer,
             bc.defines.colors.white,
             ": "
         }, bc.formatting.formatText( text, nil, sender ) )

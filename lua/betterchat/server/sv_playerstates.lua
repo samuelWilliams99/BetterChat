@@ -56,6 +56,7 @@ hook.Add( "BC_playerReady", "BC_stateInit", function( ply )
     end
 end )
 
+-- Not needed anymore?
 local function accessChange( id, ... )
     local ply
     if type( id ) == "Player" then
@@ -76,8 +77,8 @@ local function accessChangeGlobal()
     end )
 end
 
-hook.Add( "ULibUserGroupChange", "BC_rankChange", accessChange )
-hook.Add( "ULibUserAccessChange", "BC_rankChange", accessChange )
-hook.Add( "ULibUserRemoved", "BC_rankChange", accessChange )
+hook.Add( "ULibUserGroupChange", "BC_rankChange", accessChangeGlobal )
+hook.Add( "ULibUserAccessChange", "BC_rankChange", accessChangeGlobal )
+hook.Add( "ULibUserRemoved", "BC_rankChange", accessChangeGlobal )
 hook.Add( "ULibGroupAccessChanged", "BC_rankChange", accessChangeGlobal )
-hook.Add( "CAMI.PlayerUsergroupChanged", "BC_rankChange", accessChange )
+hook.Add( "CAMI.PlayerUsergroupChanged", "BC_rankChange", accessChangeGlobal )
