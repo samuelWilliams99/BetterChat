@@ -97,7 +97,7 @@ Each of these settings can also be modified via Q->options->BetterChat, and will
 
 
 ## Extra
-All channels are limited by the ULX chat cooldown ConVar: `ulx_chattime `
+All channels are limited by the ULX chat cooldown ConVar: `ulx_chattime`
 
 
 ## Nice little features:
@@ -116,11 +116,11 @@ All channels are limited by the ULX chat cooldown ConVar: `ulx_chattime `
 ## Adding custom emotes:
 **IMPORTANT**: This can be difficult, and sometimes does not work. I intend to change how this is done when I can, which will likely remove any custom emotes you add now. Proceed at your own risk :)
 1. Extract BetterChat's `gma` file to folder, using `gmad.exe` in `GarrysMod\bin`. See [here](https://steamcommunity.com/sharedfiles/filedetails/?id=865959209) for how to do this
-1. Navigate to `GarrysMod\garrysmod\addons\BetterChat\materials\spritesheets`
-2. Convert your spritesheet to vtf. Use this[https://sprays.tk/] to convert png to VTF (not VMT). IMPORTANT NOTE, your image height and width must be a power of 2 (32, 64, 128, 256, ...), you don't need to use the entire sheet, but vtf files require this. If you get an error using the converter, this is likely why. 
-3. Copy the vmt from another spritesheet and rename it to the same as your spritesheet.
-4. Open the vmt with a text editor and change line 3 to "$basetexture" "spritesheets/[YOURSPRITESHEET]" (without .vtf)
-5. Create a json file with the same name as your spritesheet, and fill it in using the following format.
+2. Navigate to `GarrysMod\garrysmod\addons\BetterChat\materials\spritesheets`
+3. Convert your spritesheet to vtf. Use [this](https://sprays.tk/) to convert png to VTF (not VMT). IMPORTANT NOTE, your image height and width must be a power of 2 (32, 64, 128, 256, ...), you don't need to use the entire sheet, but vtf files require this. If you get an error using the converter, this is likely why. 
+4. Copy the vmt from another spritesheet and rename it to the same as your spritesheet.
+5. Open the vmt with a text editor and change line 3 to "$basetexture" "spritesheets/[YOURSPRITESHEET]" (without .vtf)
+6. Create a json file with the same name as your spritesheet, and fill it in using the following format.
 ```
 {
 	"spriteWidth": 20,
@@ -149,6 +149,6 @@ All channels are limited by the ULX chat cooldown ConVar: `ulx_chattime `
 - spriteWidth and spriteHeight is the size of an individual sprite in pixels
 - posX and posY are the position of the sprite in the sprite sheet, where 0,0 is top left (increase by 1 per sprite, not per pixel)
 - Typing :mySprite: in chat will display a sprite with the name "mySprite"
-- chatStrings is a list of extra strings to display the sprite. (this does not add ":"s, if you want `yourSprite` as an extra string, use `:yourSprite:`
+- chatStrings is a list of extra strings to display the sprite. (this does not add ":"s, if you want `yourSprite` as an extra string, use `:yourSprite:`)
 - The json file can also be a png file, as gross as this is, it's the only way to get steam to allow json in a materials folder, this is why emojis.png and gmodicons.png exist.
 
