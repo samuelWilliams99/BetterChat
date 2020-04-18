@@ -36,7 +36,7 @@ If a player on your server does not like this chat, it can be disabled in Q->opt
 ## Addon Compatibility:
 Some chat based addons aren't fully compatible with BetterChat, I'll try to fix any I can, but some require the other addon to be changed. I'll list any addons that require this in the Compatibility Discussion, along with how to fix them.
 
-## Currently Known Compatible Addons:
+### Currently Known Compatible Addons:
 - DarkRP
 - ATags (with and without DarkRP)
 
