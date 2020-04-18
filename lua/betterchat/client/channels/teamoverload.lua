@@ -1,68 +1,125 @@
-function chatBox.teamName(ply)
-	return team.GetName(ply:Team())
-end
+bc.teamOverload = {}
 
-chatBox.defaultTeamChannel = {
-	icon = "group.png",
-	send = function(self, msg)
-		if DarkRP and not LocalPlayer():IsAlive() then return end
-		net.Start("BC_TM")
-		net.WriteString(msg)
-		net.SendToServer()
-	end,
-	onMessage = function()
-		chatBox.lastPrivate = nil
-	end,
-	doPrints = true,
-	addNewLines = true,
-	disabledSettings = {"openKey"},
-	allFunc = function(self, tab, idx)
-		table.insert(tab, idx, Color(0,170,0) )
-		table.insert(tab, idx+1, "(" .. chatBox.teamName(LocalPlayer()) .. ") " )
-	end,
-	openOnStart = true,
-	disallowClose = true,
-	hideRealName = true
+bc.teamOverload.defaultChannel = {
+    icon = "group.png",
+    send = function( self, msg )
+        if DarkRP and not LocalPlayer():Alive() then return end
+        net.Start( "BC_TM" )
+        net.WriteString( msg )
+        net.SendToServer()
+    end,
+    onMessage = function()
+        bc.private.lastMessaged = nil
+    end,
+    doPrints = true,
+    addNewLines = true,
+    disabledSettings = { "openKey" },
+    allFunc = function( self, tab, idx )
+        table.insert( tab, idx, bc.defines.theme.team )
+        table.insert( tab, idx + 1, "(" .. self.displayName .. ") " )
+    end,
+    openOnStart = function( channel )
+        if not bc.settings.getServerValue( "replaceTeam" ) then return end
+
+        return "TeamOverload - " .. chatHelper.teamName( LocalPlayer() ) == channel.name
+    end,
+    hideRealName = true,
+    hideChatText = true,
+    textEntryColor = bc.defines.theme.teamTextEntry,
+    replicateAll = true,
+    position = 3,
 }
 
-hook.Add("BC_PreInitPanels", "BC_InitAddTeamOverloadChannel", function()
-	if chatBox.getServerSetting("replaceTeam") then
-		local teamName = chatBox.teamName(LocalPlayer())
-		local chanName = "TeamOverload-" .. teamName
-		local channel = chatBox.getChannel(chanName)
+function bc.teamOverload.onMessage()
+    local ply = net.ReadEntity()
+    local text = net.ReadString()
 
-		if not channel then
-			channel = table.Copy(chatBox.defaultTeamChannel)
-			channel.name = chanName
-			table.insert(chatBox.channels, channel)
-		end
-		if channel.needsData then
-			for k, v in pairs(chatBox.defaultTeamChannel) do
-				if channel[k] == nil then 
-					channel[k] = v 
-				end
-			end
-			channel.needsData = nil
-		end
-		channel.displayName = teamName
+    local t = chatHelper.teamName( LocalPlayer() )
+    local chanName = "TeamOverload - " .. t
 
-		if not channel.dataChanged then channel.dataChanged = {} end
+    local tab = bc.formatting.formatMessage( ply, text, not ply:Alive() )
+    bc.channels.message( { chanName, "MsgC" }, unpack( tab ) )
+end
 
-		net.Receive("BC_TM", function()
+function bc.teamOverload.onPermissionChange()
+    local plyTeam = LocalPlayer():Team()
+    if bc.teamOverload.currentTeam == plyTeam then return end
 
-			local ply = net.ReadEntity()
-			local text = net.ReadString()
+    local old = bc.teamOverload.currentTeam
+    bc.teamOverload.currentTeam = plyTeam
 
-			local t = chatBox.teamName(LocalPlayer())
-			local chanName = "TeamOverload-"..t
-			local chan = chatBox.getChannel(chanName)
+    local oldChanName = "TeamOverload - " .. team.GetName( old )
+    local wasOpen = bc.channels.isOpen( oldChanName )
+    bc.channels.close( oldChanName )
 
+    local newChannel = bc.teamOverload.addChannel()
 
-			
-			if chan and chatBox.isChannelOpen(chan) then
-				local tab = chatBox.formatMessage(ply, text, not ply:Alive())
-				chatBox.messageChannel( {chan.name, "MsgC"}, unpack(tab) )
-			end
-		end)
-	end
-end)
+    if wasOpen then
+        bc.channels.open( newChannel.name )
+    end
+end
+
+function bc.teamOverload.makeButtons( menu )
+    local teamName = chatHelper.teamName( LocalPlayer() )
+    local chanName = "TeamOverload - " .. teamName
+
+    if bc.channels.isOpen( chanName ) then return end
+    menu:AddOption( teamName, function()
+        local chan = bc.channels.get( chanName )
+        if not chan then return end
+
+        bc.channels.open( chanName )
+        bc.channels.focus( chanName )
+    end )
+end
+
+function bc.teamOverload.disable()
+    if not bc.base.enabled then return end
+
+    net.Receivers.BC_TM = nil
+    hook.Remove( "BC_makeChannelButtons", "BC_makeTeamOverloadButtons" )
+    hook.Remove( "BC_userAccessChange", "BC_teamOverloadChange" )
+
+    local chanName = "TeamOverload - " .. chatHelper.teamName( LocalPlayer() )
+    bc.channels.close( chanName )
+
+    if bc.mainChannels.teamEnabled() then
+        bc.channels.open( "Team" )
+    end
+end
+
+function bc.teamOverload.addChannel()
+    local ply = LocalPlayer()
+
+    local teamName = chatHelper.teamName( ply )
+    local chanName = "TeamOverload - " .. teamName
+    local channel = table.Copy( bc.teamOverload.defaultChannel )
+    channel.name = chanName
+    channel.displayName = teamName
+
+    bc.channels.add( channel )
+
+    return channel
+end
+
+function bc.teamOverload.enable()
+    if not bc.base.enabled then return end
+
+    local channel = bc.teamOverload.addChannel()
+    bc.channels.open( channel.name )
+    bc.teamOverload.currentTeam = LocalPlayer():Team()
+
+    net.Receive( "BC_TM", bc.teamOverload.onMessage )
+    hook.Add( "BC_makeChannelButtons", "BC_makeTeamOverloadButtons", bc.teamOverload.makeButtons )
+    hook.Add( "BC_userAccessChange", "BC_teamOverloadChange", bc.teamOverload.onPermissionChange )
+
+    bc.channels.close( "Team" )
+end
+
+hook.Add( "BC_initPanels", "BC_initAddTeamOverloadChannel", function()
+    if bc.settings.getServerValue( "replaceTeam" ) then
+        bc.teamOverload.enable()
+    else
+        bc.teamOverload.disable()
+    end
+end )

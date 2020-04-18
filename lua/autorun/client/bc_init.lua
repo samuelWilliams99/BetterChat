@@ -1,1 +1,1 @@
-include("betterchat/sh_base.lua")
+include( "betterchat/shared/sh_base.lua" )

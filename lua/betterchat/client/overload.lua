@@ -1,93 +1,87 @@
-function chatBox.overloadFunctions()
-	chatBox.overloadedFuncs = {}
-	chatBox.overloadedFuncs.oldAddText = chat.AddText
-	chat.AddText = function( ... )
-		chatBox.print(...)
-		-- Call the original function (replace some stuff)
-		local data = {...}
-		for k,v in pairs(data) do
-			if type(v) == "table" and v.formatter and (v.type == "clickable" or v.type == "image") then
-				data[k] = v.text
-			end
-		end
-		chatBox.overloadedFuncs.oldAddText( unpack(data) )
-	end
+bc.overload = bc.overload or {}
 
-	chatBox.overloadedFuncs.oldGetChatBoxPos = chat.GetChatBoxPos
-	chat.GetChatBoxPos = function() 
-		return chatBox.graphics.frame:GetPos()
-	end
+-- formatter types with "text" defined to be replaced with the raw text
+local textTypes = { "clickable", "image", "gif" }
 
-	chatBox.overloadedFuncs.oldGetChatBoxSize = chat.GetChatBoxSize
-	chat.GetChatBoxSize = function() 
-		local xSum = chatBox.graphics.size.x
-		for k, v in pairs(chatBox.sidePanels) do
-			if v.animState > 0 then
-				xSum = xSum + (v.animState*v.size.x) + 2
-			end
-		end
+function bc.overload.overload()
+    if bc.overload.overloaded then return end
+    bc.overload.old = {}
+    local o = bc.overload.old
+    o.AddText = chat.AddText
+    function chat.AddText( ... )
+        bc.formatting.print( ... )
+        -- Call the original function (replace some stuff)
+        local data = { ... }
+        for k, v in pairs( data ) do
+            if type( v ) == "table" and v.formatter and table.HasValue( textTypes, v.type ) then
+                data[k] = v.text
+            end
+        end
+        o.AddText( unpack( data ) )
+    end
 
-		return xSum, chatBox.graphics.size.y
-	end
+    o.GetChatBoxPos = chat.GetChatBoxPos
+    function chat.GetChatBoxPos()
+        return bc.graphics.derma.frame:GetPos()
+    end
 
-	chatBox.overloadedFuncs.plyMeta = FindMetaTable("Player")
-	chatBox.overloadedFuncs.plyChatPrint = chatBox.overloadedFuncs.plyMeta.ChatPrint
-	chatBox.overloadedFuncs.plyMeta.ChatPrint = function(self, str)
-		chatBox.print(printBlue, str)
+    o.GetChatBoxSize = chat.GetChatBoxSize
+    function chat.GetChatBoxSize()
+        local xSum = bc.graphics.size.x
+        for k, v in pairs( bc.sidePanel.panels ) do
+            if v.animState > 0 then
+                xSum = xSum + ( v.animState * v.size.x ) + 2
+            end
+        end
 
-		chatBox.overloadedFuncs.plyChatPrint(self, str)
-	end
+        return xSum, bc.graphics.size.y
+    end
 
-	chatBox.overloadedFuncs.plyIsTyping = chatBox.overloadedFuncs.plyMeta.IsTyping
-	chatBox.overloadedFuncs.plyMeta.IsTyping = function( ply )
-		return chatBox.playersOpen[ply]
-	end
+    o.Open = chat.Open
+    function chat.Open( mode )
+        local chan
+        if mode == 1 then
+            if DarkRP then
+                if bc.settings.getServerValue( "replaceTeam" ) then
+                    local t = chatHelper.teamName( LocalPlayer() )
+                    chan = "TeamOverload - " .. t
+                else
+                    return
+                end
+            else -- Dont open normal team chat, do nothing to allow for bind
+                chan = "Team"
+            end
+        end
+        bc.base.open( chan )
+    end
 
-	chatBox.overloadedFuncs.hookAdd = hook.Add
-	chatBox.hookOverloads = { OnPlayerChat = table.Copy(hook.GetTable().OnPlayerChat or {}) }
-	for k, v in pairs(hook.GetTable().OnPlayerChat or {}) do
-		hook.Remove("OnPlayerChat", k)
-	end
-	hook.Add("OnPlayerChat", "BC_ChatHook", function(...)
-		if chatBox.OnPlayerSayHook then
-			return chatBox.OnPlayerSayHook(...)
-		end
-	end)
-	hook.Add = function(event, id, func)
-		if event == "OnPlayerChat" then
-			chatBox.hookOverloads.OnPlayerChat[id] = func
-		else
-			chatBox.overloadedFuncs.hookAdd( event, id, func )
-		end
-	end
+    o.Close = chat.Close
+    chat.Close = bc.base.close
 
-	chatBox.overloadedFuncs.hookRemove = hook.Remove
-	hook.Remove = function(event, id)
-		if event == "OnPlayerChat" then
-			chatBox.hookOverloads.OnPlayerChat[id] = nil
-		else
-			chatBox.overloadedFuncs.hookRemove( event, id )
-		end
-	end
+    o.plyMeta = FindMetaTable( "Player" )
+    o.plyChatPrint = o.plyMeta.ChatPrint
+    function o.plyMeta:ChatPrint( str )
+        bc.formatting.print( bc.defines.colors.printBlue, str )
 
-	hook.Run("BC_Overload")
+        o.plyChatPrint( self, str )
+    end
 
-	chatBox.overloaded = true
+    hook.Run( "BC_overload" )
+
+    bc.overload.overloaded = true
 end
 
-function chatBox.returnFunctions()
-	if not chatBox.overloaded then return end
-	chat.AddText = chatBox.overloadedFuncs.oldAddText
-	chat.GetChatBoxSize = chatBox.overloadedFuncs.oldGetChatBoxSize
-	chat.GetChatBoxPos = chatBox.overloadedFuncs.oldGetChatBoxPos
+function bc.overload.undo()
+    if not bc.overload.overloaded then return end
+    local o = bc.overload.old
+    chat.AddText = o.AddText
+    chat.GetChatBoxSize = o.GetChatBoxSize
+    chat.GetChatBoxPos = o.GetChatBoxPos
+    chat.Open = o.Open
+    chat.Close = o.Close
 
-	hook.Add = chatBox.overloadedFuncs.hookAdd
-	hook.Remove = chatBox.overloadedFuncs.hookRemove
-	hook.GetTable().OnPlayerChat = table.Copy(chatBox.hookOverloads.OnPlayerChat)
-
-	chatBox.overloadedFuncs.plyMeta.ChatPrint = chatBox.overloadedFuncs.plyChatPrint
-	chatBox.overloadedFuncs.plyMeta.IsTyping = chatBox.overloadedFuncs.plyIsTyping
-	chatBox.overloadedFuncs = {}
-	hook.Run("BC_Overload_Undo")
-	chatBox.overloaded = false
+    o.plyMeta.ChatPrint = o.plyChatPrint
+    bc.overload.old = {}
+    hook.Run( "BC_overloadUndo" )
+    bc.overload.overloaded = false
 end

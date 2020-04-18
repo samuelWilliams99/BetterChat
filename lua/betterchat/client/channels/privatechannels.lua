@@ -1,127 +1,155 @@
-chatBox.defaultPrivateChannel = {
-	init = false,
-	displayName = "[Offline]",
-	icon = "user.png",
-	addNewLines = true,
-	send = function(self, txt)
-		if IsValid(self.ply) then
-			if self.ply != LocalPlayer() then --so you can PM yourself and not get the message twice
-				chatBox.printOwnPrivate(self.name, txt)
-			end
+bc.private = {}
 
-			net.Start("BC_PM")
-			net.WriteEntity(self.ply)
-			net.WriteString(txt)
-			net.SendToServer()
-		else -- if offline, print to chat, do nothing
-			chatBox.messageChannelDirect("All", Color(255,0,0), "This player is not online. They will not recieve this message. Right click the channel to close it.")
-			chatBox.messageChannelDirect(self, Color(255,0,0), "This player is not online. They will not recieve this message. Right click the channel to close it.")
-		end
-	end,
-	allFunc = function(self, tab, idx, isConsole)
-		local sender = table.remove(tab, idx+1)
-		local arrow = isConsole and " to " or " → "
-		if sender == self.ply then --Receive
-			table.insert(tab, idx, self.ply)
-			table.insert(tab, idx+1, chatBox.colors.printBlue)
-			table.insert(tab, idx+2, arrow)
-			table.insert(tab, idx+3, {formatter=true, type="clickable", signal="Player-"..LocalPlayer():SteamID(), text="You", color=chatBox.colors.purple})
-		else --send
-			table.insert(tab, idx, {formatter=true, type="clickable", signal="Player-"..LocalPlayer():SteamID(), text="You", color=chatBox.colors.purple})
-			table.insert(tab, idx+1, chatBox.colors.printBlue)
-			table.insert(tab, idx+2, arrow)
-			table.insert(tab, idx+3, self.ply)
-		end
-	end,
-	tickMode = 2,
-	popMode = 0,
-	hideRealName = true,
-	hideInitMessage = true,
-	runCommandSeparately = true,
-	hideChatText = true,
+bc.private.lastMessaged = nil
+bc.private.defaultChannel = {
+    init = false,
+    displayName = "[Offline]",
+    icon = "user.png",
+    addNewLines = true,
+    send = function( self, txt )
+        if IsValid( self.ply ) then
+            RunConsoleCommand( "ulx", "psay", "$" .. self.ply:SteamID(), txt )
+        else -- if offline, print to chat, do nothing
+            bc.channels.messageDirect( "All", bc.defines.colors.red, "This player is not online. They will not recieve this message. Right click the channel to close it." )
+            bc.channels.messageDirect( self, bc.defines.colors.red, "This player is not online. They will not recieve this message. Right click the channel to close it." )
+        end
+    end,
+    allFunc = function( self, tab, idx, isConsole )
+        local sender = table.remove( tab, idx + 1 )
+        sender = sender.isConsole and bc.defines.consolePlayer or sender.ply
+        local arrow = isConsole and " to " or " → "
+
+        local selfPly = {
+            formatter = true,
+            type = "sender",
+            ply = self.ply
+        }
+        if sender == self.ply then --Receive
+            table.insert( tab, idx, selfPly )
+            table.insert( tab, idx + 1, bc.defines.colors.printBlue )
+            table.insert( tab, idx + 2, arrow )
+            table.insert( tab, idx + 3, bc.util.you() )
+        else --send
+            table.insert( tab, idx, bc.util.you() )
+            table.insert( tab, idx + 1, bc.defines.colors.printBlue )
+            table.insert( tab, idx + 2, arrow )
+            table.insert( tab, idx + 3, selfPly )
+        end
+    end,
+    tickMode = 2,
+    popMode = 0,
+    hideRealName = true,
+    runCommandSeparately = true,
+    hideChatText = true,
+    position = 4,
 }
 
-function chatBox.allowedPrivate(ply)
-	ply = ply or LocalPlayer()
-	if ply:IsAdmin() then
-		return chatBox.getServerSetting("allowPMAdmin")
-	end
-	return chatBox.getServerSetting("allowPM")
+function bc.private.allowed( ply )
+    ply = ply or LocalPlayer()
+    if ply:IsBot() then return false end
+    return bc.settings.isAllowed( ply, "psay" )
 end
 
-function chatBox.canPrivateMessage(ply)
-	return chatBox.allowedPrivate() and chatBox.allowedPrivate(ply)
+function bc.private.canMessage( ply )
+    if ply == LocalPlayer() then return false end
+    return bc.private.allowed() and bc.private.allowed( ply )
 end
 
-function chatBox.printOwnPrivate(name, txt)
-	if not chatBox.allowedPrivate() then return end
-	local tab = table.Add({{isController = true, doSound = false}, LocalPlayer(), chatBox.colors.white, ": "}, chatBox.formatText(txt))
-	chatBox.messageChannel( {name, "MsgC"}, unpack(tab))
+local function getSteamID( ply )
+    if not ply:IsValid() then
+        return "CONSOLE"
+    else
+        return ply:SteamID()
+    end
 end
 
-hook.Add("BC_PreInitPanels", "BC_PrivateAddHooks", function()
-	if not chatBox.allowedPrivate() then return end
-	hook.Add("BC_PlayerConnect", "BC_PrivateChannelPlayerReload", function(ply)
-		if not chatBox.enabled then return end
-		for k, v in pairs(chatBox.channels) do
-			if v.plySID then
-				v.ply = player.GetBySteamID(v.plySID)
-			end
-		end
-	end)
-
-	net.Receive("BC_PM", function(len)
-		local ply = net.ReadEntity()
-		local sender = net.ReadEntity()
-		local text = net.ReadString()
-
-		local chan = chatBox.getChannel( "Player - " .. ply:SteamID())
-		if not chan or chan.needsData then
-			chan = chatBox.createPrivateChannel( ply )
-		end
-
-		local plySettings = chatBox.playerSettings[ply:SteamID()]
-
-		if not plySettings or plySettings.ignore == 0 then
-			if not chatBox.isChannelOpen(chan) then
-				chatBox.addPrivateChannel(chan)
-			end
-			local tab = table.Add({{isController = true, doSound = (ply == sender) and (ply != LocalPlayer())}, sender, chatBox.colors.white, ": "}, chatBox.formatText(text))
-			chatBox.messageChannel( {chan.name, "MsgC"}, unpack(tab) )
-			chatBox.lastPrivate = chan
-		end
-	end)
-end)
-
-
-function chatBox.createPrivateChannel( ply )
-	if not chatBox.allowedPrivate() then return nil end
-	local name = "Player - " .. ply:SteamID()
-	local channel = chatBox.getChannel(name)
-	if not channel then
-		channel = table.Copy(chatBox.defaultPrivateChannel)
-		channel.name = name
-		channel.plySID = ply:SteamID()
-		table.insert(chatBox.channels, channel)
-	end
-	if channel.needsData then
-		for k, v in pairs(chatBox.defaultPrivateChannel) do
-			if channel[k] == nil then 
-				channel[k] = v 
-			end
-		end
-		channel.plySID = ply:SteamID()
-		channel.needsData = nil
-	end
-	channel.ply = ply
-	channel.displayName = ply:GetName()
-	if not channel.dataChanged then channel.dataChanged = {} end
-	return channel
+local function getName( ply )
+    if not ply:IsValid() then
+        return "Server"
+    else
+        return ply:Nick()
+    end
 end
 
-function chatBox.addPrivateChannel(channel)
-	if not channel then return end
-	chatBox.addChannel(channel)
-	chatBox.messageChannelDirect("All", {isController = true, doSound = false}, chatBox.colors.printBlue, "Private channel with ", channel.ply, " has been opened.")
-	chatBox.messageChannelDirect(channel, {isController = true, doSound = false}, chatBox.colors.printBlue, "This is a private channel with ", channel.ply, ". Any messages posted here will not affect Expression2 or Starfall chips.")
+hook.Add( "BC_userAccessChange", "BC_privateChannelCheck", function()
+    if not bc.private.allowed() then
+        for k, v in pairs( bc.channels.channels ) do
+            if string.sub( v.name, 1, 9 ) == "Player - " then
+                bc.channels.close( v )
+            end
+        end
+    end
+end )
+
+hook.Add( "BC_playerConnect", "BC_privateChannelPlayerReload", function( ply )
+    if not bc.base.enabled then return end
+    for k, v in pairs( bc.channels.channels ) do
+        if v.plySID and v.plySID ~= "CONSOLE" then
+            v.ply = player.GetBySteamID( v.plySID )
+        end
+    end
+end )
+
+net.Receive( "BC_PM", function( len )
+    if not bc.private.allowed() then return end
+
+    local ply = net.ReadEntity()
+    local sender = net.ReadEntity()
+    local text = net.ReadString()
+
+    if not ply:IsValid() then
+        local tab = table.Add( {
+            bc.defines.consolePlayer,
+            bc.defines.theme.server,
+            " to ",
+            bc.util.you(),
+            bc.defines.colors.white,
+            ": "
+        }, bc.formatting.formatText( text, nil, ply ) )
+        bc.channels.message( { "All", "MsgC" }, unpack( tab ) )
+        return
+    end
+
+    local chan = bc.channels.get( "Player - " .. getSteamID( ply ) )
+    if not chan then
+        chan = bc.private.createChannel( ply )
+    end
+
+    local plySettings = bc.sidePanel.players.settings[getSteamID( ply )]
+
+    if not plySettings or plySettings.ignore == 0 then
+        if not bc.channels.isOpen( chan.name ) then
+            bc.channels.open( chan.name )
+        end
+
+        local tab = table.Add( {
+            {
+                controller = true,
+                doSound = ( ply == sender ) and ( ply ~= LocalPlayer() )
+            },
+            sender:IsValid() and {
+                formatter = true,
+                type = "sender",
+                ply = sender
+            } or bc.defines.consolePlayer,
+            bc.defines.colors.white,
+            ": "
+        }, bc.formatting.formatText( text, nil, sender ) )
+        bc.channels.message( { chan.name, "MsgC" }, unpack( tab ) )
+        bc.private.lastMessaged = chan
+    end
+end )
+
+function bc.private.createChannel( ply )
+    if not bc.private.allowed() then return nil end
+
+    local name = "Player - " .. getSteamID( ply )
+    local channel = table.Copy( bc.private.defaultChannel )
+    channel.name = name
+    channel.ply = ply:IsValid() and ply or bc.defines.consolePlayer
+    channel.plySID = getSteamID( ply )
+    channel.displayName = getName( ply )
+
+    bc.channels.add( channel )
+    return channel
 end

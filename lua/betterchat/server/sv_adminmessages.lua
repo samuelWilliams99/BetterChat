@@ -1,24 +1,29 @@
-net.Receive("BC_AM",function(len, ply)
-	local txt = net.ReadString()
+bc.admin = {}
 
-	local plys = {}
+function bc.admin.sendAdmin( ply, text )
+    if not bc.manager.canMessage( ply ) then return end
 
-	for k, p in pairs(player.GetAll()) do
-		if p:IsAdmin() or (DarkRP and FAdmin.Access.PlayerHasPrivilege(p, "AdminChat")) then
-			if chatBox.chatBoxEnabled[p] then
-				net.Start("BC_AM")
-				net.WriteEntity(ply)
-				net.WriteString(txt)
-				net.Send(p)
-			else
-				table.insert(plys, p)
-			end
-		end
-	end
+    bc.logs.sendLogConsole( "Admin", ply, ": ", text )
 
-	if #plys > 0 then
-		ulx.fancyLog( plys, "#P to admins: #s", ply, txt )
-	else
-		print("(ADMIN) " .. ply:GetName() .. ": " .. txt)
-	end
-end)
+    local plys = {}
+    for k, p in pairs( player.GetAll() ) do
+        if bc.settings.isAllowed( p, "seeasay" ) then
+            if bc.base.playersEnabled[p] then
+                net.Start( "BC_AM" )
+                net.WriteEntity( ply )
+                net.WriteString( text )
+                net.Send( p )
+            else
+                table.insert( plys, p )
+            end
+        end
+    end
+
+    if not bc.settings.isAllowed( ply, "seeasay" ) then
+        table.insert( plys, ply )
+    end
+
+    for k, v in pairs( plys ) do
+        bc.manager.sendNormalClient( v, ply, " to admins: ", bc.defines.colors.green, text )
+    end
+end
