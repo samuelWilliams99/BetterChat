@@ -243,6 +243,9 @@ local function getPlyModifiers( ply )
     out.bold = bc.settings.isAllowed( ply, "bc_bold" )
     out.strike = bc.settings.isAllowed( ply, "bc_strike" )
     out.underline = bc.settings.isAllowed( ply, "bc_underline" )
+    out.rainbow = bc.settings.isAllowed( ply, "bc_rainbow" )
+    out.pulsing = bc.settings.isAllowed( ply, "bc_pulsing" )
+    out.shaking = bc.settings.isAllowed( ply, "bc_shaking" )
     return out
 end
 
@@ -278,7 +281,10 @@ local modifierKeyMap = {
     ["~~"] = "strike",
     ["**"] = "bold",
     ["__"] = "underline",
-    ["*"] = "italic"
+    ["*"] = "italic",
+    ["&&"] = "rainbow",
+    ["%%"] = "pulsing",
+    ["$$"] = "shaking"
 }
 
 function f.formatModifiersSingle( txt, state, allowed )
@@ -340,9 +346,9 @@ end
 function f.formatSpecialWords( text, tab, sender )
     local patterns = {}
     local players = player.GetAll()
-    local prePattern = "[ '\"%*_~]"
-    local postPatternPly = "[ '\"!%?%*_~s:]"
-    local postPatternCol = "[ '\"!%?%*_~]"
+    local prePattern = "[ '\"%*_~%]]"
+    local postPatternPly = "[ '\"!%?%*_~%[s:]"
+    local postPatternCol = "[ '\"!%?%*_~%[]"
     for k, v in pairs( players ) do
         table.insert( patterns, prePattern .. v:Nick():lower():PatternSafe() .. postPatternPly )
     end

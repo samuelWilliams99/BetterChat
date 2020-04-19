@@ -616,12 +616,15 @@ function RICHERTEXT:SetFont( font )
     self.innerFont = font
     self:AddLabel()
 end
-function RICHERTEXT:SetDecorations( bold, italics, underline, strike )
-    table.insert( self.log, { type = "decorations", data = { bold, italics, underline, strike } } )
-    self.textBold = bold
-    self.textItalics = italics
-    self.textUnderline = underline
-    self.textStrike = strike
+function RICHERTEXT:SetDecorations( data )
+    table.insert( self.log, { type = "decorations", data = { data } } )
+    self.textBold = data.bold
+    self.textItalics = data.italics
+    self.textUnderline = data.underline
+    self.textStrike = data.strike
+    self.textRainbow = data.rainbow
+    self.textPulsing = data.pulsing
+    self.textShaking = data.shaking
     self:AddLabel()
 end
 
@@ -791,6 +794,9 @@ function RICHERTEXT:AddLabel()
         label.textUnderline = self.textUnderline
         label.textStrike = self.textStrike
         label.textBold = self.textBold
+        label.textRainbow = self.textRainbow
+        label.textPulsing = self.textPulsing
+        label.textShaking = self.textShaking
         addLabelPaint( label )
     end
     label:SetTextColor( table.Copy( self.textColor ) )

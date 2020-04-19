@@ -271,6 +271,21 @@ bc.settings.ulxPermissions = {
         defaultAccess = ULib.ACCESS_ALL,
         extra = "Ability to use ~~strike~~ in chat",
     },
+    {
+        value = "rainbow",
+        defaultAccess = ULib.ACCESS_OPERATOR,
+        extra = "Ability to use &&rainbow&& in chat",
+    },
+    {
+        value = "pulsing",
+        defaultAccess = ULib.ACCESS_OPERATOR,
+        extra = "Ability to use %%rainbow%% in chat",
+    },
+    {
+        value = "shaking",
+        defaultAccess = ULib.ACCESS_OPERATOR,
+        extra = "Ability to use $$rainbow$$ in chat",
+    },
 }
 
 if SERVER then

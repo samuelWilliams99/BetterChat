@@ -577,7 +577,7 @@ function bc.channels.messageDirect( channel, controller, ... )
                         richText:InsertColorChange( prevCol )
                     end
                 elseif obj.type == "decoration" then
-                    richText:SetDecorations( obj.bold, obj.italic, obj.underline, obj.strike )
+                    richText:SetDecorations( obj )
                 elseif obj.type == "themeColor" then
                     local col = table.Copy( bc.defines.theme[obj.name] )
                     if col then
