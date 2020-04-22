@@ -406,8 +406,6 @@ function bc.channels.message( channelNames, ... )
     controller.tickMode = tickMode
     controller.popMode = popMode
 
-    table.insert( data, 1, controller )
-
     local dataAll = table.Copy( data )
 
     if editChan and useEditFunc then
@@ -415,14 +413,14 @@ function bc.channels.message( channelNames, ... )
     end
 
     if relayToAll then
-        bc.channels.messageDirect( "All", unpack( dataAll ) )
+        bc.channels.messageDirect( "All", controller, unpack( dataAll ) )
     end
 
     for k, c in pairs( channels ) do
         if c.showAllPrefix then
-            bc.channels.messageDirect( c, unpack( dataAll ) )
+            bc.channels.messageDirect( c, controller, unpack( dataAll ) )
         else
-            bc.channels.messageDirect( c, unpack( data ) )
+            bc.channels.messageDirect( c, controller, unpack( data ) )
         end
     end
 
