@@ -49,7 +49,7 @@ hook.Add( "Initialize", "BC_playerSayInit", function()
             if isTeam then
                 bc.logs.sendLog( bc.defines.channelTypes.TEAM, "Team - " .. team.GetName( ply:Team() ), ply, ": ", msg )
             else
-                bc.logs.sendLogConsole( "Global", ply, ": ", msg )
+                bc.logs.sendLogConsole( bc.defines.channelTypes.GLOBAL, "Global", ply, ": ", msg )
             end
 
             return ""
