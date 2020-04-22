@@ -114,18 +114,22 @@ hook.Add( "BC_onServerLog", "myHook", function( channelType, channelName, ... )
         -- Normal player messages
     elseif channelType == bc.defines.channelTypes.TEAM then
         local teamID = sender:Team()
+
         -- Team messages
     elseif channelType == bc.defines.channelTypes.PRIVATE then
         local receiver = data[3]
-        local message = data[5]
+        message = data[5]
+
         -- Private messages, either via !psay, private channel, or /PM for DarkRP
     elseif channelType == bc.defines.channelTypes.GROUP then
         local groupID = string.match( channelName, "^Group (%d+) " )
         groupID = tonumber( id )
+
         -- Group messages, groupID never changes for a group and is never reused.
     elseif channelType == bc.defines.channelTypes.ADMIN then
         -- Admin messages using @, ulx asay, admin channel, or /adminhelp for DarkRP
     end
+
     local senderName = sender:IsValid() and sender:getName() or "(SERVER)"
     return "<" .. channelName .. "> " .. senderName .. ": " .. message
 end )
