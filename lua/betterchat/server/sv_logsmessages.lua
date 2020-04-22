@@ -22,6 +22,7 @@ function bc.logs.sendLogConsole( channelType, channel, ... )
     local replacementStr = hook.Run( "BC_onServerLog", channelType, channel, ... )
     consoleStr = replacementStr or consoleStr
 
+    if #consoleStr == 0 then return end
     print( consoleStr )
     local logFile = GetConVar( "ulx_logfile" )
     if logFile:GetBool() then

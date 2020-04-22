@@ -106,32 +106,41 @@ Usage:
 -- ... are the message structure as it would be printed to logs. Often includes: player, ": ", message
 --     but can be different (e.g. for private messages)
 -- This hook must RETURN the string to be printed, not print it itself. This is so ULX logs still function.
+
+-- The following example shows how to recreate normal gmod logging - This means no logs for groups
 hook.Add( "BC_onServerLog", "myHook", function( channelType, channelName, ... )
     local data = { ... }
     local sender = data[1]
-    local message = data[3]
-    if channelType == bc.defines.channelTypes.GLOBAL then
-        -- Normal player messages
-    elseif channelType == bc.defines.channelTypes.TEAM then
-        local teamID = sender:Team()
+    local senderName = "Console"
+    local senderAlive = true
+    if sender:IsValid() then
+        senderName = sender:Nick()
+        senderAlive = sender:Alive()
+    end
 
-        -- Team messages
+    -- data[2] will likely be ": "
+    local message = data[3]
+
+    if channelType == bc.defines.channelTypes.GLOBAL then
+        return ( senderAlive and "" or "*DEAD* " ) .. senderName .. ": " .. message
+    elseif channelType == bc.defines.channelTypes.TEAM then
+        -- By default, team only show if you're dead. Ofc this is wrong, but we're recreating default behaviour here.
+        return ( senderAlive and "" or "*DEAD*(TEAM) " ) .. senderName .. ": " .. message
     elseif channelType == bc.defines.channelTypes.PRIVATE then
+        -- data[2] is " -> "
         local receiver = data[3]
+        -- data[4] is ": "
         message = data[5]
 
         -- Private messages, either via !psay, private channel, or /PM for DarkRP
+        return senderName .. " to " .. receiver:Nick() .. ": " .. message
     elseif channelType == bc.defines.channelTypes.GROUP then
-        local groupID = string.match( channelName, "^Group (%d+) " )
-        groupID = tonumber( id )
-
-        -- Group messages, groupID never changes for a group and is never reused.
+        -- Ignore group messages - the group id and name will be in channelName. Structure: "Group ${id} - ${name}"
+        return ""
     elseif channelType == bc.defines.channelTypes.ADMIN then
         -- Admin messages using @, ulx asay, admin channel, or /adminhelp for DarkRP
+        return senderName .. " to admins: " .. message
     end
-
-    local senderName = sender:IsValid() and sender:getName() or "(SERVER)"
-    return "<" .. channelName .. "> " .. senderName .. ": " .. message
 end )
 ```
 
