@@ -97,8 +97,8 @@ Each of these settings can also be modified via Q->options->BetterChat, and will
 
 
 ## Extra
-All channels are limited by the ULX chat cooldown ConVar: `ulx_chattime`
-If you wish to change the way this addon logs messages to console, you can use the `BC_onServerLog` hook.
+All channels are limited by the ULX chat cooldown ConVar: `ulx_chattime`  
+If you wish to change the way this addon logs messages to console, you can use the `BC_onServerLog` hook.  
 Usage:
 ```lua
 -- channelType is one of the enums in bc.defines.channelTypes: GLOBAL, TEAM, GROUP, ADMIN, PRIVATE
@@ -107,24 +107,24 @@ Usage:
 --     but can be different (e.g. for private messages)
 -- This hook must RETURN the string to be printed, not print it itself. This is so ULX logs still function.
 hook.Add( "BC_onServerLog", "myHook", function( channelType, channelName, ... )
-	local data = { ... }
-	local sender = data[1]
-	local message = data[3]
-	if channelType == bc.defines.channelTypes.GLOBAL then
-		-- Normal player messages
-	elseif channelType == bc.defines.channelTypes.TEAM then
-		local teamID = sender:Team()
-		-- Team messages
-	elseif channelType == bc.defines.channelTypes.PRIVATE then
-		local receiver = data[3]
-		local message = data[5]
-		-- Private messages, either via !psay, private channel, or /PM for DarkRP
-	elseif channelType == bc.defines.channelTypes.GROUP then
-		local groupID = string.match( channelName, "^Group (%d+) " )
+    local data = { ... }
+    local sender = data[1]
+    local message = data[3]
+    if channelType == bc.defines.channelTypes.GLOBAL then
+        -- Normal player messages
+    elseif channelType == bc.defines.channelTypes.TEAM then
+        local teamID = sender:Team()
+        -- Team messages
+    elseif channelType == bc.defines.channelTypes.PRIVATE then
+        local receiver = data[3]
+        local message = data[5]
+        -- Private messages, either via !psay, private channel, or /PM for DarkRP
+    elseif channelType == bc.defines.channelTypes.GROUP then
+        local groupID = string.match( channelName, "^Group (%d+) " )
         groupID = tonumber( id )
         -- Group messages, groupID never changes for a group and is never reused.
     elseif channelType == bc.defines.channelTypes.ADMIN then
-    	-- Admin messages using @, ulx asay, admin channel, or /adminhelp for DarkRP
+        -- Admin messages using @, ulx asay, admin channel, or /adminhelp for DarkRP
     end
     local senderName = sender:IsValid() and sender:getName() or "(SERVER)"
     return "<" .. channelName .. "> " .. senderName .. ": " .. message
@@ -155,27 +155,27 @@ end )
 6. Create a json file with the same name as your spritesheet, and fill it in using the following format.
 ```
 {
-	"spriteWidth": 20,
-	"spriteHeight": 20,
-	"sprites": [
-		{
-			"posX": 0,
-			"posY": 0,
-			"name": "eyeroll",
-			"chatStrings": [
+    "spriteWidth": 20,
+    "spriteHeight": 20,
+    "sprites": [
+        {
+            "posX": 0,
+            "posY": 0,
+            "name": "eyeroll",
+            "chatStrings": [
 
-			]
-		},
-		{
-			"posX": 1,
-			"posY": 0,
-			"name": "sidetongue",
-			"chatStrings": [
-				":p", ":P"
-			]
-		},
+            ]
+        },
+        {
+            "posX": 1,
+            "posY": 0,
+            "name": "sidetongue",
+            "chatStrings": [
+                ":p", ":P"
+            ]
+        },
 
-	]
+    ]
 }
 ```
 - spriteWidth and spriteHeight is the size of an individual sprite in pixels
