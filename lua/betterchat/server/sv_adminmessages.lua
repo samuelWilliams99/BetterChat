@@ -3,7 +3,7 @@ bc.admin = {}
 function bc.admin.sendAdmin( ply, text )
     if not bc.manager.canMessage( ply ) then return end
 
-    bc.logs.sendLogConsole( "Admin", ply, ": ", text )
+    bc.logs.sendLogConsole( bc.defines.channelTypes.ADMIN, "Admin", ply, ": ", text )
 
     local plys = {}
     for k, p in pairs( player.GetAll() ) do

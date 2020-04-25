@@ -1,11 +1,11 @@
 bc.logs = {}
 
 function bc.logs.sendLog( channelType, channelName, ... )
-    bc.logs.sendLogConsole( channelName, ... )
+    bc.logs.sendLogConsole( channelType, channelName, ... )
     bc.logs.sendLogPlayers( channelType, channelName, ... )
 end
 
-function bc.logs.sendLogConsole( channel, ... )
+function bc.logs.sendLogConsole( channelType, channel, ... )
     local data = {}
     for k, v in ipairs( { ... } ) do
         if type( v ) == "string" then
@@ -19,6 +19,10 @@ function bc.logs.sendLogConsole( channel, ... )
         end
     end
     local consoleStr = "<" .. channel .. "> " .. table.concat( data, "" )
+    local replacementStr = hook.Run( "BC_onServerLog", channelType, channel, ... )
+    consoleStr = replacementStr or consoleStr
+
+    if #consoleStr == 0 then return end
     print( consoleStr )
     local logFile = GetConVar( "ulx_logfile" )
     if logFile:GetBool() then
