@@ -1,6 +1,6 @@
 -- Rename this file to "sv_defaultserverlogging.lua" to enable it.
 
--- Uncomment the following if you do not want clients to be able to reload this plugin
+-- Uncomment the following if you do not want clients to be able to reload this plugin - Only applies to cl_ and sh_ plugins
 -- RELOADABLE = false
 
 -- Plugins file names must be in the form [sv|sh|cl]_{pluginName}.lua
