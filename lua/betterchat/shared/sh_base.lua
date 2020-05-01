@@ -61,8 +61,12 @@ end
 
 hook.Run( "BC_sharedInit" )
 
+bc.base.nonReloadables = bc.base.nonReloadables or {}
+
 -- Plugins
 function bc.base.loadPlugins()
+    local oldReloadable = RELOADABLE -- Just incase some other addon defines this, globals are dangerous
+
     print( "[BetterChat] Loading plugins..." )
     local files, _ = file.Find( "betterchat_plugins/*", "LUA" )
     for k, fileName in pairs( files ) do
@@ -80,14 +84,23 @@ function bc.base.loadPlugins()
 
         local pluginName = string.match( fileName, "^.._(.+)%.lua$")
 
+        if CLIENT and bc.base.nonReloadables[fileName] then
+            print( "[BetterChat] Plugin \"" .. pluginName .. "\" has disabled reloading, skipping" )
+            continue
+        end
+
         if ( SERVER and shouldLoadClient ) then
-            print( "[BetterChat] Registering plugin: " .. pluginName )
+            print( "[BetterChat] Registering plugin for clients: " .. pluginName )
             AddCSLuaFile( "betterchat_plugins/" .. fileName )
         end
 
         if ( CLIENT and shouldLoadClient ) or ( SERVER and shouldLoadServer ) then
             print( "[BetterChat] Loading plugin: " .. pluginName )
+            RELOADABLE = true
             include( "betterchat_plugins/" .. fileName )
+            if not RELOADABLE then
+                bc.base.nonReloadables[fileName] = true
+            end
         end
 
         if not ( shouldLoadClient or shouldLoadServer ) then
@@ -95,6 +108,8 @@ function bc.base.loadPlugins()
         end
     end
     print( "[BetterChat] Finished loading plugins" )
+
+    RELOADABLE = oldReloadable
 end
 
 bc.base.loadPlugins()
