@@ -61,24 +61,6 @@ end
 
 hook.Run( "BC_sharedInit" )
 
-if SERVER then return end
-
---includes
-include( "betterchat/client/graphics.lua" )
-include( "betterchat/client/formatting.lua" )
-include( "betterchat/client/overload.lua" )
-include( "betterchat/client/datamanager.lua" )
-include( "betterchat/client/images.lua" )
-include( "betterchat/client/compatibility.lua" )
-include( "betterchat/client/channels/channels.lua" )
-include( "betterchat/client/sidepanel/sidepanel.lua" )
-include( "betterchat/client/input/input.lua" )
---panels
-include( "betterchat/client/vguipanels/davatarimagerounded.lua" )
-include( "betterchat/client/vguipanels/dnicescrollpanel.lua" )
-include( "betterchat/client/vguipanels/drichertext.lua" )
-
-
 -- Plugins
 local files, _ = file.Find( "betterchat_plugins/*", "LUA" )
 for fileName in pairs( files ) do
@@ -105,6 +87,23 @@ for fileName in pairs( files ) do
         MsgC( Color( 255, 0, 0 ), "[BetterChat] Plugin found with incorrect name! Plugins should be named \"[realm]_name.lua\". E.g. sv_myplugin.lua" )
     end
 end
+
+if SERVER then return end
+
+--includes
+include( "betterchat/client/graphics.lua" )
+include( "betterchat/client/formatting.lua" )
+include( "betterchat/client/overload.lua" )
+include( "betterchat/client/datamanager.lua" )
+include( "betterchat/client/images.lua" )
+include( "betterchat/client/compatibility.lua" )
+include( "betterchat/client/channels/channels.lua" )
+include( "betterchat/client/sidepanel/sidepanel.lua" )
+include( "betterchat/client/input/input.lua" )
+--panels
+include( "betterchat/client/vguipanels/davatarimagerounded.lua" )
+include( "betterchat/client/vguipanels/dnicescrollpanel.lua" )
+include( "betterchat/client/vguipanels/drichertext.lua" )
 
 concommand.Add( "bc_enable", function()
     if bc.base.enabled then
