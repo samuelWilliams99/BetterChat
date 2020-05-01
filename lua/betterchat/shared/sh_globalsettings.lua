@@ -286,6 +286,11 @@ bc.settings.ulxPermissions = {
         defaultAccess = ULib.ACCESS_OPERATOR,
         extra = "Ability to use $$rainbow$$ in chat",
     },
+    {
+        value = "spaced",
+        defaultAccess = ULib.ACCESS_ALL,
+        extra = "Ability to use $$rainbow$$ in chat",
+    },
 }
 
 if SERVER then

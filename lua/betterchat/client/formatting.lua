@@ -246,17 +246,13 @@ local function getPlyModifiers( ply )
     out.rainbow = bc.settings.isAllowed( ply, "bc_rainbow" )
     out.pulsing = bc.settings.isAllowed( ply, "bc_pulsing" )
     out.shaking = bc.settings.isAllowed( ply, "bc_shaking" )
+    out.spaced = bc.settings.isAllowed( ply, "bc_spaced" )
     return out
 end
 
 function f.formatModifiers( tab, ply )
     local newTab = {}
-    local state = {
-        bold = false,
-        underline = false,
-        strike = false,
-        italic = false
-    }
+    local state = {}
     for k, v in pairs( tab ) do
         if type( v ) == "string" then
             local tab = f.formatModifiersSingle( v, state, getPlyModifiers( ply ) )
@@ -284,7 +280,8 @@ local modifierKeyMap = {
     ["*"] = "italic",
     ["&&"] = "rainbow",
     ["%%"] = "pulsing",
-    ["$$"] = "shaking"
+    ["$$"] = "shaking",
+    ["||"] = "spaced"
 }
 
 function f.formatModifiersSingle( txt, state, allowed )

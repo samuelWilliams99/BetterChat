@@ -625,6 +625,7 @@ function RICHERTEXT:SetDecorations( data )
     self.textRainbow = data.rainbow
     self.textPulsing = data.pulsing
     self.textShaking = data.shaking
+    self.textSpaced = data.spaced
     self:AddLabel()
 end
 
@@ -877,15 +878,17 @@ function RICHERTEXT:addNewLines( txt ) -- Goes through big bit of text, puts in 
         offsetX = offsetX + getElementSizeX( lastElement )
     end
 
+    local space = self.textSpaced and " " or "   "
+
     local limitX = self:GetWide() - 50
-    local data = string.Explode( " ", txt )
+    local data = string.Explode( space, txt )
     local out = {}
     surface.SetFont( self.innerFont )
     local k = 1
     local loopLimit = 200
     while k <= #data and loopLimit > 0 do
         loopLimit = loopLimit - 1
-        local word = data[k] .. ( k == #data and "" or " " )
+        local word = data[k] .. ( k == #data and "" or space )
         local sizeX = getFrom( 1, surface.GetTextSize( word ) )
         if offsetX + sizeX > limitX then
             if not isNewLineObj( out[#out] ) and offsetX > 0 then
@@ -930,6 +933,10 @@ function RICHERTEXT:AppendText( txt, noLog ) --Deals with the tumour that is tab
     if not noLog then
         table.insert( self.log, { type = "text", data = { txt } } )
     end
+    if self.textSpaced then
+        txt = table.concat( txt:Split( "" ), " " )
+    end
+
     local tabChunks = string.Explode( "\t", txt )
     for k = 1, #tabChunks do
         local chunk = tabChunks[k]
