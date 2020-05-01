@@ -1,4 +1,7 @@
--- Change the extension on this plugin to .lua to enable it.
+-- Rename this file to "sv_defaultserverlogging.lua" to enable it.
+
+-- Plugins file names must be in the form [sv|sh|cl]_{pluginName}.lua
+-- For example: sv_defaultserverlogging.lua, sh_simpleplugin.lua, cl_myplugin.lua
 
 -- The following example shows how to recreate normal gmod logging - This means no logs for groups
 hook.Add( "BC_onServerLog", "exampleHook", function( channelType, channelName, ... )

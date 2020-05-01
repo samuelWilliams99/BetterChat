@@ -62,31 +62,45 @@ end
 hook.Run( "BC_sharedInit" )
 
 -- Plugins
-local files, _ = file.Find( "betterchat_plugins/*", "LUA" )
-for fileName in pairs( files ) do
-    if fileName == "sv_example.txt" then continue end
+function bc.base.loadPlugins()
+    print( "[BetterChat] Loading plugins..." )
+    local files, _ = file.Find( "betterchat_plugins/*", "LUA" )
+    for k, fileName in pairs( files ) do
+        if fileName == "sv_example.txt" then continue end
 
-    if not string.match( "^.+%.lua" ) then
-        print( "[BetterChat] Non lua file found in plugins" )
+        if not string.match( fileName, "^.+%.lua" ) then
+            print( "[BetterChat] Non lua file found in plugins: " .. fileName )
+            continue
+        end
+
+        local pluginType = string.sub( fileName, 1, 2 )
+
+        local shouldLoadClient = pluginType == "cl" or pluginType == "sh"
+        local shouldLoadServer = pluginType == "sv" or pluginType == "sh"
+
+        local pluginName = string.match( fileName, "^.._(.+)%.lua$")
+
+        if ( SERVER and shouldLoadClient ) then
+            print( "[BetterChat] Registering plugin: " .. pluginName )
+            AddCSLuaFile( "betterchat_plugins/" .. fileName )
+        end
+
+        if ( CLIENT and shouldLoadClient ) or ( SERVER and shouldLoadServer ) then
+            print( "[BetterChat] Loading plugin: " .. pluginName )
+            include( "betterchat_plugins/" .. fileName )
+        end
+
+        if not ( shouldLoadClient or shouldLoadServer ) then
+            MsgC( Color( 255, 0, 0 ), "[BetterChat] Plugin found with incorrect name!\n    Plugins should be named \"[realm]_name.lua\". E.g. sv_myplugin.lua\n" )
+        end
     end
-
-    local pluginType = string.sub( fileName, 1, 2 )
-
-    local shouldLoadClient = pluginType == "cl" or pluginType == "sh"
-    local shouldLoadServer = pluginType == "sv" or pluginType == "sh"
-
-    if ( SERVER and shouldLoadClient ) then
-        AddCSLuaFile( "betterchat_plugins/" .. fileName )
-    end
-
-    if ( CLIENT and shouldLoadClient ) or ( SERVER and shouldLoadServer ) then
-        include( "betterchat_plugins/" .. fileName )
-    end
-
-    if not ( shouldLoadClient or shouldLoadServer ) then
-        MsgC( Color( 255, 0, 0 ), "[BetterChat] Plugin found with incorrect name! Plugins should be named \"[realm]_name.lua\". E.g. sv_myplugin.lua" )
-    end
+    print( "[BetterChat] Finished loading plugins" )
 end
+
+bc.base.loadPlugins()
+concommand.Add( "bc_reloadPlugins", function()
+    bc.base.loadPlugins()
+end )
 
 if SERVER then return end
 
