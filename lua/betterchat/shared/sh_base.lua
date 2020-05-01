@@ -78,6 +78,34 @@ include( "betterchat/client/vguipanels/davatarimagerounded.lua" )
 include( "betterchat/client/vguipanels/dnicescrollpanel.lua" )
 include( "betterchat/client/vguipanels/drichertext.lua" )
 
+
+-- Plugins
+local files, _ = file.Find( "betterchat_plugins/*", "LUA" )
+for fileName in pairs( files ) do
+    if fileName == "sv_example.txt" then continue end
+
+    if not string.match( "^.+%.lua" ) then
+        print( "[BetterChat] Non lua file found in plugins" )
+    end
+
+    local pluginType = string.sub( fileName, 1, 2 )
+
+    local shouldLoadClient = pluginType == "cl" or pluginType == "sh"
+    local shouldLoadServer = pluginType == "sv" or pluginType == "sh"
+
+    if ( SERVER and shouldLoadClient ) then
+        AddCSLuaFile( "betterchat_plugins/" .. fileName )
+    end
+
+    if ( CLIENT and shouldLoadClient ) or ( SERVER and shouldLoadServer ) then
+        include( "betterchat_plugins/" .. fileName )
+    end
+
+    if not ( shouldLoadClient or shouldLoadServer ) then
+        MsgC( Color( 255, 0, 0 ), "[BetterChat] Plugin found with incorrect name! Plugins should be named \"[realm]_name.lua\". E.g. sv_myplugin.lua" )
+    end
+end
+
 concommand.Add( "bc_enable", function()
     if bc.base.enabled then
         bc.base.disable()
