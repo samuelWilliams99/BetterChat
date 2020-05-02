@@ -15,7 +15,7 @@ bc.private.defaultChannel = {
         end
     end,
     allFunc = function( self, tab, idx, isConsole )
-        local sender = table.remove( tab, idx + 1 )
+        local sender = table.remove( tab, idx )
         sender = sender.isConsole and bc.defines.consolePlayer or sender.ply
         local arrow = isConsole and " to " or " → "
 
