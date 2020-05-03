@@ -185,6 +185,7 @@ function bc.manager.canMessage( ply )
     if type( ulxPlayerSay ) == "table" then
         ulxPlayerSay = ulxPlayerSay.fn
     end
+    ply.lastChatTime = ply.lastChatTime or 0
     return ulxPlayerSay( ply ) ~= ""
 end
 
