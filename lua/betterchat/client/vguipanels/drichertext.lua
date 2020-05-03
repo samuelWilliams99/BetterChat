@@ -550,7 +550,7 @@ function RICHERTEXT:GetSelectedText()
 end
 
 function RICHERTEXT:getCharacter( x, y )
-    local lineNum = math.floor( y / self.fontHeight ) + 1 --calc line easily, since all lines are same width
+    local lineNum = math.floor( y / self.fontHeight ) + 1 --calc line easily, since all lines are same height
     lineNum = math.Clamp( lineNum, 1, #self.lines - 1 )
     local line = self.lines[lineNum]
 
@@ -658,7 +658,7 @@ function RICHERTEXT:AddLine()
             offset = offset + ( self.linesYs[1].bottom - self.linesYs[1].top )
             table.remove( self.linesYs, 1 )
         end
-        self.yRemoved = self.yRemoved + offset
+        self.yRemoved = self.linesYs[1].top
         for k, line in pairs( self.lines ) do
             for i, el in pairs( line ) do
                 local x, y = el:GetPos()
