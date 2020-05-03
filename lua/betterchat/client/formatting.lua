@@ -550,7 +550,7 @@ end
 
 function f.triggerTick()
     if not bc.settings.getValue( "doTick" ) then return end
-    if timer.Exists( "BC_triggerTick" ) then timer.Destroy( "BC_triggerTick" ) end
+    if timer.Exists( "BC_triggerTick" ) then timer.Remove( "BC_triggerTick" ) end
     timer.Create( "BC_triggerTick", 0.05, 1, function()
         chat.PlaySound()
     end )
@@ -558,8 +558,8 @@ end
 
 function f.triggerPop()
     if not bc.settings.getValue( "doPop" ) then return end
-    if timer.Exists( "BC_triggerTick" ) then timer.Destroy( "BC_triggerTick" ) end
-    if timer.Exists( "BC_triggerPop" ) then timer.Destroy( "BC_triggerPop" ) end
+    if timer.Exists( "BC_triggerTick" ) then timer.Remove( "BC_triggerTick" ) end
+    if timer.Exists( "BC_triggerPop" ) then timer.Remove( "BC_triggerPop" ) end
     timer.Create( "BC_triggerPop", 0.05, 1, function()
         f.playPop()
     end )
