@@ -744,6 +744,7 @@ function bc.channels.open( name )
     richText:SetFont( data.font or g.font )
     richText:SetMaxLines( bc.settings.getValue( "chatHistory" ) )
     richText:SetHighlightColor( bc.defines.theme.textHighlight )
+    richText:SetAllowDecorations( richText:GetFont() ~= "ChatFont" )
 
     richText.panel = panel
 
