@@ -297,13 +297,12 @@ end
 
 function bc.images.addEmote( richText, obj )
     local im = obj.sheet.sprites[obj.idx]
-    richText:AddImage( obj.sheet.path, obj.text, 20, 20, im.posX * obj.sheet.spriteWidth, im.posY * obj.sheet.spriteHeight, obj.sheet.spriteWidth, obj.sheet.spriteHeight )
+    richText:AddImage( obj.sheet.path, obj.text, 1, 1, im.posX * obj.sheet.spriteWidth, im.posY * obj.sheet.spriteHeight, obj.sheet.spriteWidth, obj.sheet.spriteHeight )
 end
 
 function bc.images.addGif( richText, obj )
     richText:InsertClickableTextStart( "Link-" .. obj.url )
-    local size = richText.fontHeight * 5
-    richText:AddGif( obj.url, obj.text .. "\n", size, size )
+    richText:AddGif( obj.url, obj.text .. "\n", 5, 5 )
     richText:InsertClickableTextEnd()
 end
 

@@ -7,6 +7,15 @@ function RTG:Init()
     self.doRender = true
     self.prevDoRender = true
     self.color = Color( 255, 255, 255, 255 )
+    self.sizeScale = nil
+end
+
+function RTG:SetSizeScale( x, y )
+    self.sizeScale = { x = x, y = y }
+end
+
+function RTG:GetSizeScale()
+    return self.sizeScale
 end
 
 function RTG:SetType( t )

@@ -643,6 +643,8 @@ function bc.channels.close( name )
     local tabs = psheet.tabScroller.Panels
     local activeTab = psheet:GetActiveTab()
 
+    timer.Remove( "BC_ChannelScroll-" .. channel.name )
+
     local nextChannel
     if d.tab == activeTab then
         local tabIdx = table.KeyFromValue( tabs, activeTab )
@@ -673,6 +675,10 @@ function bc.channels.close( name )
 
     bc.data.saveData()
     bc.channels.updateButtonPosition()
+
+    timer.Simple( 0.02, function()
+        hook.Run( "BC_channelChanged" ) -- delay to allow channel data to change
+    end )
 end
 
 local function openLink( url )
@@ -740,6 +746,16 @@ function bc.channels.open( name )
     richText:SetHighlightColor( bc.defines.theme.textHighlight )
 
     richText.panel = panel
+
+    local timerName = "BC_ChannelScroll-" .. data.name
+    timer.Create( timerName, 0.5, 0, function()
+        if not IsValid( richText ) then
+            timer.Remove( timerName )
+        end
+        if not bc.base.isOpen and richText.scrollToBottomBtn:IsVisible() then
+            bc.channels.scrollToBottom( data.name )
+        end
+    end )
 
     local rtOldLayout = richText.PerformLayout
     function richText:PerformLayout()
