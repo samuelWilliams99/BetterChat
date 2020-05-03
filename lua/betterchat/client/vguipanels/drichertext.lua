@@ -812,8 +812,8 @@ function RICHERTEXT:AddLabel()
         self.showText = v
         if v then
             local text = self.text or self:GetText()
-            if self.text[1] == "#" then text = "#" .. self.text end
-            
+            if text[1] == "#" then text = "#" .. text end
+
             self:SetText( text )
         else
             self.text = self:GetText()
