@@ -341,8 +341,8 @@ function f.formatSpecialWords( text, tab, sender )
     local patterns = {}
     local players = player.GetAll()
     local prePattern = "[ '\"%*_~]"
-    local postPatternPly = "[ '\"!%?%*_~s:]"
-    local postPatternCol = "[ '\"!%?%*_~]"
+    local postPatternPly = "[ '\"!%?%*_~s:,]"
+    local postPatternCol = "[ '\"!%?%*_~,]"
     for k, v in pairs( players ) do
         table.insert( patterns, prePattern .. v:Nick():lower():PatternSafe() .. postPatternPly )
     end

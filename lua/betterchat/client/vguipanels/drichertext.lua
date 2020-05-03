@@ -976,8 +976,8 @@ function RICHERTEXT:AppendTextNoTab( txt ) --This func cannot handle tabs
     for k = 1, #txt do
         local char = txt[k]
 
-        if char == "\n" then --Add character to curText buffer until reach a newline char
-            local lastElement = line[#line] -- This will exist due to previous AddElement in this func
+        if char == "\n" then
+            local lastElement = line[#line] -- This will exist due to previous AddLabel in this func
             if not isLabel( lastElement ) then
                 self:AddLabel()
                 lastElement = line[#line]
@@ -999,7 +999,7 @@ function RICHERTEXT:AppendTextNoTab( txt ) --This func cannot handle tabs
                 self:AddLabel() -- Give it a starting label
             end
             curText = "" -- Reset curText buffer
-        else
+        else --Add character to curText buffer until reach a newline char
             curText = curText .. char
         end
     end
