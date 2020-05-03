@@ -750,8 +750,9 @@ function bc.channels.open( name )
 
     local timerName = "BC_ChannelScroll-" .. data.name
     timer.Create( timerName, 0.5, 0, function()
-        if not IsValid( richText ) then
+        if not IsValid( richText ) or not richText.scrollToBottomBtn then
             timer.Remove( timerName )
+            return
         end
         if not bc.base.isOpen and richText.scrollToBottomBtn:IsVisible() then
             bc.channels.scrollToBottom( data.name )
