@@ -621,6 +621,11 @@ function RICHERTEXT:SetFont( font )
     self.innerFont = font
     self:AddLabel()
 end
+
+function RICHERTEXT:GetFont()
+    return self.innerFont
+end
+
 function RICHERTEXT:SetDecorations( bold, italics, underline, strike )
     table.insert( self.log, { type = "decorations", data = { bold, italics, underline, strike } } )
     self.textBold = bold
