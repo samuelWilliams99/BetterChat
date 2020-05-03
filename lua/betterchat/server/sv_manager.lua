@@ -181,11 +181,15 @@ function bc.manager.getClients( chanName, sender )
 end
 
 function bc.manager.canMessage( ply )
+    if ply.isConsole or type( ply ) ~= "Player" then return true end
+
     local ulxPlayerSay = hook.GetULibTable().PlayerSay[1].ulxPlayerSay
     if type( ulxPlayerSay ) == "table" then
         ulxPlayerSay = ulxPlayerSay.fn
     end
+
     ply.lastChatTime = ply.lastChatTime or 0
+
     return ulxPlayerSay( ply ) ~= ""
 end
 
