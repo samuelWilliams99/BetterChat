@@ -1060,6 +1060,7 @@ function RICHERTEXT:AddGraphic( element, rawText )
         size.x = size.x * self.fontHeight
         size.y = size.y * self.fontHeight
         element:SetSize( size.x, size.y )
+        element:UpdateDoRender()
     end
 
     local imagePadding = 2
