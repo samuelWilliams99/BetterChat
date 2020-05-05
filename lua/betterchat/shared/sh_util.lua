@@ -136,13 +136,13 @@ if CLIENT then
     end
 
     makeFonts( "default", {
-        font = "Tahoma",
+        font = system.IsLinux() and "DejaVu Sans" or "Tahoma",
         size = 21,
         weight = 500,
     } )
 
     makeFonts( "defaultLarge", {
-        font = "Tahoma",
+        font = system.IsLinux() and "DejaVu Sans" or "Tahoma",
         size = 26,
         weight = 500,
     } )

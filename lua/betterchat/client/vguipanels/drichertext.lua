@@ -180,6 +180,11 @@ function RICHERTEXT:Init()
 
                 if l == s.line then
                     local element = line[s.element]
+
+                    if not element then
+                        self:UnselectText()
+                    end
+
                     local sx
                     local px, py = element:GetPos()
                     if isLabel( element ) then
@@ -545,7 +550,7 @@ function RICHERTEXT:GetSelectedText()
 end
 
 function RICHERTEXT:getCharacter( x, y )
-    local lineNum = math.floor( y / self.fontHeight ) + 1 --calc line easily, since all lines are same width
+    local lineNum = math.floor( y / self.fontHeight ) + 1 --calc line easily, since all lines are same height
     lineNum = math.Clamp( lineNum, 1, #self.lines - 1 )
     local line = self.lines[lineNum]
 
@@ -616,6 +621,11 @@ function RICHERTEXT:SetFont( font )
     self.innerFont = font
     self:AddLabel()
 end
+
+function RICHERTEXT:GetFont()
+    return self.innerFont
+end
+
 function RICHERTEXT:SetDecorations( bold, italics, underline, strike )
     table.insert( self.log, { type = "decorations", data = { bold, italics, underline, strike } } )
     self.textBold = bold
@@ -653,7 +663,7 @@ function RICHERTEXT:AddLine()
             offset = offset + ( self.linesYs[1].bottom - self.linesYs[1].top )
             table.remove( self.linesYs, 1 )
         end
-        self.yRemoved = self.yRemoved + offset
+        self.yRemoved = self.linesYs[1].top
         for k, line in pairs( self.lines ) do
             for i, el in pairs( line ) do
                 local x, y = el:GetPos()
@@ -806,7 +816,10 @@ function RICHERTEXT:AddLabel()
         if self.showText == v then return end
         self.showText = v
         if v then
-            self:SetText( self.text or self:GetText() )
+            local text = self.text or self:GetText()
+            if text[1] == "#" then text = "#" .. text end
+
+            self:SetText( text )
         else
             self.text = self:GetText()
             self:SetText( "" )
@@ -968,14 +981,15 @@ function RICHERTEXT:AppendTextNoTab( txt ) --This func cannot handle tabs
     for k = 1, #txt do
         local char = txt[k]
 
-        if char == "\n" then --Add character to curText buffer until reach a newline char
-            local lastElement = line[#line] -- This will exist due to previous AddElement in this func
+        if char == "\n" then
+            local lastElement = line[#line] -- This will exist due to previous AddLabel in this func
             if not isLabel( lastElement ) then
                 self:AddLabel()
                 lastElement = line[#line]
             end
             local tmpText = lastElement:GetText() .. string.Replace( curText, "\t", "" ) -- Should a tab have made its way in here, get rid of it! Then append to labels text
             if tmpText[1] == "#" then tmpText = "#" .. tmpText end --dLabels remove the first character if its a hash, so add in new one to counter that
+
             lastElement:SetText( tmpText ) -- Update label
             lastElement.rawText = lastElement.rawText .. curText -- Update label's raw text
 
@@ -990,7 +1004,7 @@ function RICHERTEXT:AppendTextNoTab( txt ) --This func cannot handle tabs
                 self:AddLabel() -- Give it a starting label
             end
             curText = "" -- Reset curText buffer
-        else
+        else --Add character to curText buffer until reach a newline char
             curText = curText .. char
         end
     end
@@ -1002,6 +1016,7 @@ function RICHERTEXT:AppendTextNoTab( txt ) --This func cannot handle tabs
         end
         local tmpText = lastElement:GetText() .. string.Replace( curText, "\t", "" )
         if tmpText[1] == "#" then tmpText = "#" .. tmpText end --dLabels remove the first character if its a hash, so add in new one to counter that
+
         lastElement:SetText( tmpText )
         lastElement.rawText = lastElement.rawText .. curText -- Basically do the shit from the start of new line 
     end
@@ -1039,6 +1054,13 @@ function RICHERTEXT:Paint( w, h ) end
 
 function RICHERTEXT:AddGraphic( element, rawText )
     if rawText == "" then rawText = "[image]" end
+
+    if element:GetSizeScale() then
+        local size = element:GetSizeScale()
+        size.x = size.x * self.fontHeight
+        size.y = size.y * self.fontHeight
+        element:SetSize( size.x, size.y )
+    end
 
     local imagePadding = 2
 
@@ -1124,7 +1146,7 @@ function RICHERTEXT:CreateGraphic( t, path, text, sizeX, sizeY, imOffsetX, imOff
     end
     local g = vgui.Create( "DRicherTextGraphic", self.scrollPanel:GetCanvas() )
     g:SetType( t )
-    g:SetSize( sizeX, sizeY )
+    g:SetSizeScale( sizeX, sizeY )
     g:SetPath( path )
     if imOffsetX then
         g:SetSubImage( imOffsetX, imOffsetY, imSizeX, imSizeY )
