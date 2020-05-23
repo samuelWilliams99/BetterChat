@@ -230,74 +230,78 @@ bc.settings.serverTemplate = {
     },
 }
 
-bc.settings.ulxPermissions = {
-    {
-        value = "chatlogs",
-        defaultAccess = ULib.ACCESS_SUPERADMIN,
-        extra = "Enables the 'Logs' channel which receives all messages from groups, PM, team, etc.",
-    },
-    {
-        value = "giphy",
-        defaultAccess = ULib.ACCESS_OPERATOR,
-        extra = "Ability to use !giphy if bc_server_giphykey is valid",
-    },
-    {
-        value = "color",
-        defaultAccess = ULib.ACCESS_OPERATOR,
-        extra = "Ability to use [#ff0000]Red in chat",
-    },
-    {
-        value = "groups",
-        defaultAccess = ULib.ACCESS_ALL,
-        extra = "Ability to use BetterChat groups",
-    },
-    {
-        value = "italics",
-        defaultAccess = ULib.ACCESS_ALL,
-        extra = "Ability to use *italics* in chat",
-    },
-    {
-        value = "bold",
-        defaultAccess = ULib.ACCESS_ALL,
-        extra = "Ability to use **bold** in chat",
-    },
-    {
-        value = "underline",
-        defaultAccess = ULib.ACCESS_ALL,
-        extra = "Ability to use __underline__ in chat",
-    },
-    {
-        value = "strike",
-        defaultAccess = ULib.ACCESS_ALL,
-        extra = "Ability to use ~~strike~~ in chat",
-    },
-    {
-        value = "rainbow",
-        defaultAccess = ULib.ACCESS_OPERATOR,
-        extra = "Ability to use &&rainbow&& in chat",
-    },
-    {
-        value = "pulsing",
-        defaultAccess = ULib.ACCESS_OPERATOR,
-        extra = "Ability to use %%rainbow%% in chat",
-    },
-    {
-        value = "shaking",
-        defaultAccess = ULib.ACCESS_OPERATOR,
-        extra = "Ability to use $$rainbow$$ in chat",
-    },
-    {
-        value = "spaced",
-        defaultAccess = ULib.ACCESS_ALL,
-        extra = "Ability to use $$rainbow$$ in chat",
-    },
-}
+hook.Add( "Initialize", "BC_ulxSetup", function()
+    bc.settings.ulxPermissions = {
+        {
+            value = "chatlogs",
+            defaultAccess = ULib.ACCESS_SUPERADMIN,
+            extra = "Enables the 'Logs' channel which receives all messages from groups, PM, team, etc.",
+        },
+        {
+            value = "giphy",
+            defaultAccess = ULib.ACCESS_OPERATOR,
+            extra = "Ability to use !giphy if bc_server_giphykey is valid",
+        },
+        {
+            value = "color",
+            defaultAccess = ULib.ACCESS_OPERATOR,
+            extra = "Ability to use [#ff0000]Red in chat",
+        },
+        {
+            value = "groups",
+            defaultAccess = ULib.ACCESS_ALL,
+            extra = "Ability to use BetterChat groups",
+        },
+        {
+            value = "italics",
+            defaultAccess = ULib.ACCESS_ALL,
+            extra = "Ability to use *italics* in chat",
+        },
+        {
+            value = "bold",
+            defaultAccess = ULib.ACCESS_ALL,
+            extra = "Ability to use **bold** in chat",
+        },
+        {
+            value = "underline",
+            defaultAccess = ULib.ACCESS_ALL,
+            extra = "Ability to use __underline__ in chat",
+        },
+        {
+            value = "strike",
+            defaultAccess = ULib.ACCESS_ALL,
+            extra = "Ability to use ~~strike~~ in chat",
+        },
+        {
+            value = "rainbow",
+            defaultAccess = ULib.ACCESS_OPERATOR,
+            extra = "Ability to use &&rainbow&& in chat",
+        },
+        {
+            value = "pulsing",
+            defaultAccess = ULib.ACCESS_OPERATOR,
+            extra = "Ability to use %%rainbow%% in chat",
+        },
+        {
+            value = "shaking",
+            defaultAccess = ULib.ACCESS_OPERATOR,
+            extra = "Ability to use $$rainbow$$ in chat",
+        },
+        {
+            value = "spaced",
+            defaultAccess = ULib.ACCESS_ALL,
+            extra = "Ability to use $$rainbow$$ in chat",
+        },
+    }
+
+    if SERVER then
+        for _, perm in pairs( bc.settings.ulxPermissions ) do
+            ULib.ucl.registerAccess( "ulx bc_" .. perm.value, perm.defaultAccess, perm.extra, "BetterChat" )
+        end
+    end
+end )
 
 if SERVER then
-    for _, perm in pairs( bc.settings.ulxPermissions ) do
-        ULib.ucl.registerAccess( "ulx bc_" .. perm.value, perm.defaultAccess, perm.extra, "BetterChat" )
-    end
-
     hook.Add( "Initialize", "BC_handleChatTime", function()
         -- Gmod implements 0.5s delay by default, but this chat bypasses it
         -- It is too risky to allow 0s delay, spam can crash clients

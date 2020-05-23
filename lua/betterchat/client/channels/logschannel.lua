@@ -51,19 +51,19 @@ net.Receive( "BC_LM", function()
 
     local chan = bc.channels.get( "Logs" )
     if not chan then return end
-    if not bc.channels.isOpen( chan ) then return end
+    if not bc.channels.isOpen( "Logs" ) then return end
 
     if channelType == bc.defines.channelTypes.TEAM then
         local ply = data[1]
         if ply:Team() == LocalPlayer():Team() then return end
-        bc.channels.message( "Logs", bc.defines.theme.logsPrefix, "<TEAM - " .. team.GetName( ply:Team() ) .. ">", bc.defines.colors.white, " | ", unpack( data ) )
+        bc.channels.message( "Logs", bc.defines.theme.logsPrefix, "Team:" .. team.GetName( ply:Team() ), bc.defines.colors.white, " | ", unpack( data ) )
     elseif channelType == bc.defines.channelTypes.PRIVATE then
         local from = data[1]
         local to = data[3]
         if from == LocalPlayer() or to == LocalPlayer() then return end
         table.insert( data, 2, bc.defines.colors.printBlue )
         table.insert( data, 4, bc.defines.colors.white )
-        bc.channels.message( "Logs", bc.defines.theme.logsPrefix, "<PRIVATE>", bc.defines.colors.white, " | ", unpack( data ) )
+        bc.channels.message( "Logs", bc.defines.theme.logsPrefix, "PM", bc.defines.colors.white, " | ", unpack( data ) )
     elseif channelType == bc.defines.channelTypes.GROUP then
         local s, e, id = string.find( channelName, "^Group (%d+) " )
         id = tonumber( id )
@@ -75,7 +75,7 @@ net.Receive( "BC_LM", function()
                 end
             end
         end
-        bc.channels.message( "Logs", bc.defines.theme.logsPrefix, "<" .. channelName .. ">", bc.defines.colors.white, " | ", unpack( data ) )
+        bc.channels.message( "Logs", bc.defines.theme.logsPrefix, channelName, bc.defines.colors.white, " | ", unpack( data ) )
     end
 end )
 

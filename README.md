@@ -29,6 +29,7 @@ A Better ChatBox that focuses on letting you make the ChatBox you want! BetterCh
 - Customisable player quick access menu (quickly run ulx commands or any custom command on players via a menu)
 - Fully integrated DarkRP Support (including groups, FAdmin, PM, etc.)
 - Ulx permission support for all special features (giphy, groups, text modification, etc. )
+- Plugin support
 and many more smaller features, you just gotta try it out to find them all! :D
 
 If a player on your server does not like this chat, it can be disabled in Q->options->BetterChat without error.
@@ -144,6 +145,16 @@ hook.Add( "BC_onServerLog", "myHook", function( channelType, channelName, ... )
 end )
 ```
 
+## Plugins
+Plugin lua files can be placed in the lua/betterchat_plugins folder. These will be automatically networked and loaded on client and server based on the name.  
+Plugins file names must be in the form `[sv|sh|cl]_{pluginName}.lua`  
+For example:
+- `sv_defaultserverlogging.lua`
+- `sh_simpleplugin.lua`
+- `cl_myplugin.lua`
+
+Plugins can be reloaded on server and client via the `bc_reloadplugins` console command.  
+If you wish your plugin to not be reloadable **on clients**, set the global `RELOADABLE` to `false`
 
 ## Nice little features:
 - You can copy a text's colour in the right click menu

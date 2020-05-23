@@ -49,7 +49,7 @@ function bc.sidePanel.players.applyDefaults( data )
 end
 
 function bc.sidePanel.players.generateEntry( ply )
-    if not ply then return end
+    if not ply or not IsValid( ply ) or not ply.SteamID then return end
 
     local plySettings = bc.sidePanel.players.settings[ply:SteamID()]
     if not plySettings then

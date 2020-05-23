@@ -207,9 +207,11 @@ hook.Add( "BC_keyCodeTyped", "BC_sendMessageHook", function( code, ctrl, shift )
             return true
         end
 
+        if channel.noSend then return true end
+
         if not bc.channels.canMessage() then
             bc.channels.showCooldown = true
-            return
+            return true
         end
 
         bc.graphics.derma.textEntry:SetText( "" )
@@ -220,7 +222,7 @@ hook.Add( "BC_keyCodeTyped", "BC_sendMessageHook", function( code, ctrl, shift )
             if not dontClose then
                 bc.base.close()
             end
-            return
+            return true
         end
 
         if channel.trim then
@@ -528,8 +530,11 @@ function bc.channels.messageDirect( channel, controller, ... )
     if channel.showTimestamps then
         table.insert( data, 1, bc.defines.theme.timeStamps )
         local timeData = os.date( "*t" )
-        table.insert( data, 2, string.format( "%02i:%02i", timeData.hour, timeData.min ) .. " - " )
-        table.insert( data, 3, bc.defines.colors.white )
+        table.insert( data, 2, { formatter = true, type = "decoration", underline = true } )
+        table.insert( data, 3, string.format( "%02i:%02i", timeData.hour, timeData.min ) )
+        table.insert( data, 4, { formatter = true, type = "decoration" } )
+        table.insert( data, 5, " " )
+        table.insert( data, 6, bc.defines.colors.white )
     end
 
     local richText = bc.channels.panels[chanName].text
@@ -643,6 +648,8 @@ function bc.channels.close( name )
     local tabs = psheet.tabScroller.Panels
     local activeTab = psheet:GetActiveTab()
 
+    timer.Remove( "BC_ChannelScroll-" .. channel.name )
+
     local nextChannel
     if d.tab == activeTab then
         local tabIdx = table.KeyFromValue( tabs, activeTab )
@@ -673,6 +680,10 @@ function bc.channels.close( name )
 
     bc.data.saveData()
     bc.channels.updateButtonPosition()
+
+    timer.Simple( 0.02, function()
+        hook.Run( "BC_channelChanged" ) -- delay to allow channel data to change
+    end )
 end
 
 local function openLink( url )
@@ -738,8 +749,20 @@ function bc.channels.open( name )
     richText:SetFont( data.font or g.font )
     richText:SetMaxLines( bc.settings.getValue( "chatHistory" ) )
     richText:SetHighlightColor( bc.defines.theme.textHighlight )
+    richText:SetAllowDecorations( richText:GetFont() ~= "ChatFont" )
 
     richText.panel = panel
+
+    local timerName = "BC_ChannelScroll-" .. data.name
+    timer.Create( timerName, 0.5, 0, function()
+        if not IsValid( richText ) or not richText.scrollToBottomBtn then
+            timer.Remove( timerName )
+            return
+        end
+        if not bc.base.isOpen and richText.scrollToBottomBtn:IsVisible() then
+            bc.channels.scrollToBottom( data.name )
+        end
+    end )
 
     local rtOldLayout = richText.PerformLayout
     function richText:PerformLayout()

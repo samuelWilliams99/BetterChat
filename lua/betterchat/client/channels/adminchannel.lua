@@ -63,7 +63,7 @@ net.Receive( "BC_AM", function()
     local isAlive, isAdmin = true, true
     if ply:IsValid() then
         isAlive = ply:Alive()
-        isAdmin = ply:IsAdmin()
+        isAdmin = bc.admin.allowed( ply )
     end
 
     local tab = bc.formatting.formatMessage( ply, text, not isAlive, isAdmin and bc.defines.colors.white or bc.defines.theme.nonAdminText )

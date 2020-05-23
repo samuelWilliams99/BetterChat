@@ -307,7 +307,7 @@ hook.Add( "PlayerBindPress", "BC_overrideChatBind", function( ply, bind, pressed
     else
         return true -- Doesn't allow any functions to be called for this bind
     end
-end )
+end, HOOK_LOW )
 
 hook.Add( "HUDShouldDraw", "BC_hideDefaultChat", function( name )
     if not bc.base.enabled then return end
