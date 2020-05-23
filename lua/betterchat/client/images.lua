@@ -165,6 +165,9 @@ hook.Add( "BC_keyCodeTyped", "BC_emoteShortCutHook", function( code, ctrl, shift
         bc.images.toggleEmoteMenu()
     elseif bc.graphics.derma.emoteMenu:IsVisible() then
         if code >= KEY_1 and code <= KEY_9 and ctrl then
+            local c = bc.channels.getActiveChannel()
+            if c.noSend then return true end
+
             local idx = code - KEY_1 + 1
             local p = bc.graphics.derma.emotePSheet:GetActiveTab():GetPanel()
             local emote = p.emotes[idx]
@@ -267,6 +270,9 @@ function bc.images.addEmotesToPanel( panel, data, usage )
         g:SetCursor( "hand" )
         function g:OnMousePressed( t )
             if t == MOUSE_LEFT then
+                local c = bc.channels.getActiveChannel()
+                if c.noSend then return true end
+
                 local entry = bc.graphics.derma.textEntry
                 local txt = entry:GetText()
                 local cPos = entry:GetCaretPos()

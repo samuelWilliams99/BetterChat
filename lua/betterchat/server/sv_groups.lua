@@ -284,7 +284,7 @@ net.Receive( "BC_GM", function( len, ply )
 
     local members = bc.group.getGroupMembers( group )
 
-    bc.logs.sendLog( bc.defines.channelTypes.GROUP, "Group " .. group.id .. " - " .. group.name, ply, ": ", msg )
+    bc.logs.sendLog( bc.defines.channelTypes.GROUP, "Group " .. group.id .. "-" .. group.name, ply, ": ", msg )
 
     net.Start( "BC_GM" )
     net.WriteUInt( groupID, 16 )

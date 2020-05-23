@@ -207,9 +207,11 @@ hook.Add( "BC_keyCodeTyped", "BC_sendMessageHook", function( code, ctrl, shift )
             return true
         end
 
+        if channel.noSend then return true end
+
         if not bc.channels.canMessage() then
             bc.channels.showCooldown = true
-            return
+            return true
         end
 
         bc.graphics.derma.textEntry:SetText( "" )
@@ -220,7 +222,7 @@ hook.Add( "BC_keyCodeTyped", "BC_sendMessageHook", function( code, ctrl, shift )
             if not dontClose then
                 bc.base.close()
             end
-            return
+            return true
         end
 
         if channel.trim then

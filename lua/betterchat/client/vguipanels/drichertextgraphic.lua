@@ -84,7 +84,7 @@ function RTG:UpdateGraphic()
 
         function g:Paint( w, h )
 
-            if ( !self.m_Material ) then return true end
+            if not self.m_Material then return true end
 
             surface.SetMaterial( self.m_Material )
             surface.SetDrawColor( self.m_Color.r, self.m_Color.g, self.m_Color.b, self.m_Color.a )
@@ -108,7 +108,7 @@ function RTG:UpdateGraphic()
         g:Dock( FILL )
         g:SetHTML(
             [[
-				<style> 
+				<style>
 					body, div, img {
 						margin: 0px;
 						overflow: hidden;
@@ -129,8 +129,8 @@ function RTG:SetDoRender( r )
     end )
 end
 
-function RTG:UpdateDoRender()
-    if self.prevDoRender == self.doRender then return end
+function RTG:UpdateDoRender( force )
+    if self.prevDoRender == self.doRender and not force then return end
     local r = self.doRender
     if self.type == "image" then
         if r then self.graphic:Show() else self.graphic:Hide() end

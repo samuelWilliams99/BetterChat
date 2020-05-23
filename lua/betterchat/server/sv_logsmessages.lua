@@ -31,7 +31,6 @@ function bc.logs.sendLogConsole( channelType, channel, ... )
 end
 
 function bc.logs.sendLogPlayers( channelType, channel, ... )
-    do return end
     local plys = table.filterSeq( player.GetAll(), function( ply )
         return bc.settings.isAllowed( ply, "bc_chatlogs" )
     end )
