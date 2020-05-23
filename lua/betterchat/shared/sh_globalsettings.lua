@@ -75,10 +75,10 @@ bc.settings.clientTemplate = {
         default = true
     },
     {
-        name = "Console Commands with '%'",
+        name = "Console Commands with '##'",
         value = "allowConsole",
         type = "boolean",
-        extra = "Should any message starting with '%' be run as a console command instead",
+        extra = "Should any message starting with '##' be run as a console command instead",
         default = false,
     },
     {
@@ -280,17 +280,17 @@ hook.Add( "Initialize", "BC_ulxSetup", function()
         {
             value = "pulsing",
             defaultAccess = ULib.ACCESS_OPERATOR,
-            extra = "Ability to use %%rainbow%% in chat",
+            extra = "Ability to use %%pulsing%% in chat",
         },
         {
             value = "shaking",
             defaultAccess = ULib.ACCESS_OPERATOR,
-            extra = "Ability to use $$rainbow$$ in chat",
+            extra = "Ability to use $$shaking$$ in chat",
         },
         {
             value = "spaced",
             defaultAccess = ULib.ACCESS_ALL,
-            extra = "Ability to use $$rainbow$$ in chat",
+            extra = "Ability to use $$spaced$$ in chat",
         },
     }
 

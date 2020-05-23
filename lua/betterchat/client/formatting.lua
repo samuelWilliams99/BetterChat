@@ -290,7 +290,7 @@ function f.formatModifiersSingle( txt, state, allowed )
     local s, e, escape, c1, c2
     local lastTxt = ""
     while true do
-        s, e, escape, c1, c2 = string.find( " " .. txt, "([\\]?)([%*_~])(.?)" )
+        s, e, escape, c1, c2 = string.find( " " .. txt, "([\\]?)([%*_~&%%%$|])(.?)" )
         if not s or lastTxt == txt then break end -- Prevent inf loop if something goes wrong
         lastTxt = txt
 
@@ -344,9 +344,9 @@ function f.formatSpecialWords( text, tab, sender )
     local patterns = {}
     local players = player.GetAll()
 
-    local prePattern = "[ '\"%*_~%]]"
-    local postPatternPly = "[ '\"!%?%*_~%[s:,]"
-    local postPatternCol = "[ '\"!%?%*_~%[,]"
+    local prePattern = "[ '\"%*_~&%%%$|%]]"
+    local postPatternPly = "[ '\"!%?%*_~&%%%$|%[s:,]"
+    local postPatternCol = "[ '\"!%?%*_~&%%%$|%[,]"
 
     for k, v in pairs( players ) do
         table.insert( patterns, prePattern .. v:Nick():lower():PatternSafe() .. postPatternPly )

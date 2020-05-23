@@ -847,7 +847,9 @@ function bc.channels.open( name )
     function richText:NewElement( element, lineNum )
         element.lineNo = lineNum
         element.timeCreated = CurTime()
+        local oldThink = element.Think or function() end
         function element:Think()
+            oldThink( element )
             if bc.base.isOpen then
                 local col = self:GetTextColor()
                 col.a = 255

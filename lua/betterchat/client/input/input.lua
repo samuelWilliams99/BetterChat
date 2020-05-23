@@ -68,14 +68,13 @@ hook.Add( "BC_keyCodeTyped", "BC_inputHook", function( code, ctrl, shift, entry 
 end )
 
 hook.Add( "BC_messageCanSend", "BC_runConsoleCommand", function( channel, txt )
-    if bc.settings.getValue( "allowConsole" ) then
-        if txt and txt[1] == "%" then
-            local cmd = txt:sub( 2 )
-            if not cmd or #cmd == 0 then return true end
-            LocalPlayer():ConCommand( cmd )
-            return true
-        end
+    if bc.settings.getValue( "allowConsole" ) and string.Left( txt or "", 2 ) == "##" then
+        local cmd = txt:sub( 3 )
+        if not cmd or #cmd == 0 then return true end
+        LocalPlayer():ConCommand( cmd )
+        return true
     end
+
     local giphyCommand = bc.defines.giphyCommand
     if bc.images.giphyEnabled and string.sub( txt, 1, #giphyCommand + 1 ) == giphyCommand .. " " then
         local str = string.sub( txt, 8 )

@@ -1,4 +1,5 @@
 include( "drichertextgraphic.lua" )
+include( "dlabelpaintable.lua" )
 
 local RICHERTEXT = {}
 
@@ -846,23 +847,46 @@ local function addLabelPaint( label )
             surface.DrawRect( 0, h / 2, w, thickness )
         end
     end
+
+    function label:Paint( w, h )
+        local x = 0
+        local y = -1
+
+        if self.textShaking then
+            x = math.random( -2, 2 )
+            y = math.random( -3, 1 )
+        end
+
+        draw.DrawText( self._text, self:GetFont(), x, y, self:GetTextColor() )
+    end
+end
+
+local function addLabelColorThink( label )
+    local timeAdded = CurTime()
+    local origColor = label:GetTextColor()
+    local oldThink = label.Think or function() end
+    function label:Think()
+        oldThink( self )
+        if not self.showText then return end
+
+        if self.textRainbow then
+            self:SetTextColor( HSVToColor((CurTime() - timeAdded) * 180 % 360, 1, 1) )
+        elseif self.textPulsing then
+            local t = CurTime() - timeAdded
+            local prog = ( 1 + math.sin( t * 4 ) ) / 4
+            local curColor = chatHelper.lerpCol( origColor, bc.defines.colors.black, prog )
+            self:SetTextColor( curColor )
+        end
+    end
 end
 
 function RICHERTEXT:AddLabel()
     local line = self.lines[#self.lines] -- Get last line
     local idx = self:PrepNewElement()
 
-    local label = vgui.Create( "DLabel", self.scrollPanel:GetCanvas() ) -- Make a fokin label
+    local label = vgui.Create( "DLabelPaintable", self.scrollPanel:GetCanvas() ) -- Make a fokin label
     label:SetFont( self:GetLabelFont() )
-    if self.doFormatting then
-        label.textUnderline = self.textUnderline
-        label.textStrike = self.textStrike
-        label.textBold = self.textBold
-        label.textRainbow = self.textRainbow
-        label.textPulsing = self.textPulsing
-        label.textShaking = self.textShaking
-        addLabelPaint( label )
-    end
+    label.showText = true
     label:SetTextColor( table.Copy( self.textColor ) )
     label:SetText( "" )
     label.rawText = ""
@@ -871,6 +895,20 @@ function RICHERTEXT:AddLabel()
     label:SetSize( self:GetWide() - self.offset.x - 40, self.fontHeight )
     label:SetMouseInputEnabled( true )
     label:MoveToFront()
+
+    if self.doFormatting then
+        label.textUnderline = self.textUnderline
+        label.textStrike = self.textStrike
+        label.textBold = self.textBold
+        label.textRainbow = self.textRainbow
+        label.textPulsing = self.textPulsing
+        label.textShaking = self.textShaking
+        addLabelPaint( label )
+
+        if self.textRainbow or self.textPulsing then
+            addLabelColorThink( label )
+        end
+    end
 
     function label:SetDoRender( v )
         if self.showText == v then return end
