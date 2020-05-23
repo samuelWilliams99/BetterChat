@@ -530,8 +530,11 @@ function bc.channels.messageDirect( channel, controller, ... )
     if channel.showTimestamps then
         table.insert( data, 1, bc.defines.theme.timeStamps )
         local timeData = os.date( "*t" )
-        table.insert( data, 2, string.format( "%02i:%02i", timeData.hour, timeData.min ) .. " - " )
-        table.insert( data, 3, bc.defines.colors.white )
+        table.insert( data, 2, { formatter = true, type = "decoration", underline = true } )
+        table.insert( data, 3, string.format( "%02i:%02i", timeData.hour, timeData.min ) )
+        table.insert( data, 4, { formatter = true, type = "decoration" } )
+        table.insert( data, 5, " " )
+        table.insert( data, 6, bc.defines.colors.white )
     end
 
     local richText = bc.channels.panels[chanName].text
