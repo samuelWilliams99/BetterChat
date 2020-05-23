@@ -239,7 +239,7 @@ end
 
 local function getPlyModifiers( ply )
     local out = {}
-    out.italic = bc.settings.isAllowed( ply, "bc_italics" )
+    out.italics = bc.settings.isAllowed( ply, "bc_italics" )
     out.bold = bc.settings.isAllowed( ply, "bc_bold" )
     out.strike = bc.settings.isAllowed( ply, "bc_strike" )
     out.underline = bc.settings.isAllowed( ply, "bc_underline" )
@@ -277,7 +277,7 @@ local modifierKeyMap = {
     ["~~"] = "strike",
     ["**"] = "bold",
     ["__"] = "underline",
-    ["*"] = "italic",
+    ["*"] = "italics",
     ["&&"] = "rainbow",
     ["%%"] = "pulsing",
     ["$$"] = "shaking",
@@ -343,7 +343,7 @@ end
 function f.formatSpecialWords( text, tab, sender )
     local patterns = {}
     local players = player.GetAll()
-    
+
     local prePattern = "[ '\"%*_~%]]"
     local postPatternPly = "[ '\"!%?%*_~%[s:,]"
     local postPatternCol = "[ '\"!%?%*_~%[,]"

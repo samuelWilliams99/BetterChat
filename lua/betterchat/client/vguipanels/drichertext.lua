@@ -944,7 +944,7 @@ function RICHERTEXT:addNewLines( txt ) -- Goes through big bit of text, puts in 
         offsetX = offsetX + getElementSizeX( lastElement )
     end
 
-    local space = self.textSpaced and " " or "   "
+    local space = self.textSpaced and "   " or " "
 
     local limitX = self:GetWide() - 50
     local data = string.Explode( space, txt )
