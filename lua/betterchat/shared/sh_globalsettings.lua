@@ -19,6 +19,36 @@ bc.settings.clientTemplate = {
         max = 1000,
     },
     {
+        name = "Chatbox width",
+        value = "chatWidth",
+        type = "number",
+        extra = "Width in pixels of the chatbox",
+        default = 600,
+        min = 400,
+        max = 2000,
+    },
+    {
+        name = "Chatbox height",
+        value = "chatHeight",
+        type = "number",
+        extra = "Height in pixels of the chatbox",
+        default = 300,
+        min = 250,
+        max = 1000,
+    },
+    {
+        name = "Apply size",
+        type = "button",
+        extra = "Apply width and height to the chatbox.",
+        value = "applysize",
+    },
+    {
+        name = "Reset size",
+        type = "button",
+        extra = "Reset width and height of the chatbox back to 600x300",
+        value = "resetsize",
+    },
+    {
         name = "Team chat opens recent PM",
         value = "teamOpenPM",
         type = "boolean",
@@ -326,6 +356,16 @@ function bc.settings.isAllowed( ply, perm )
 end
 
 if CLIENT then
+    concommand.Add( "bc_applysize", function()
+        bc.sizeMove.resize( bc.settings.getValue( "chatWidth" ), bc.settings.getValue( "chatHeight" ), true )
+    end )
+
+    concommand.Add( "bc_resetsize", function()
+        GetConVar( "bc_chatWidth" ):Revert()
+        GetConVar( "bc_chatHeight" ):Revert()
+        bc.sizeMove.resize( bc.settings.getValue( "chatWidth" ), bc.settings.getValue( "chatHeight" ), true )
+    end )
+
     function bc.settings.getDefault( setting )
         local val = "bc_" .. setting.value
         local def

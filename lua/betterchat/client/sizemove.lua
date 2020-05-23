@@ -96,6 +96,8 @@ function bc.sizeMove.resize( w, h, final )
             data.Panel:InvalidateLayout( true )
         end
     end
+
+    bc.data.saveData()
 end
 
 local function inDragCorner( elem )
@@ -161,5 +163,12 @@ hook.Add( "VGUIMousePressed", "BC_sizeMoveMousePressed", function( self, keyCode
             originalBottom = chatHelper.getFrom( 2, g.derma.frame:GetPos() ) + g.size.y,
             type = edge
         }
+    end
+end )
+
+hook.Add( "BC_postInitPanels", "BC_sizeMoveSetConvars", function()
+    if bc.data.size then
+        GetConVar( "bc_chatWidth" ):SetFloat( bc.data.size.x )
+        GetConVar( "bc_chatHeight" ):SetFloat( bc.data.size.y )
     end
 end )
