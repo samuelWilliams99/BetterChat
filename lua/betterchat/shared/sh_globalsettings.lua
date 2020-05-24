@@ -216,10 +216,6 @@ bc.settings.serverTemplate = {
                     print( "[BetterChat] Cannot removeTeam while bc_server_replaceTeam is true" )
                     return "0"
                 end
-                if DarkRP then
-                    print( "[BetterChat] Team is already removed in DarkRP" )
-                    return "0"
-                end
                 ULib.clientRPC( bc.base.getEnabledPlayers(), "bc.channels.close", "Team" )
             else
                 ULib.clientRPC( bc.base.getEnabledPlayers(), "bc.channels.open", "Team" )

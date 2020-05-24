@@ -73,6 +73,14 @@ function bc.compatibility.overrideDarkRPChatReceivers( phrase )
         local chanName = channel.name
         if chanName == "All" or chanName == "Players" then
             return bc.compatibility.darkRPDefaultChatReceiver( ply )
+        elseif chanName == "Team" then
+            for _, func in pairs( GAMEMODE.DarkRPGroupChats ) do
+                if func( LocalPlayer() ) and func( ply ) then
+                    return true
+                end
+            end
+
+            return false
         elseif string.sub( chanName, 1, 15 ) == "TeamOverload - " then
             return ply:Team() == LocalPlayer():Team()
         elseif chanName == "Admin" then

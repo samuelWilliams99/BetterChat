@@ -512,7 +512,7 @@ hook.First( { "OnGamemodeLoaded", "Initialize" }, function()
             tab = f.formatMessage( ply, text, dead )
         end
 
-        bc.channels.message( { ( teamChat and not DarkRP ) and "Team" or "Players", "MsgC" }, unpack( tab ) )
+        bc.channels.message( { ( teamChat and not bc.settings.getServerValue( "removeTeam" ) ) and "Team" or "Players", "MsgC" }, unpack( tab ) )
 
         return true
     end

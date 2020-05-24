@@ -62,11 +62,11 @@ hook.Add( "Initialize", "BC_playerSayInit", function()
             if isTeam then
                 if bc.settings.getServerValue( "replaceTeam" ) then
                     bc.manager.sendTeamOverload( ply, msg )
+                elseif bc.settings.getServerValue( "removeTeam" ) then
+                    return ""
                 end
-
-                -- Get fucked other groups
-                return ""
             end
+
             -- DarkRP's PlayerSay always returns "", so no need to worry about networking messages here
             oldPlayerSay( GAMEMODE, ply, msg, isTeam )
             return ""

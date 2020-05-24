@@ -285,7 +285,7 @@ hook.Add( "PlayerBindPress", "BC_overrideChatBind", function( ply, bind, pressed
             if bc.settings.getServerValue( "replaceTeam" ) then
                 local t = chatHelper.teamName( LocalPlayer() )
                 chan = "TeamOverload - " .. t
-            elseif DarkRP or bc.settings.getServerValue( "removeTeam" ) then
+            elseif bc.settings.getServerValue( "removeTeam" ) then
                 return true
             else
                 chan = "Team"
@@ -295,12 +295,10 @@ hook.Add( "PlayerBindPress", "BC_overrideChatBind", function( ply, bind, pressed
         return
     end
 
-    local succ, err = pcall( function()
-        if chan == "Team" and not DarkRP then
-            bc.channels.open( "Team" )
-        end
+    local succ = pcall( function()
         bc.base.open( chan )
     end )
+
     if not succ then
         print( "Chatbox not initialized, disabling." )
         bc.base.enabled = false
