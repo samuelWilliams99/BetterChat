@@ -1,5 +1,9 @@
 bc.sidePanel.channels.template = {
     {
+        name = "General",
+        type = "catDivider",
+    },
+    {
         name = "Channel name",
         value = "displayName",
         type = "string",
@@ -33,6 +37,30 @@ bc.sidePanel.channels.template = {
         shouldSave = true,
     },
     {
+        name = "Input background color",
+        value = "textEntryColor",
+        type = "color",
+        extra = "Set the color of the text input background",
+        shouldSave = true,
+        default = bc.defines.theme.foreground
+    },
+    {
+        name = "Open on message",
+        value = "openOnMessage",
+        type = "boolean",
+        default = true,
+        extra = "Should this channel automatically open when you receive a message",
+        shouldSave = true,
+        shouldAdd = function( data )
+            return ( data.group or data.name == "Admin" ) and true or false
+        end,
+    },
+
+    {
+        name = "Sound",
+        type = "catDivider",
+    },
+    {
         name = "Play \"tick\" sound",
         value = "tickMode",
         type = "options",
@@ -52,8 +80,13 @@ bc.sidePanel.channels.template = {
         extra = "What should trigger the \"pop\" sound in this channel",
         shouldSave = true,
     },
+
     {
         name = "Formatting",
+        type = "catDivider",
+    },
+    {
+        name = "Allow formatting",
         value = "doFormatting",
         type = "boolean",
         default = true,
@@ -111,43 +144,81 @@ bc.sidePanel.channels.template = {
         extra = "Show timestamps before every message",
         shouldSave = true,
     },
+
+    {
+        name = "Font override",
+        type = "catDivider",
+    },
+    {
+        name = "Use font override",
+        value = "useOverrideFont",
+        type = "boolean",
+        default = false,
+        extra = "Use the following font info for this channel ONLY. The global setting for this is in the Q menu.",
+        onChange = function( data )
+            local newVal = data.useOverrideFont
+            data.disabledSettings = data.disabledSettings or {}
+
+            table.RemoveByValue( data.disabledSettings, "fontFamily" )
+            table.RemoveByValue( data.disabledSettings, "fontSize" )
+            table.RemoveByValue( data.disabledSettings, "fontBold" )
+
+            if not newVal then
+                table.Add( data.disabledSettings, { "fontFamily", "fontSize", "fontBold" } )
+                bc.fontManager.updateChannelFont( data )
+            else
+                local defaultData = bc.fontManager.getGlobalFontData()
+                data.fontFamily = defaultData.family
+                data.fontSize = defaultData.size
+                data.fontBold = defaultData.bold
+            end
+
+
+            bc.sidePanel.channels.reloadSettings( data )
+        end,
+        shouldSave = true,
+    },
+    {
+        name = "Font family",
+        value = "fontFamily",
+        type = "options",
+        options = bc.fontManager.fontFamilies,
+        default = bc.fontManager.systemFont,
+        extra = "Set the font family for this channel only",
+        onChange = function( data ) bc.fontManager.updateChannelFont( data ) end,
+        shouldSave = true,
+    },
+    {
+        name = "Font size",
+        value = "fontSize",
+        type = "number",
+        default = 21,
+        min = 10,
+        max = 50,
+        extra = "Set the font size for this channel only",
+        onChange = function( data ) bc.fontManager.updateChannelFont( data ) end,
+        shouldSave = true,
+    },
+    {
+        name = "Is bold",
+        value = "fontBold",
+        type = "boolean",
+        default = false,
+        extra = "Set if this channels font is bold",
+        onChange = function( data ) bc.fontManager.updateChannelFont( data ) end,
+        shouldSave = true,
+    },
+
+    {
+        name = "Channel interaction",
+        type = "catDivider",
+    },
     {
         name = "Display prints",
         value = "doPrints",
         type = "boolean",
         default = false,
         extra = "Set whether prints (from ulx, expression2, server, etc.) should be displayed in this channel",
-        shouldSave = true,
-    },
-    {
-        name = "Input background color",
-        value = "textEntryColor",
-        type = "color",
-        extra = "Set the color of the text input background",
-        shouldSave = true,
-        default = bc.defines.theme.foreground
-    },
-    {
-        name = "Font",
-        value = "font",
-        type = "options",
-        options = { "Default", "Default Large", "Original", "MonoSpace", "MonoSpace Large" },
-        optionValues = { "BC_default", "BC_defaultLarge", "ChatFont", "BC_monospace", "BC_monospaceLarge" },
-        default = "BC_default",
-        extra = "Set the font of this channel",
-        onChange = function( data )
-            local txt = bc.channels.panels[data.name].text
-            if not txt or not IsValid( txt ) then return end
-            if data.font == "ChatFont" then
-                bc.channels.messageDirect( data, bc.defines.colors.orange, "Warning: This font is not compatible with font editors like **bold**" )
-            end
-            txt:SetAllowDecorations( data.font ~= "ChatFont" )
-            surface.SetFont( data.font )
-            local _, h = surface.GetTextSize( "A" )
-            txt.fontHeight = h - 2
-            txt:SetFont( data.font )
-            txt:Reload()
-        end,
         shouldSave = true,
     },
     {
@@ -174,15 +245,4 @@ bc.sidePanel.channels.template = {
         extra = "Should messages in this channel be relayed to the All channel",
         shouldSave = true,
     },
-    {
-        name = "Open on message",
-        value = "openOnMessage",
-        type = "boolean",
-        default = true,
-        extra = "Should this channel automatically open when you receive a message",
-        shouldSave = true,
-        shouldAdd = function( data )
-            return ( data.group or data.name == "Admin" ) and true or false
-        end,
-    }
 }

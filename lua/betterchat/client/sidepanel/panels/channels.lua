@@ -7,7 +7,29 @@ hook.Add( "BC_initPanels", "BC_initSidePanelChannels", function()
         rotate = true,
         col = bc.defines.theme.channelCogFocused
     } )
+
+    -- Set up category children
+    local cat = nil
+    for k, setting in pairs( bc.sidePanel.channels.template ) do
+        if setting.type == "catDivider" then
+            cat = setting
+            cat.children = cat.children or {}
+        elseif cat then
+            table.insert( cat.children, setting )
+        end
+    end
 end )
+
+function bc.sidePanel.channels.shouldAdd( setting, channel )
+    if channel.disabledSettings and table.HasValue( channel.disabledSettings, setting.value ) then
+        return false
+    end
+    if setting.shouldAdd and not setting.shouldAdd( channel, setting ) then
+        return false
+    end
+
+    return true
+end
 
 function bc.sidePanel.channels.generateSettings( sPanel, data )
     local canvas = sPanel:GetCanvas()
@@ -40,8 +62,7 @@ function bc.sidePanel.channels.generateSettings( sPanel, data )
 
     local k = 1
     for idx, v in pairs( bc.sidePanel.channels.template ) do
-        if data.disabledSettings and table.HasValue( data.disabledSettings, v.value ) then continue end
-        if v.shouldAdd then if not v.shouldAdd( data ) then return end end
+        if not bc.sidePanel.channels.shouldAdd( v, data ) then continue end
 
         bc.sidePanel.renderSetting( sPanel, data, bc.sidePanel.channels.template[idx], k )
         k = k + 1
@@ -51,18 +72,30 @@ end
 
 function bc.sidePanel.channels.applyDefaults( data )
     for k, v in pairs( bc.sidePanel.channels.template ) do
+        if v.type == "button" or v.type == "catDivider" then continue end
         if data[v.value] == nil then data[v.value] = v.default end
     end
 end
 
 function bc.sidePanel.channels.reloadSettings( data )
     local pName = "Channel Settings"
-    if bc.sidePanel.getChild( pName, data.name ) then
+    local panel = bc.sidePanel.getChild( pName, data.name )
+    if panel then
+        local isShowing = bc.sidePanel.panels[pName].activePanel == data.name
+        local scrollVal
+        if isShowing then
+            scrollVal = panel:GetVBar():GetScroll()
+        end
+
         bc.sidePanel.removeChild( pName, data.name, true )
+
         local p = bc.sidePanel.createChild( pName, data.name )
         bc.sidePanel.channels.generateSettings( p, data )
-        if bc.sidePanel.panels[pName].activePanel == data.name then
+
+        if isShowing then
             bc.sidePanel.show( pName, data.name )
+            p:InvalidateLayout( true )
+            p:GetVBar():SetScroll( scrollVal )
         end
     end
 end

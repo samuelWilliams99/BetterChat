@@ -57,7 +57,7 @@ hook.Add( "BC_preInitPanels", "BC_initChannels", function()
     d.psheet = vgui.Create( "DPropertySheet", d.chatFrame )
     d.psheet:SetName( "BC_tabSheet" )
     d.psheet:SetPos( 0, 5 )
-    d.psheet:SetSize( g.size.x, g.size.y - 37 )
+    d.psheet:SetSize( g.size.x, g.size.y - g.textEntryHeight - 6 )
     d.psheet:SetPadding( 0 )
     d.psheet:SetFadeTime( 0 )
     d.psheet:SetMouseInputEnabled( true )
@@ -74,7 +74,7 @@ hook.Add( "BC_preInitPanels", "BC_initChannels", function()
 
     local oldLayout = d.psheet.PerformLayout
     function d.psheet:PerformLayout()
-        self:SetSize( g.size.x, g.size.y - 37 )
+        self:SetSize( g.size.x, g.size.y - g.textEntryHeight - 6 )
         oldLayout( self )
     end
 
@@ -703,6 +703,11 @@ function bc.channels.add( data )
     bc.channels.rememberDefaults( data )
     bc.data.loadChannel( data )
     bc.sidePanel.channels.applyDefaults( data )
+
+    if not data.useOverrideFont then
+        table.Add( data.disabledSettings, { "fontFamily", "fontSize", "fontBold" } )
+    end
+
     table.insert( bc.channels.channels, data )
     return data
 end
@@ -733,6 +738,8 @@ function bc.channels.open( name )
     bc.sidePanel.channels.generateSettings( sPanel, data )
     table.insert( bc.channels.openChannels, data.name )
 
+    data.font = bc.fontManager.getChannelFont( data )
+
     local panel = vgui.Create( "DPanel", d.psheet )
 
     function panel:Paint( w, h )
@@ -745,7 +752,7 @@ function bc.channels.open( name )
 
     local richText = vgui.Create( "DRicherText", panel )
     richText:SetPos( 10, 10 )
-    richText:SetSize( g.size.x - 20, g.size.y - 42 - 37 )
+    richText:SetSize( g.size.x - 20, g.size.y - 42 - g.textEntryHeight - 6 )
     richText:SetFont( data.font or g.font )
     richText:SetMaxLines( bc.settings.getValue( "chatHistory" ) )
     richText:SetHighlightColor( bc.defines.theme.textHighlight )
@@ -766,7 +773,7 @@ function bc.channels.open( name )
 
     local rtOldLayout = richText.PerformLayout
     function richText:PerformLayout()
-        self:SetSize( g.size.x - 20, g.size.y - 42 - 37 )
+        self:SetSize( g.size.x - 20, g.size.y - 42 - g.textEntryHeight - 6 )
         self.panel.settingsBtn:InvalidateLayout()
         rtOldLayout( self )
     end

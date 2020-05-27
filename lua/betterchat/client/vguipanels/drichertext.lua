@@ -305,8 +305,7 @@ function RICHERTEXT:TriggerScrollUpdate()
     self.toUpdateScroll = true
 end
 
-function RICHERTEXT:Reload() -- Clear the text, reset a bunch of shit, then run through the logs again
-
+function RICHERTEXT:Clear()
     for k1, v1 in pairs( self.lines ) do
         for k, v in pairs( v1 ) do
             v:Remove()
@@ -322,6 +321,10 @@ function RICHERTEXT:Reload() -- Clear the text, reset a bunch of shit, then run 
     self.addNewLine = false
     self.graphics = {}
     self.yRemoved = 0
+end
+
+function RICHERTEXT:Reload() -- Clear the text, reset a bunch of shit, then run through the logs again
+    self:Clear()
 
     local funcs = {
         ["text"] = RICHERTEXT.AppendText,
@@ -629,6 +632,10 @@ end
 function RICHERTEXT:SetFont( font )
     if not font then return end
     self.innerFont = font
+    surface.SetFont( font )
+    local _, h = surface.GetTextSize( "A" )
+    self.fontHeight = h - 2
+
     self:AddLabel()
 end
 

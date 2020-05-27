@@ -95,7 +95,7 @@ hook.Add( "BC_initPanels", "BC_initImages", function()
     local emoteBtn = vgui.Create( "DImageButton", d.chatFrame )
     emoteBtn:SetSize( 20, 20 )
     emoteBtn:SetMaterial( bc.defines.materials.emoteButton )
-    emoteBtn:SetPos( g.size.x - 25, g.size.y - 25 )
+    emoteBtn:SetPos( g.size.x - 25, g.size.y - 30 - bc.graphics.textEntryHeight / 2 )
     emoteBtn:SetIsMenu( true )
     function emoteBtn:OnMousePressed()
         bc.images.toggleEmoteMenu()
@@ -103,7 +103,7 @@ hook.Add( "BC_initPanels", "BC_initImages", function()
     local oldLayout = emoteBtn.PerformLayout
     function emoteBtn:PerformLayout()
         self:SetSize( 20, 20 )
-        self:SetPos( g.size.x - 25, g.size.y - 25 )
+        self:SetPos( g.size.x - 25, g.size.y - 10 - bc.graphics.textEntryHeight / 2 )
         oldLayout( self )
     end
     d.emoteButton = emoteBtn

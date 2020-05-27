@@ -20,7 +20,7 @@ local function loadFromTemplate( data, dest, template )
     for k, v in pairs( template ) do
         if data[v.value] == nil then continue end
         -- If data is options but value isn't a valid option
-        if v.type == "options" and not table.HasValue( v.optionValues, data[v.value] ) then
+        if v.type == "options" and not table.HasValue( v.optionValues or v.options, data[v.value] ) then
             data[v.value] = v.default
         end
         dest[v.value] = data[v.value]
