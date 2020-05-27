@@ -78,6 +78,25 @@ bc.settings.clientTemplate = {
         noMenu = true,
     },
     {
+        name = "Font line spacing",
+        value = "fontLineSpacingTemp",
+        type = "number",
+        default = -2,
+        min = -5,
+        max = 15,
+        extra = "Default channel font line spacing",
+        noServerDefault = true,
+    },
+    {
+        value = "fontLineSpacing",
+        type = "number",
+        default = -2,
+        min = -5,
+        max = 15,
+        noServerDefault = true,
+        noMenu = true,
+    },
+    {
         name = "Is bold",
         value = "fontBoldTemp",
         type = "boolean",
@@ -87,6 +106,21 @@ bc.settings.clientTemplate = {
     },
     {
         value = "fontBold",
+        type = "boolean",
+        default = false,
+        noServerDefault = true,
+        noMenu = true,
+    },
+     {
+        name = "Anti-Alias",
+        value = "fontAntiAliasTemp",
+        type = "boolean",
+        default = false,
+        extra = "Default channel and text entry anti-aliasing",
+        noServerDefault = true,
+    },
+    {
+        value = "fontAntiAlias",
         type = "boolean",
         default = false,
         noServerDefault = true,
@@ -540,16 +574,6 @@ end )
 
 if not CLIENT then return end
 
-concommand.Add( "bc_applysize", function()
-    bc.sizeMove.resize( bc.settings.getValue( "chatWidth" ), bc.settings.getValue( "chatHeight" ), true )
-end )
-
-concommand.Add( "bc_resetsize", function()
-    GetConVar( "bc_chatWidth" ):Revert()
-    GetConVar( "bc_chatHeight" ):Revert()
-    bc.sizeMove.resize( bc.settings.getValue( "chatWidth" ), bc.settings.getValue( "chatHeight" ), true )
-end )
-
 concommand.Add( "bc_reloadSettingsPanel", function()
     bc.settings.generateToolMenu()
 end )
@@ -735,9 +759,9 @@ end )
 
 function bc.settings.revertToDefaults()
     for k, setting in pairs( bc.settings.clientTemplate ) do
-        local val = "bc_" .. setting.value
-
         if setting.type == "button" or setting.type == "catDivider" then continue end
+
+        local val = "bc_" .. setting.value
 
         local cv = GetConVar( val )
         if not cv then continue end

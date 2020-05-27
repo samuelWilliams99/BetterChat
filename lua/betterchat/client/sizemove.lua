@@ -172,3 +172,13 @@ hook.Add( "BC_postInitPanels", "BC_sizeMoveSetConvars", function()
         GetConVar( "bc_chatHeight" ):SetFloat( bc.data.size.y )
     end
 end )
+
+concommand.Add( "bc_applysize", function()
+    bc.sizeMove.resize( bc.settings.getValue( "chatWidth" ), bc.settings.getValue( "chatHeight" ), true )
+end )
+
+concommand.Add( "bc_resetsize", function()
+    GetConVar( "bc_chatWidth" ):Revert()
+    GetConVar( "bc_chatHeight" ):Revert()
+    bc.sizeMove.resize( bc.settings.getValue( "chatWidth" ), bc.settings.getValue( "chatHeight" ), true )
+end )

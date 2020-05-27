@@ -162,17 +162,20 @@ bc.sidePanel.channels.template = {
             table.RemoveByValue( data.disabledSettings, "fontFamily" )
             table.RemoveByValue( data.disabledSettings, "fontSize" )
             table.RemoveByValue( data.disabledSettings, "fontBold" )
+            table.RemoveByValue( data.disabledSettings, "fontAntiAlias" )
+            table.RemoveByValue( data.disabledSettings, "fontLineSpacing" )
 
             if not newVal then
-                table.Add( data.disabledSettings, { "fontFamily", "fontSize", "fontBold" } )
+                table.Add( data.disabledSettings, { "fontFamily", "fontSize", "fontBold", "fontAntiAlias", "fontLineSpacing" } )
                 bc.fontManager.updateChannelFont( data )
             else
                 local defaultData = bc.fontManager.getGlobalFontData()
                 data.fontFamily = defaultData.family
                 data.fontSize = defaultData.size
                 data.fontBold = defaultData.bold
+                data.fontAntiAlias = defaultData.antiAlias
+                data.fontLineSpacing = bc.settings.getValue( "fontLineSpacing" )
             end
-
 
             bc.sidePanel.channels.reloadSettings( data )
         end,
@@ -200,11 +203,31 @@ bc.sidePanel.channels.template = {
         shouldSave = true,
     },
     {
+        name = "Font line spacing",
+        value = "fontLineSpacing",
+        type = "number",
+        default = -2,
+        min = -5,
+        max = 15,
+        extra = "Default channel font line spacing",
+        onChange = function( data ) bc.fontManager.updateChannelFont( data ) end,
+        shouldSave = true,
+    },
+    {
         name = "Is bold",
         value = "fontBold",
         type = "boolean",
         default = false,
         extra = "Set if this channels font is bold",
+        onChange = function( data ) bc.fontManager.updateChannelFont( data ) end,
+        shouldSave = true,
+    },
+    {
+        name = "Anti-Alias",
+        value = "fontAntiAlias",
+        type = "boolean",
+        default = false,
+        extra = "Default channel and text entry anti-aliasing",
         onChange = function( data ) bc.fontManager.updateChannelFont( data ) end,
         shouldSave = true,
     },

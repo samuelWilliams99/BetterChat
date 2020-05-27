@@ -705,7 +705,7 @@ function bc.channels.add( data )
     bc.sidePanel.channels.applyDefaults( data )
 
     if not data.useOverrideFont then
-        table.Add( data.disabledSettings, { "fontFamily", "fontSize", "fontBold" } )
+        table.Add( data.disabledSettings, { "fontFamily", "fontSize", "fontBold", "fontAntiAlias", "fontLineSpacing" } )
     end
 
     table.insert( bc.channels.channels, data )
@@ -739,6 +739,7 @@ function bc.channels.open( name )
     table.insert( bc.channels.openChannels, data.name )
 
     data.font = bc.fontManager.getChannelFont( data )
+    data.lineSpacing = bc.fontManager.getChannelLineSpacing( data )
 
     local panel = vgui.Create( "DPanel", d.psheet )
 
@@ -753,6 +754,7 @@ function bc.channels.open( name )
     local richText = vgui.Create( "DRicherText", panel )
     richText:SetPos( 10, 10 )
     richText:SetSize( g.size.x - 20, g.size.y - 42 - g.textEntryHeight - 6 )
+    richText:SetLineSpacing( data.lineSpacing )
     richText:SetFont( data.font or g.font )
     richText:SetMaxLines( bc.settings.getValue( "chatHistory" ) )
     richText:SetHighlightColor( bc.defines.theme.textHighlight )

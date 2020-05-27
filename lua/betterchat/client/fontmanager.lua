@@ -23,11 +23,13 @@ end
 local function getFontNameHash( fontData )
     return "bc_generatedFont_" .. spaceToUnderscore( fontData.family )
         .. "_" .. fontData.size ..
-        ( fontData.bold and "_b" or "" ) .. ( fontData.italics and "_i" or "" )
+        ( fontData.bold and "_b" or "" ) .. ( fontData.italics and "_i" or "" ) .. ( fontData.antiAlias and "_aa" or "" )
 end
 
 local function makeFont( name, data )
-    data.antialias = false
+    if data.antialias == nil then
+        data.antialias = false
+    end
     data.shadow = true
     data.extended = true
     data.weight = data.weight or 500
@@ -68,7 +70,8 @@ function fm.getFont( fontData )
         font = fontData.family,
         size = fontData.size,
         weight = 500 + ( fontData.bold and 200 or 0 ),
-        italics = fontData.italics
+        italics = fontData.italics,
+        antialias = tobool( fontData.antiAlias )
     } )
 
     fm.fonts[hash] = fontData
@@ -80,6 +83,7 @@ function fm.getGlobalFontData( noSize )
         family = bc.settings.getValue( "fontFamily" ),
         size = noSize and 21 or bc.settings.getValue( "fontSize" ),
         bold = bc.settings.getValue( "fontBold" ),
+        antiAlias = bc.settings.getValue( "fontAntiAlias" ),
     }
 end
 
@@ -88,6 +92,8 @@ function fm.applyFontChange()
     GetConVar( "bc_fontSize" ):SetInt( bc.settings.getValue( "fontSizeTemp" ) )
     GetConVar( "bc_fontBold" ):SetBool( bc.settings.getValue( "fontBoldTemp" ) )
     GetConVar( "bc_fontScaleEntry" ):SetBool( bc.settings.getValue( "fontScaleEntryTemp" ) )
+    GetConVar( "bc_fontAntiAlias" ):SetBool( bc.settings.getValue( "fontAntiAliasTemp" ) )
+    GetConVar( "bc_fontLineSpacing" ):SetInt( bc.settings.getValue( "fontLineSpacingTemp" ) )
     if bc.base.enabled then
         bc.base.disable()
         bc.base.enable()
@@ -100,6 +106,8 @@ concommand.Add( "bc_resetfont", function()
     GetConVar( "bc_fontSizeTemp" ):Revert()
     GetConVar( "bc_fontBoldTemp" ):Revert()
     GetConVar( "bc_fontScaleEntryTemp" ):Revert()
+    GetConVar( "bc_fontAntiAliasTemp" ):Revert()
+    GetConVar( "bc_fontLineSpacingTemp" ):Revert()
     fm.applyFontChange()
 end )
 
@@ -108,6 +116,8 @@ hook.Add( "bc_preInitPanels", "BC_setFontValues", function()
     GetConVar( "bc_fontSizeTemp" ):SetInt( GetConVar( "bc_fontSize" ):GetInt() )
     GetConVar( "bc_fontBoldTemp" ):SetBool( GetConVar( "bc_fontBold" ):GetBool() )
     GetConVar( "bc_fontScaleEntryTemp" ):SetBool( GetConVar( "bc_fontScaleEntry" ):GetBool() )
+    GetConVar( "bc_fontAntiAliasTemp" ):SetBool( GetConVar( "bc_fontAntiAlias" ):GetBool() )
+    GetConVar( "bc_fontLineSpacingTemp" ):SetInt( GetConVar( "bc_fontLineSpacing" ):GetInt() )
 end )
 
 function fm.getGlobalFont( noSize )
@@ -119,21 +129,34 @@ function fm.getChannelFont( channel )
         return fm.getFont( {
             family = channel.fontFamily,
             size = channel.fontSize,
-            bold = channel.fontBold
+            bold = channel.fontBold,
+            antiAlias = channel.fontAntiAlias,
         } )
     else
         return fm.getGlobalFont()
     end
 end
 
+function fm.getChannelLineSpacing( channel )
+    if channel.useOverrideFont then
+        return channel.fontLineSpacing
+    else
+        return bc.settings.getValue( "fontLineSpacing" )
+    end
+end
+
 function fm.updateChannelFont( channel, noReload )
     local oldFont = channel.font
+    local oldLineSpacing = channel.lineSpacing
     channel.font = fm.getChannelFont( channel )
 
-    if channel.font ~= oldFont then
+    channel.lineSpacing = fm.getChannelLineSpacing( channel )
+
+    if channel.font ~= oldFont or channel.lineSpacing ~= oldLineSpacing then
         local txt = bc.channels.panels[channel.name].text
         if not txt or not IsValid( txt ) then return end
 
+        txt:SetLineSpacing( channel.lineSpacing )
         txt:SetFont( channel.font )
 
         if not noReload then

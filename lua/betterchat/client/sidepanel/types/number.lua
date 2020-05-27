@@ -5,7 +5,6 @@ function bc.sidePanel.renderSettingFuncs.number( sPanel, panel, data, y, w, h, s
     numberEntry:SetName( "BC_settingsEntry" )
     numberEntry:SetPos( w - entryWidth, y - 1 )
     numberEntry:SetSize( entryWidth, 18 )
-    numberEntry:SetValue( data[setting.value] )
     numberEntry:SetTooltip( setting.extra )
     numberEntry:SetUpdateOnType( false )
     numberEntry:SetDisabled( setting.disabled or false )
@@ -14,6 +13,8 @@ function bc.sidePanel.renderSettingFuncs.number( sPanel, panel, data, y, w, h, s
     numberEntry:SetMin( setting.min or 0 )
     numberEntry:SetMax( setting.max or 100 )
 
+    numberEntry:SetValue( data[setting.value] )
+    
     numberEntry.data = data
     numberEntry.val = setting.value
 

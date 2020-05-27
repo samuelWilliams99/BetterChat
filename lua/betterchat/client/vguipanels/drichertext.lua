@@ -85,6 +85,8 @@ function RICHERTEXT:Init()
 
     self.lastScroll = -1
 
+    self.lineSpacing = -2
+
     function self:Think()
         if self.select.mouseDown then
             local sPanel = self.scrollPanel
@@ -634,13 +636,22 @@ function RICHERTEXT:SetFont( font )
     self.innerFont = font
     surface.SetFont( font )
     local _, h = surface.GetTextSize( "A" )
-    self.fontHeight = h - 2
+    self.fontHeight = h + self.lineSpacing
+    self.textHeight = h
 
     self:AddLabel()
 end
 
 function RICHERTEXT:GetFont()
     return self.innerFont
+end
+
+function RICHERTEXT:SetLineSpacing( v )
+    self.lineSpacing = v
+end
+
+function RICHERTEXT:GetLineSpacing()
+    return self.lineSpacing
 end
 
 function RICHERTEXT:SetDecorations( data )
@@ -899,7 +910,7 @@ function RICHERTEXT:AddLabel()
     label.rawText = ""
     label.rawTextIdx = idx
     label:SetPos( 5 + self.offset.x, self.offset.y - self.yRemoved )
-    label:SetSize( self:GetWide() - self.offset.x - 40, self.fontHeight )
+    label:SetSize( self:GetWide() - self.offset.x - 40, self.textHeight )
     label:SetMouseInputEnabled( true )
     label:MoveToFront()
 
