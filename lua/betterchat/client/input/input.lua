@@ -113,6 +113,9 @@ hook.Add( "BC_messageCanSend", "BC_runConsoleCommand", function( channel, txt )
     if bc.settings.getValue( "allowConsole" ) and string.Left( txt or "", 2 ) == "##" then
         local cmd = txt:sub( 3 )
         if not cmd or #cmd == 0 then return true end
+
+        bc.channels.messageDirect( channel, bc.defines.theme.commands, "> ", cmd )
+
         LocalPlayer():ConCommand( cmd )
         return true
     end
