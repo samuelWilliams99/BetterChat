@@ -86,7 +86,7 @@ hook.Add( "BC_keyCodeTyped", "BC_inputHook", function( code, ctrl, shift, entry 
 
             repeat
                 cPos = cPos + changeBy
-                local bytePos = utf8.offset( txt, cPos ) or #txt + 1
+                bytePos = utf8.offset( txt, cPos ) or #txt + 1
 
                 if txt[bytePos] == " " then
                     if seenNonSpace then
