@@ -933,8 +933,6 @@ function RICHERTEXT:AddLabel()
         self.showText = v
         if v then
             local text = self.text or self:GetText()
-            if text[1] == "#" then text = "#" .. text end
-
             self:SetText( text )
         else
             self.text = self:GetText()
@@ -1110,7 +1108,6 @@ function RICHERTEXT:AppendTextNoTab( txt ) --This func cannot handle tabs
                 lastElement = line[#line]
             end
             local tmpText = lastElement:GetText() .. string.Replace( curText, "\t", "" ) -- Should a tab have made its way in here, get rid of it! Then append to labels text
-            if tmpText[1] == "#" then tmpText = "#" .. tmpText end --dLabels remove the first character if its a hash, so add in new one to counter that
 
             lastElement:SetText( tmpText ) -- Update label
             lastElement.rawText = lastElement.rawText .. curText -- Update label's raw text
@@ -1137,7 +1134,6 @@ function RICHERTEXT:AppendTextNoTab( txt ) --This func cannot handle tabs
             lastElement = line[#line]
         end
         local tmpText = lastElement:GetText() .. string.Replace( curText, "\t", "" )
-        if tmpText[1] == "#" then tmpText = "#" .. tmpText end --dLabels remove the first character if its a hash, so add in new one to counter that
 
         lastElement:SetText( tmpText )
         lastElement.rawText = lastElement.rawText .. curText -- Basically do the shit from the start of new line 

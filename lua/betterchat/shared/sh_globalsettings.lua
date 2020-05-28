@@ -668,10 +668,12 @@ function bc.settings.generateToolMenu( panel )
         bc.settings.toolPanel = panel
     end
 
+    if not panel then return end
+
     panel:ClearControls()
     for _, setting in pairs( bc.settings.clientTemplate ) do
         if setting.noMenu then continue end
-        
+
         local val = "bc_" .. ( setting.value or "" )
 
         local c

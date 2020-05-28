@@ -9,60 +9,102 @@ hook.Add( "BC_initPanels", "BC_initInput", function()
 end )
 
 hook.Add( "BC_keyCodeTyped", "BC_inputHook", function( code, ctrl, shift, entry )
+    local txt = entry:GetText()
     if code == KEY_UP then
         if i.historyIndex == 0 then
-            i.historyInput = entry:GetText()
+            i.historyInput = txt
         end
         i.historyIndex = math.Min( i.historyIndex + 1, #i.history )
         if i.historyIndex ~= 0 then
             entry:SetText( i.history[( #i.history + 1 ) - i.historyIndex] )
-            entry:SetCaretPos( #entry:GetText() )
+            entry:SetCaretPos( utf8.len( entry:GetText() ) )
         end
         return true
     elseif code == KEY_DOWN then
         if i.historyIndex == 0 then
             return true
         end
+
         i.historyIndex = math.Max( i.historyIndex - 1, 0 )
         if i.historyIndex ~= 0 then
             entry:SetText( i.history[( #i.history + 1 ) - i.historyIndex] )
-            entry:SetCaretPos( #entry:GetText() )
         else
             entry:SetText( i.historyInput )
-            entry:SetCaretPos( #entry:GetText() )
         end
+
+        entry:SetCaretPos( utf8.len( entry:GetText() ) )
+
         return true
-    elseif code == KEY_C then
-        if ctrl then
-            local txt = hook.Run( "RICHERTEXT:CopyText" )
-            if txt then
-                SetClipboardText( txt )
+    elseif ctrl then
+        if code == KEY_BACKSPACE then
+            local cPos
+
+            if #txt == 0 then
+                cPos = 1
+            else
+                cPos = utf8.offset( txt, entry:GetCaretPos() ) or #txt + 1
+            end
+
+            if shift then
+                entry:SetText( string.sub( txt, cPos ) )
+            else
+                local preTxt = string.TrimRight( string.sub( entry:GetText(), 1, cPos - 1 ) )
+
+                local spacePos = 0
+
+                for k = 1, math.min( cPos, #preTxt ) do
+                    if txt[k] == " " then
+                        spacePos = k
+                    end
+                end
+
+                local preText = string.sub( preTxt, 1, spacePos )
+                entry:SetText( preText .. string.sub( txt, cPos ) )
+                entry:SetCaretPos( utf8.len( preText ) )
+            end
+            return true
+        elseif code == KEY_C then
+            local copiedText = hook.Run( "RICHERTEXT:CopyText" )
+            if copiedText then
+                SetClipboardText( copiedText )
                 return true
             end
-        end
-    elseif code == KEY_V then
-        if ctrl then
+        elseif code == KEY_V then
             entry:SetMultiline( true )
-        end
-    elseif code == KEY_BACKSPACE and ctrl then
-        local cPos = entry:GetCaretPos() + 1
-        local txt = entry:GetText()
-        if shift then
-            entry:SetText( string.sub( txt, cPos, #txt ) )
-        else
-            local preTxt = string.TrimRight( string.sub( entry:GetText(), 1, cPos - 1 ) )
+        elseif code == KEY_LEFT or code == KEY_RIGHT then
+            if #txt == 0 then return true end
 
-            local spacePos = 0
+            local isLeft = code == KEY_LEFT
+            local cPos = entry:GetCaretPos()
+            local changeBy = isLeft and -1 or 1
+            local endValue = isLeft and 0 or utf8.len( txt )
 
-            for k = 1, math.min( cPos, #preTxt ) do
-                if txt[k] == " " then
-                    spacePos = k
+            if cPos == endValue then return true end
+
+            local bytePos = utf8.offset( txt, isLeft and cPos - 1 or cPos ) or #txt + 1
+            local seenNonSpace = txt[bytePos] and txt[bytePos] ~= " "
+
+            repeat
+                cPos = cPos + changeBy
+                local bytePos = utf8.offset( txt, cPos ) or #txt + 1
+
+                if txt[bytePos] == " " then
+                    if seenNonSpace then
+                        break
+                    end
+                else
+                    seenNonSpace = true
                 end
+            until cPos == endValue
+
+            if isLeft and cPos ~= 0 then
+                cPos = cPos + 1
             end
-            entry:SetText( string.sub( preTxt, 1, spacePos ) .. string.sub( txt, cPos, #txt ) )
-            entry:SetCaretPos( spacePos )
+
+            entry:SetCaretPos( cPos )
+
+            return true
         end
-        return true
     end
 
 end )

@@ -167,17 +167,17 @@ function fm.updateChannelFont( channel, noReload )
     end
 end
 
-makeFont( "bc_default", {
+makeFont( "BC_default", {
     font = fm.systemFont,
     size = 21,
 } )
 
-makeFont( "bc_monospace", {
+makeFont( "BC_monospace", {
     font = "Lucida Console",
     size = 15,
 } )
 
-makeFont( "bc_monospaceSmall", {
+makeFont( "BC_monospaceSmall", {
     font = "Lucida Console",
     size = 10,
 } )
