@@ -166,7 +166,7 @@ end )
 
 ## Plugins
 
-Plugin lua files can be placed in the lua/betterchat\_plugins folder. These will be automatically networked and loaded on client and server based on the name.  
+Plugin lua files can be placed in the lua/betterchat_plugins folder. These will be automatically networked and loaded on client and server based on the name.  
 Plugins file names must be in the form `[sv|sh|cl]\_{pluginName}.lua`  
 For example:
 
