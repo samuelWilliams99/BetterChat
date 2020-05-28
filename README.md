@@ -2,6 +2,10 @@
 # BetterChat
 A Better ChatBox that focuses on letting you make the ChatBox you want! BetterChat introduces channels, emotes, text modifiers, extensive per-channel settings, and even optional giphy support!
 
+## Download:
+You can get the latest release from the [Steam Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=1841694244).
+The latest development build is available from [Github](https://api.github.com/repos/samuelWilliams99/BetterChat/zipball/master).
+
 ## NOTES: 
 - This chat requires ULX, and integrates the support very thoroughly.
 - To enable giphy support, you will need to generate a testing giphy key for your server.
