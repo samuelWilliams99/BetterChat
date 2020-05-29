@@ -338,12 +338,25 @@ function RICHERTEXT:Reload() -- Clear the text, reset a bunch of shit, then run 
         ["decorations"] = RICHERTEXT.SetDecorations
     }
 
-    self.logCopy = table.Copy( self.log )
+    local logs = self.log
     self.log = {}
 
-    for k = 1, #self.logCopy do
-        funcs[self.logCopy[k].type]( self, unpack( self.logCopy[k].data or {} ) )
+    local lastLog = logs[#self.log]
+    local firstLine = -1
+    if lastLog then
+        firstLine = lastLog.lineCountPre - self.maxLines
     end
+
+    for k = 1, #logs do
+        local log = logs[k]
+        if log.lineCountPre >= firstLine then
+            funcs[log.type]( self, unpack( log.data ) )
+        end
+    end
+end
+
+function RICHERTEXT:Log( logType, ... )
+    table.insert( self.log, { type = logType, data = { ... }, lineCountPre = #self.lines } )
 end
 
 function RICHERTEXT:OnRemove()
@@ -655,7 +668,7 @@ function RICHERTEXT:GetLineSpacing()
 end
 
 function RICHERTEXT:SetDecorations( data )
-    table.insert( self.log, { type = "decorations", data = { data } } )
+    self:Log( "decorations", data )
     self.textBold = data.bold
     self.textItalics = data.italics
     self.textUnderline = data.underline
@@ -1051,7 +1064,7 @@ end
 
 function RICHERTEXT:AppendText( txt, noLog ) --Deals with the tumour that is tabs before passing to AppendTextNoTabs
     if not noLog then
-        table.insert( self.log, { type = "text", data = { txt } } )
+        self:Log( "text", txt, noLog )
     end
     if self.textSpaced then
         txt = table.concat( txt:Split( "" ), " " )
@@ -1142,7 +1155,7 @@ function RICHERTEXT:AppendTextNoTab( txt ) --This func cannot handle tabs
     end
 end
 function RICHERTEXT:InsertColorChange( r, g, b, a )
-    table.insert( self.log, { type = "col", data = { r, g, b, a } } )
+    self:Log( "col", r, g, b, a )
     if not self.doFormatting then return end
     if IsColor( r ) then
         self.textColor = r
@@ -1153,13 +1166,13 @@ function RICHERTEXT:InsertColorChange( r, g, b, a )
     self:AddLabel()
 end
 function RICHERTEXT:InsertClickableTextStart( sigVal )
-    table.insert( self.log, { type = "clickStart", data = { sigVal } } )
+    self:Log( "clickStart", sigVal )
     if not self.doFormatting then return end
     self.clickable = sigVal
     self:AddLabel()
 end
 function RICHERTEXT:InsertClickableTextEnd()
-    table.insert( self.log, { type = "clickEnd", data = {} } )
+    self:Log( "clickEnd" )
     if not self.doFormatting then return end
     self.clickable = nil
     self:AddLabel()
@@ -1247,14 +1260,15 @@ function RICHERTEXT:AddGraphic( element, rawText )
 end
 
 function RICHERTEXT:AddImage( ... )
-    table.insert( self.log, { type = "image", data = { ... } } )
+    self:Log( "image", ... )
     return self:CreateGraphic( "image", ... )
 end
 
 function RICHERTEXT:AddGif( ... )
-    table.insert( self.log, { type = "gif", data = { ... } } )
+    local data = { ... }
+    self:Log( "gif", ... )
     if not self.showGifs then
-        self:AppendText( self.log[#self.log].data[2], true )
+        self:AppendText( data[2], true )
         return
     end
     return self:CreateGraphic( "gif", ... )
