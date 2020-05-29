@@ -80,6 +80,7 @@ end
 local function max4( a, b, c, d ) return math.max( a + 0, b + 0, c + 0, d + 0 ) end
 local protocols = { [""] = 0, ["http://"] = 0, ["https://"] = 0, ["ftp://"] = 0 }
 
+-- Somewhat poor performance on non-space strings
 function bc.util.getNextUrl( inputStr )
     local pos_start, pos_end, url, prot, subd, tld, colon, port, slash, path =
         string.find( inputStr, "(([%w_.~!*:@&+$/?%%#-]-)(%w[-.%w]*%.)(%w+)(:?)(%d*)(/?)([%w_.~!*:@&+$/?%%#=-]*))" )
@@ -97,7 +98,6 @@ function bc.util.getNextUrl( inputStr )
             and ( colon == "" or port ~= "" and port + 0 < 65536 ) then
         return pos_start, pos_end, string.sub( inputStr, pos_start, pos_end )
     end
-    return nil
 end
 -- End urlFinding
 

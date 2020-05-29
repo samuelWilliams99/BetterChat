@@ -696,16 +696,15 @@ function RICHERTEXT:AddLine()
     table.insert( self.lines, {} ) -- Add empty line to lines stack
 
     if #self.lines > self.maxLines then
-        local offset = 0
         while #self.lines > self.maxLines do
             for k, v in pairs( self.lines[1] ) do
                 v:Remove()
             end
             table.remove( self.lines, 1 )
-            offset = offset + ( self.linesYs[1].bottom - self.linesYs[1].top )
             table.remove( self.linesYs, 1 )
         end
 
+        local offset = self.linesYs[1].top - self.yRemoved
         self.yRemoved = self.linesYs[1].top
 
         for k, line in pairs( self.lines ) do
@@ -851,7 +850,7 @@ local function addLabelPaint( label )
     function label:Paint( w, h )
         local tCol = self:GetTextColor()
         local thickness = self.textBold and 2 or 1
-        local w = self:GetTextSize()
+        local textW = self:GetTextSize()
         local x = 0
         local y = 0
 
@@ -864,15 +863,15 @@ local function addLabelPaint( label )
 
         if self.textUnderline then
             surface.SetDrawColor( Color( 0, 0, 0, tCol.a ) )
-            surface.DrawRect( x + 1, y + h - thickness, w, thickness )
+            surface.DrawRect( x + 1, y + h - thickness, textW, thickness )
             surface.SetDrawColor( tCol )
-            surface.DrawRect( x, y + h - thickness - 1, w, thickness )
+            surface.DrawRect( x, y + h - thickness - 1, textW, thickness )
         end
         if self.textStrike then
             surface.SetDrawColor( Color( 0, 0, 0, tCol.a ) )
-            surface.DrawRect( x + 1, y + h / 2 + 1, w, thickness )
+            surface.DrawRect( x + 1, y + h / 2 + 1, textW, thickness )
             surface.SetDrawColor( tCol )
-            surface.DrawRect( x, y + h / 2, w, thickness )
+            surface.DrawRect( x, y + h / 2, textW, thickness )
         end
     end
 end
@@ -1007,6 +1006,7 @@ function RICHERTEXT:addNewLines( txt ) -- Goes through big bit of text, puts in 
     while k <= #data and loopLimit > 0 do
         loopLimit = loopLimit - 1
         local word = data[k] .. ( k == #data and "" or space )
+
         local sizeX = getFrom( 1, surface.GetTextSize( word ) )
         if offsetX + sizeX > limitX then
             if not isNewLineObj( out[#out] ) and offsetX > 0 then
@@ -1014,11 +1014,14 @@ function RICHERTEXT:addNewLines( txt ) -- Goes through big bit of text, puts in 
                 k = k - 1
                 offsetX = 0
             else
-                -- 20 = guess for minimum characters needed to fill a whole line. to save a little performance
-                for l = 20, #word do
-                    local str = string.Left( word, l )
-                    local sizeX = getFrom( 1, surface.GetTextSize( str ) )
-                    if offsetX + sizeX > limitX - 10 then
+                -- guess for minimum characters needed to fill a whole line. to save a little performance
+                local startIdx = 20
+                local str = string.Left( word, startIdx )
+                local wordSizeX = surface.GetTextSize( str )
+                for l = startIdx + 1, #word do
+                    wordSizeX = wordSizeX + surface.GetTextSize( word[l] )
+
+                    if offsetX + wordSizeX > limitX - 10 then
                         table.insert( out, string.Left( word, l - 1 ) )
                         table.insert( out, { isNewLine = true } )
                         data[k] = string.Right( word, #word - l + 1 )
@@ -1034,18 +1037,17 @@ function RICHERTEXT:addNewLines( txt ) -- Goes through big bit of text, puts in 
         end
         k = k + 1
     end
-    local nlPoses = {}
+    local nlPosMap = {}
     local pCounter = 1
     for k, v in pairs( out ) do
         if isNewLineObj( v ) then
-            table.insert( nlPoses, pCounter )
+            nlPosMap[pCounter] = true
             out[k] = "\n"
         end
         pCounter = pCounter + #out[k]
     end
-    return table.concat( out, "" ), nlPoses
+    return table.concat( out, "" ), nlPosMap
 end
-
 
 function RICHERTEXT:AppendText( txt, noLog ) --Deals with the tumour that is tabs before passing to AppendTextNoTabs
     if not noLog then
@@ -1090,11 +1092,13 @@ function RICHERTEXT:AppendText( txt, noLog ) --Deals with the tumour that is tab
 end
 
 function RICHERTEXT:AppendTextNoTab( txt ) --This func cannot handle tabs
-    txt, nlPoses = self:addNewLines( txt )
+    local nlPosMap
+    txt, nlPosMap = self:addNewLines( txt )
     local line = self.lines[#self.lines]
     if #line == 0 or not isLabel( line[#line] ) then
         self:AddLabel()
     end
+
     local curText = ""
     for k = 1, #txt do
         local char = txt[k]
@@ -1110,7 +1114,7 @@ function RICHERTEXT:AppendTextNoTab( txt ) --This func cannot handle tabs
             lastElement:SetText( tmpText ) -- Update label
             lastElement.rawText = lastElement.rawText .. curText -- Update label's raw text
 
-            if not table.HasValue( nlPoses, k ) then
+            if not nlPosMap[k] then
                 lastElement.rawText = lastElement.rawText .. "\n"
             end
 

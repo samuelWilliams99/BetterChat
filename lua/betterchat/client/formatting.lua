@@ -534,7 +534,7 @@ function f.print( ... )
                     isPly = true
                 end
             end
-            if not isPly then
+            if not isPly and #v < 1000 then
                 local tab = f.convertLinks( v )
                 if #tab ~= 1 or tab[1] ~= v then
                     table.remove( data, k )
