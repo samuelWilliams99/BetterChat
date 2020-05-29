@@ -257,6 +257,7 @@ function RICHERTEXT:Init()
     self.showGraphics = true
     self.maxLines = 200
     self.yRemoved = 0
+    self.linesRemoved = 0
     self.allowDecorations = true
 
     self.textColor = Color( 255, 255, 255, 255 )
@@ -323,6 +324,7 @@ function RICHERTEXT:Clear()
     self.addNewLine = false
     self.graphics = {}
     self.yRemoved = 0
+    self.linesRemoved = 0
 end
 
 function RICHERTEXT:Reload() -- Clear the text, reset a bunch of shit, then run through the logs again
@@ -341,7 +343,7 @@ function RICHERTEXT:Reload() -- Clear the text, reset a bunch of shit, then run 
     local logs = self.log
     self.log = {}
 
-    local lastLog = logs[#self.log]
+    local lastLog = logs[#logs]
     local firstLine = -1
     if lastLog then
         firstLine = lastLog.lineCountPre - self.maxLines
@@ -356,7 +358,7 @@ function RICHERTEXT:Reload() -- Clear the text, reset a bunch of shit, then run 
 end
 
 function RICHERTEXT:Log( logType, ... )
-    table.insert( self.log, { type = logType, data = { ... }, lineCountPre = #self.lines } )
+    table.insert( self.log, { type = logType, data = { ... }, lineCountPre = #self.lines + self.linesRemoved } )
 end
 
 function RICHERTEXT:OnRemove()
@@ -719,6 +721,7 @@ function RICHERTEXT:AddLine()
 
         local offset = self.linesYs[1].top - self.yRemoved
         self.yRemoved = self.linesYs[1].top
+        self.linesRemoved = self.linesRemoved + 1
 
         for k, line in pairs( self.lines ) do
             for i, el in pairs( line ) do
