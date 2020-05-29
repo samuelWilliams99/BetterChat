@@ -848,34 +848,32 @@ function RICHERTEXT:GetLabelFont()
 end
 
 local function addLabelPaint( label )
-    function label:PaintOver( _w, h )
-        local w = self:GetTextSize()
+    function label:Paint( w, h )
         local tCol = self:GetTextColor()
         local thickness = self.textBold and 2 or 1
-        if self.textUnderline then
-            surface.SetDrawColor( Color( 0, 0, 0, tCol.a ) )
-            surface.DrawRect( 1, h - thickness, w, thickness )
-            surface.SetDrawColor( tCol )
-            surface.DrawRect( 0, h - thickness - 1, w, thickness )
-        end
-        if self.textStrike then
-            surface.SetDrawColor( Color( 0, 0, 0, tCol.a ) )
-            surface.DrawRect( 1, h / 2 + 1, w, thickness )
-            surface.SetDrawColor( tCol )
-            surface.DrawRect( 0, h / 2, w, thickness )
-        end
-    end
-
-    function label:Paint( w, h )
+        local w = self:GetTextSize()
         local x = 0
-        local y = -1
+        local y = 0
 
         if self.textShaking then
             x = math.random( -2, 2 )
-            y = math.random( -3, 1 )
+            y = math.random( -2, 2 )
         end
 
-        draw.DrawText( self._text, self:GetFont(), x, y, self:GetTextColor() )
+        draw.DrawText( self._text, self:GetFont(), x, y - 1, tCol )
+
+        if self.textUnderline then
+            surface.SetDrawColor( Color( 0, 0, 0, tCol.a ) )
+            surface.DrawRect( x + 1, y + h - thickness, w, thickness )
+            surface.SetDrawColor( tCol )
+            surface.DrawRect( x, y + h - thickness - 1, w, thickness )
+        end
+        if self.textStrike then
+            surface.SetDrawColor( Color( 0, 0, 0, tCol.a ) )
+            surface.DrawRect( x + 1, y + h / 2 + 1, w, thickness )
+            surface.SetDrawColor( tCol )
+            surface.DrawRect( x, y + h / 2, w, thickness )
+        end
     end
 end
 
