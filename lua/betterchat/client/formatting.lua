@@ -237,7 +237,7 @@ local function backTrackModifier( tab, state, key )
     end
 end
 
-local function getPlyModifiers( ply )
+function f.getPlyModifiers( ply )
     local out = {}
     out.italics = bc.settings.isAllowed( ply, "bc_italics" )
     out.bold = bc.settings.isAllowed( ply, "bc_bold" )
@@ -255,7 +255,7 @@ function f.formatModifiers( tab, ply )
     local state = {}
     for k, v in pairs( tab ) do
         if type( v ) == "string" then
-            local tab = f.formatModifiersSingle( v, state, getPlyModifiers( ply ) )
+            local tab = f.formatModifiersSingle( v, state, f.getPlyModifiers( ply ) )
             table.Add( newTab, tab )
         else
             table.insert( newTab, v )
@@ -273,7 +273,7 @@ function f.formatModifiers( tab, ply )
     return newTab
 end
 
-local modifierKeyMap = {
+f.modifierKeyMap = {
     ["~~"] = "strike",
     ["**"] = "bold",
     ["__"] = "underline",
@@ -308,7 +308,7 @@ function f.formatModifiersSingle( txt, state, allowed )
             e = e + 1
         end
 
-        local key = modifierKeyMap[c]
+        local key = f.modifierKeyMap[c]
         -- Do nothing (but separate out text so it doesn't get parsed twice/infinitely)
         if escape ~= "" or not key or not allowed[key] then
             table.insert( out, string.sub( txt, 1, s - 1 ) .. c )

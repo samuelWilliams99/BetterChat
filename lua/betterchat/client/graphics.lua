@@ -19,6 +19,7 @@ function bc.graphics.build()
 
     local h = draw.GetFontHeight( g.textEntryFont )
     g.textEntryHeight = math.Max( h + 9, 31 )
+    g.textEntryFontHeight = h
 
     local framePos = table.Copy( bc.data.pos or g.originalFramePos )
 
@@ -36,7 +37,7 @@ function bc.graphics.build()
 
     d.frame = vgui.Create( "DFrame" )
     d.frame:SetPos( framePos.x, framePos.y )
-    d.frame:SetSize( g.size.x, g.size.y )
+    d.frame:SetSize( g.size.x, g.size.y + g.textEntryHeight + 2 )
     d.frame:SetTitle( "" )
     d.frame:SetName( "BC_chatFrame" )
     d.frame:ShowCloseButton( false )
@@ -168,6 +169,14 @@ function bc.graphics.build()
         end
         return hook.Run( "BC_keyCodeTyped", code, ctrl, shift, self )
     end
+
+    function d.textEntry:AllowInput( c )
+        if self.rejectNextChange then
+            self.rejectNextChange = false
+            return true
+        end
+    end
+
     function d.textEntry:OnTextChanged()
         self.maxCharacters = bc.settings.getServerValue( "maxLength" )
         if self and self:GetText() then

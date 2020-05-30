@@ -21,9 +21,11 @@ function PANEL:SizeToContentsY( addVal )
     self:SetTall( h + addVal )
 end
 
-function PANEL:SizeToContents()
+function PANEL:SizeToContents( addW, addH )
+    addW = addW or 0
+    addH = addH or 0
     local w, h = self:GetTextSize()
-    self:SetSize( w, h )
+    self:SetSize( w + addW, h + addH )
 end
 
 function PANEL:GetTextSize()
