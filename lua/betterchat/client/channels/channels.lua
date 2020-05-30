@@ -830,18 +830,28 @@ function bc.channels.open( name )
                 end )
 
                 local ply = player.GetBySteamID( dataArg )
-                if ply and bc.private.canMessage( ply ) then
-                    m:AddOption( "Open Private Channel", function()
-                        local ply = player.GetBySteamID( dataArg )
-                        if not ply then return end
-
-                        channel = bc.private.createChannel( ply )
-
-                        if not bc.channels.isOpen( channel.name ) then
-                            bc.channels.open( channel.name )
-                        end
-                        bc.channels.focus( channel.name )
+                if ply then
+                    m:AddOption( "Copy Steam name", function()
+                        ply = player.GetBySteamID( dataArg )
+                        if not IsValid( ply ) then return end
+                        steamworks.RequestPlayerInfo( ply:SteamID64(), function( steamName )
+                            SetClipboardText( steamName )
+                        end )
                     end )
+
+                    if bc.private.canMessage( ply ) then
+                        m:AddOption( "Open Private Channel", function()
+                            ply = player.GetBySteamID( dataArg )
+                            if not ply then return end
+
+                            channel = bc.private.createChannel( ply )
+
+                            if not bc.channels.isOpen( channel.name ) then
+                                bc.channels.open( channel.name )
+                            end
+                            bc.channels.focus( channel.name )
+                        end )
+                    end
                 end
             end
         elseif eventType == "RightClickPreMenu" then
