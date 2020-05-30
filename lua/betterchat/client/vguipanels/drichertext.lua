@@ -8,8 +8,12 @@ local function getFrom( idx, ... ) -- Simple helper function that picks an input
     return d[idx]
 end
 
+local function isLabel( elem )
+    return elem:GetName() == "DLabelPaintable"
+end
+
 local function getElementSize( elem, subHalfChar )
-    if elem:GetClassName() == "Label" then
+    if isLabel( elem ) then
         surface.SetFont( elem:GetFont() )
         local txt = elem:GetText()
         local sx, sy = surface.GetTextSize( txt )
@@ -25,10 +29,6 @@ end
 
 local function getTextSizeX( txt, subHalfChar )
     return getFrom( 1, surface.GetTextSize( txt ) )
-end
-
-local function isLabel( elem )
-    return elem:GetClassName() == "Label"
 end
 
 local function orderChars( s, e )
@@ -953,6 +953,10 @@ function RICHERTEXT:AddLabel()
         end
     end
 
+    function label:GetDoRender()
+        return self.showText
+    end
+
     self:setClickEvents( label ) -- Set its events (right click menu and text select events)
 
     if self.clickable then -- handle all the click events, Right calls the event handler, Left works out if its single or double click, then calls handler
@@ -1016,7 +1020,9 @@ function RICHERTEXT:addNewLines( txt ) -- Goes through big bit of text, puts in 
     local limitX = self:GetWide() - 50
     local data = string.Explode( space, txt )
     local out = {}
+
     surface.SetFont( self.innerFont )
+
     local k = 1
     local loopLimit = 200
     while k <= #data and loopLimit > 0 do

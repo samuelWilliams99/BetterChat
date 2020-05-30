@@ -1,10 +1,11 @@
 local PANEL = {}
 
 function PANEL:Init()
-    self.BaseClass.SetText( self, "" )
+    self:SetTextColor( Color( 255, 255, 255, 255 ) )
 end
 
 function PANEL:Paint( w, h )
+    if #self._text == 0 then return end
     draw.DrawText( self._text, self:GetFont(), 0, -1, self:GetTextColor() )
 end
 
@@ -38,4 +39,20 @@ function PANEL:GetText()
     return self._text
 end
 
-vgui.Register( "DLabelPaintable", PANEL, "DLabel" )
+function PANEL:SetFont( font )
+    self._font = font
+end
+
+function PANEL:GetFont()
+    return self._font
+end
+
+function PANEL:SetTextColor( col )
+    self._textCol = col
+end
+
+function PANEL:GetTextColor()
+    return self._textCol
+end
+
+vgui.Register( "DLabelPaintable", PANEL, "DPanel" )

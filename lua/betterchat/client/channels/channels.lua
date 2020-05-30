@@ -859,6 +859,8 @@ function bc.channels.open( name )
         local oldThink = element.Think or function() end
         function element:Think()
             oldThink( element )
+            if not self:GetDoRender() then return end
+
             if bc.base.isOpen then
                 local col = self:GetTextColor()
                 col.a = 255

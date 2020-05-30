@@ -129,6 +129,10 @@ function RTG:SetDoRender( r )
     end )
 end
 
+function RTG:GetDoRender()
+    return self.doRender
+end
+
 function RTG:UpdateDoRender( force )
     if self.prevDoRender == self.doRender and not force then return end
     local r = self.doRender
