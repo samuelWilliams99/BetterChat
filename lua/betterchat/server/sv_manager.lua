@@ -117,6 +117,11 @@ function plyMeta:ChatPrint( msg )
     ULib.clientRPC( self, "bc.formatting.print", bc.defines.colors.printBlue, msg )
     o.ChatPrint( self, msg )
 end
+
+o.Say = o.Say or plyMeta.Say
+function plyMeta:Say( msg, isTeam )
+    hook.Run( "PlayerSay", self, msg, isTeam )
+end
 -- end
 
 function bc.manager.formatName( recip, ply )
