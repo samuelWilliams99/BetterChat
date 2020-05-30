@@ -864,7 +864,12 @@ end
 
 local function addLabelPaint( label )
     function label:Paint( w, h )
+        if not self.showText then return end
+
         local tCol = self:GetTextColor()
+
+        if tCol.a == 0 then return end
+
         local thickness = self.textBold and 2 or 1
         local textW = self:GetTextSize()
         local x = 0
@@ -942,15 +947,7 @@ function RICHERTEXT:AddLabel()
     end
 
     function label:SetDoRender( v )
-        if self.showText == v then return end
         self.showText = v
-        if v then
-            local text = self.text or self:GetText()
-            self:SetText( text )
-        else
-            self.text = self:GetText()
-            self:SetText( "" )
-        end
     end
 
     function label:GetDoRender()
