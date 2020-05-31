@@ -133,7 +133,7 @@ function bc.graphics.build()
     d.textEntry = vgui.Create( "DTextEntry", d.chatFrame )
     d.textEntry:SetName( "BC_chatEntry" )
     d.textEntry:SetPos( 10, g.size.y - ( g.textEntryHeight - 5 ) )
-    d.textEntry:SetSize( g.size.x - 52, g.textEntryHeight - 11 )
+    d.textEntry:SetSize( g.size.x - 52 - 10, g.textEntryHeight - 11 )
     d.textEntry:SetFont( g.textEntryFont )
     d.textEntry:SetTextColor( bc.defines.theme.inputText )
     d.textEntry:SetCursorColor( bc.defines.theme.inputText )
@@ -142,7 +142,7 @@ function bc.graphics.build()
 
     function d.textEntry:PerformLayout()
         self:SetPos( 10, g.size.y - ( g.textEntryHeight - 5 ) )
-        self:SetSize( g.size.x - 52, g.textEntryHeight - 11 )
+        self:SetSize( g.size.x - 52 - 10, g.textEntryHeight - 11 )
     end
 
     function d.textEntry:Paint( w, h )

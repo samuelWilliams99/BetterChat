@@ -18,18 +18,50 @@ hook.Add( "BC_initPanels", "BC_initInput", function()
     i.historyIndex = 0
     i.historyInput = ""
 
-    i.fMenu = vgui.Create( "DPanel", bc.graphics.derma.frame )
-    i.fMenu:SetSize( 0, bc.graphics.textEntryHeight )
-    i.fMenu:SetPos( 0, bc.graphics.size.y + 2 )
+    local g = bc.graphics
+    local d = g.derma
+
+    i.fMenu = vgui.Create( "DPanel", d.frame )
+    i.fMenu:SetSize( 0, g.textEntryHeight )
     function i.fMenu:Paint( w, h )
         bc.util.blur( self, 10, 20, 255 )
         draw.RoundedBox( 0, 0, 0, w, h, bc.defines.theme.background )
     end
+    function i.fMenu:PerformLayout()
+        self:SetPos( 0, g.size.y + 2 )
+    end
     i.fMenu:Hide()
+
+    i.fButton = vgui.Create( "DButton", d.chatFrame )
+    i.fButton:SetText( "?" )
+    i.fButton:SetFont( g.textEntryFont )
+    i.fButton:SetTextColor( bc.defines.theme.buttonTextFocused )
+    i.fButton.Paint = nil
+    i.fButton:SizeToContents()
+    i.fButton:Hide()
+    function i.fButton:DoClick()
+        i.toggleFormattingMenu()
+    end
+    function i.fButton:PerformLayout()
+        self:SetPos( g.size.x - 52, g.size.y - g.textEntryHeight + 3 )
+    end
 
     i.inverseModifierKeyMap = {}
     for k, v in pairs( bc.formatting.modifierKeyMap ) do
         i.inverseModifierKeyMap[v] = k
+    end
+
+    i.updateFormattingButton()
+end )
+
+hook.Add( "BC_hideChat", "BC_hideFMenu", function()
+    i.hideFormattingMenu()
+    i.fButton:Hide()
+end )
+
+hook.Add( "BC_showChat", "bc_showFButton", function()
+    if i.fButton.enabled then
+        i.fButton:Show()
     end
 end )
 
@@ -45,8 +77,22 @@ hook.Add( "BC_keyCodeTyped", "BC_inputHook", function( code, ctrl, shift, entry 
         elseif code == KEY_SPACE or code == KEY_ENTER then
             i.applyFMenuSelected( code == KEY_SPACE )
             return true
-        else
+        elseif code >= KEY_0 and code <= KEY_9 then
+            local num = code - KEY_0
+            if num <= 0 or num > #i.fMenu:GetChildren() then
+                local textEntry = bc.graphics.derma.textEntry
+
+                textEntry.rejectNextChange = true
+                i.hideFormattingMenu()
+
+                return true
+            end
+
+            i.applyFMenuValue( num, true )
+            return true
+        elseif code ~= KEY_LCONTROL then
             i.hideFormattingMenu()
+            return true
         end
     end
 
@@ -113,7 +159,7 @@ hook.Add( "BC_keyCodeTyped", "BC_inputHook", function( code, ctrl, shift, entry 
         elseif code == KEY_V then
             entry:SetMultiline( true )
         elseif code == KEY_F then
-            i.toggleFormattingMenu()
+            i.showFormattingMenu()
             return true
         end
     end
@@ -149,6 +195,17 @@ hook.Add( "BC_messageSent", "BC_relayULX", function( channel, txt )
     end
 end )
 
+
+function i.updateFormattingButton()
+    local allowedData = i.getAllowedModifierData()
+
+    local visible = #table.GetKeys( allowedData ) > 0
+    i.fButton:SetVisible( visible )
+    i.fButton.enabled = visible
+end
+
+hook.Add( "BC_userAccessChange", "BC_updateFormattingButton", i.updateFormattingButton )
+
 function i.isFormattingMenuShowing()
     return i.fMenuShowing
 end
@@ -169,6 +226,9 @@ function i.showFormattingMenu()
     i.fMenu:Clear()
     local totalWide = 0
     local allowedData = i.getAllowedModifierData()
+
+    if #table.GetKeys( allowedData ) == 0 then return end
+
     for k, d in pairs( allowedData ) do
         local label = vgui.Create( "DLabelPaintable", i.fMenu )
         label:Dock( LEFT )
@@ -177,13 +237,24 @@ function i.showFormattingMenu()
         label:SetFont( bc.graphics.textEntryFont )
         label:SizeToContents( 6, 0 )
         label:SetBackgroundColor( bc.defines.theme.foreground )
+        label:SetCursor( "hand" )
         label.selected = k == i.fMenuSelected
-        label.modStr = d.modStr
+        label.modIndex = k
+        label.modStrPre = d.modStrPre
+        label.modStrPost = d.modStrPost
+        label.caretOverride = d.caretOverride
+
         function label:Paint( w, h )
             surface.SetDrawColor( self.selected and bc.defines.theme.foregroundLight or self:GetBackgroundColor() )
             surface.DrawRect( 0, 0, w, h )
             local y = ( h - bc.graphics.textEntryFontHeight ) / 2
             draw.DrawText( self._text, self:GetFont(), 3, y - 1, self:GetTextColor() )
+        end
+
+        function label:OnMousePressed( btn )
+            if btn == MOUSE_LEFT then
+                i.applyFMenuValue( self.modIndex )
+            end
         end
 
         label:InvalidateLayout( true )
@@ -220,15 +291,17 @@ function i.decFMenuSelected()
     i.setFMenuSelected( cur - 1 )
 end
 
-function i.applyFMenuSelected( rejectNextChange )
+function i.applyFMenuValue( val, rejectNextChange )
     if not i.fMenuShowing then return end
-    local str = i.fMenu:GetChildren()[i.getFMenuSelected()].modStr
+    local elem = i.fMenu:GetChildren()[val]
+    local modPre = elem.modStrPre
+    local modPost = elem.modStrPost
 
     local textEntry = bc.graphics.derma.textEntry
 
     textEntry.rejectNextChange = rejectNextChange
 
-    local text = undoChanges and textEntry.prevText or textEntry:GetText()
+    local text = textEntry:GetText()
     local curPos = textEntry:GetCaretPos()
     local s, e = textEntry:GetSelectedTextRange()
 
@@ -243,12 +316,21 @@ function i.applyFMenuSelected( rejectNextChange )
 
     local bPos = utf8.offset( text, s ) or #text + 1
     local pre, post = string.sub( text, 1, bPos - 1 ), string.sub( text, bPos + #selectText )
-    text = pre .. str .. selectText .. str .. post
+    text = pre .. modPre .. selectText .. modPost .. post
 
     textEntry:SetText( text )
-    textEntry:SetCaretPos( curPos + utf8.len( str ) )
+
+    local caretPos = curPos + utf8.len( modPre )
+    if elem.caretOverride then
+        caretPos = s + elem.caretOverride
+    end
+    textEntry:SetCaretPos( caretPos )
 
     i.hideFormattingMenu()
+end
+
+function i.applyFMenuSelected( rejectNextChange )
+    i.applyFMenuValue( i.getFMenuSelected(), rejectNextChange )
 end
 
 function i.hideFormattingMenu()
@@ -270,7 +352,17 @@ function i.getAllowedModifierData()
         local example = i.inverseModifierKeyMap[mod] .. mod .. i.inverseModifierKeyMap[mod]
         table.insert( out, {
             example = example,
-            modStr = i.inverseModifierKeyMap[mod]
+            modStrPre = i.inverseModifierKeyMap[mod],
+            modStrPost = i.inverseModifierKeyMap[mod]
+        } )
+    end
+
+    if bc.settings.isAllowed( LocalPlayer(), "bc_color" ) then
+        table.insert( out, {
+            example = "[@color]text[#]",
+            modStrPre = "[@]",
+            modStrPost = "[#]",
+            caretOverride = 2,
         } )
     end
 

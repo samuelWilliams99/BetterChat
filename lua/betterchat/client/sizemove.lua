@@ -67,7 +67,7 @@ function bc.sizeMove.resize( w, h, final )
     g.size = { x = w, y = h }
     g.originalFramePos = { x = 38, y = ScrH() - g.size.y - 150 }
 
-    d.frame:SetSize( g.size.x + ( bc.sidePanel.totalWidth or 0 ), g.size.y )
+    d.frame:SetSize( g.size.x + ( bc.sidePanel.totalWidth or 0 ), g.size.y + g.textEntryHeight + 2 )
 
     -- Seems some things don't update until mouseover, trigger them here instead
     if d.channelButton then
@@ -78,6 +78,8 @@ function bc.sizeMove.resize( w, h, final )
     d.psheet:InvalidateLayout()
     d.emoteButton:InvalidateLayout()
     d.textEntry:InvalidateLayout()
+    bc.input.fButton:InvalidateLayout()
+    bc.input.fMenu:InvalidateLayout()
 
     for k, v in pairs( bc.channels.panels ) do
         if not IsValid( v.panel ) then continue end
