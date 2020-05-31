@@ -831,13 +831,15 @@ function bc.channels.open( name )
 
                 local ply = player.GetBySteamID( dataArg )
                 if ply then
-                    m:AddOption( "Copy Steam name", function()
-                        ply = player.GetBySteamID( dataArg )
-                        if not IsValid( ply ) then return end
-                        steamworks.RequestPlayerInfo( ply:SteamID64(), function( steamName )
-                            SetClipboardText( steamName )
+                    if not ply:IsBot() then
+                        m:AddOption( "Copy Steam name", function()
+                            ply = player.GetBySteamID( dataArg )
+                            if not IsValid( ply ) then return end
+                            bc.util.steamName( ply:SteamID64(), function( steamName )
+                                SetClipboardText( steamName )
+                            end )
                         end )
-                    end )
+                    end
 
                     if bc.private.canMessage( ply ) then
                         m:AddOption( "Open Private Channel", function()

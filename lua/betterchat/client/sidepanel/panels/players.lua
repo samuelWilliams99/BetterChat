@@ -112,7 +112,7 @@ function bc.sidePanel.players.generateEntry( ply )
     nameLabel:SetTextColor( bc.defines.colors.white )
     nameLabel:SetSize( w - 32 - 70, 20 )
     nameLabel:SetPos( 80, 14 )
-    steamworks.RequestPlayerInfo( ply:SteamID64(), function( steamName )
+    bc.util.steamName( ply:SteamID64(), function( steamName )
         if IsValid( nameLabel ) then
             nameLabel:SetTooltip( "Steam name: " .. steamName )
         end

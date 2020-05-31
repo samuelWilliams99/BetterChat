@@ -298,3 +298,8 @@ function bc.util.you( ply )
         color = bc.defines.colors.ulxYou
     }
 end
+
+function bc.util.steamName( ply, cb )
+    if ply:IsBot() then return end
+    steamworks.RequestPlayerInfo( ply:SteamID64(), cb )
+end
