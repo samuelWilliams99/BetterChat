@@ -210,10 +210,48 @@ hook.Add( "BC_overload", "bc_compat_TTT", function()
                 ": ", unpack( bc.formatting.formatText( text, nil, sender ) ) )
         end
     end
+
+    bc.compatibility.oldTTTRadioMsg = bc.compatibility.oldTTTRadioMsg or net.Receivers.ttt_radiomsg
+    net.Receivers.ttt_radiomsg = function()
+        local sender = net.ReadEntity()
+        local msg    = net.ReadString()
+        local param  = net.ReadString()
+
+        if not (IsValid(sender) and sender:IsPlayer()) then return end
+
+        GAMEMODE:PlayerSentRadioCommand(sender, msg, param)
+
+        -- if param is a language string, translate it
+        -- else it's a nickname
+        local lang_param = LANG.GetNameParam(param)
+        if lang_param then
+            if lang_param == "quick_corpse_id" then
+                -- special case where nested translation is needed
+                param = LANG.GetParamTranslation(lang_param, {player = net.ReadString()})
+            else
+                param = LANG.GetTranslation(lang_param)
+            end
+        end
+
+        local text = LANG.GetParamTranslation(msg, {player = param})
+
+        -- don't want to capitalize nicks, but everything else is fair game
+        if lang_param then
+            text = util.Capitalize(text)
+        end
+
+        if sender:IsDetective() then
+            AddDetectiveText(sender, text)
+        else
+            chat.AddText( { formatter = true, type = "escape" }, sender, COLOR_WHITE, ": ",
+                unpack( bc.formatting.formatText( text, nil, sender ) ) )
+        end
+    end
 end )
 
 hook.Add( "BC_overloadUndo", "bc_compat_TTT", function()
     if GAMEMODE.ThisClass ~= "gamemode_terrortown" then return end
 
     net.Receivers.ttt_rolechat = bc.compatibility.oldTTTRoleChat
+    net.Receivers.ttt_radiomsg = bc.compatibility.oldTTTRadioMsg
 end )

@@ -345,8 +345,8 @@ function f.formatSpecialWords( text, tab, sender )
     local players = player.GetAll()
 
     local prePattern = "[ '\"%*_~&%%%$|%]]"
-    local postPatternPly = "[ '\"!%?%*_~&%%%$|%[s:,]"
-    local postPatternCol = "[ '\"!%?%*_~&%%%$|%[,]"
+    local postPatternPly = "[ '\"!%?%*_~&%%%$|%[s:,%.]"
+    local postPatternCol = "[ '\"!%?%*_~&%%%$|%[,%.]"
 
     for k, v in pairs( players ) do
         table.insert( patterns, prePattern .. v:Nick():lower():PatternSafe() .. postPatternPly )
@@ -536,7 +536,7 @@ function f.print( ... )
             col = v
         elseif ( v == "You" or v == "Yourself" ) and col == bc.defines.colors.ulxYou then
             data[k] = { formatter = true, type = "clickable", signal = "Player-" .. LocalPlayer():SteamID(), text = v }
-        else
+        elseif type( v ) == "string" then
             local isPly = false
             for i, ply in pairs( player.GetAll() ) do
                 if ply:Nick() == v and col == team.GetColor( ply:Team() ) then
