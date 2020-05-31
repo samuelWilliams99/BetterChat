@@ -835,7 +835,7 @@ function bc.channels.open( name )
                         m:AddOption( "Copy Steam name", function()
                             ply = player.GetBySteamID( dataArg )
                             if not IsValid( ply ) then return end
-                            bc.util.steamName( ply:SteamID64(), function( steamName )
+                            bc.util.steamName( ply, function( steamName )
                                 SetClipboardText( steamName )
                             end )
                         end )
