@@ -342,6 +342,7 @@ function bc.channels.message( channelNames, ... )
         channelNames = { channelNames } --if passed single channel, pack into array
     end
 
+    local allChannel = bc.channels.get( "All" )
 
     local editIdx
     local useEditFunc = true
@@ -402,6 +403,11 @@ function bc.channels.message( channelNames, ... )
 
         if channel.replicateAll then continue end
         table.insert( channels, channel )
+    end
+
+    if relayToAll then
+        if allChannel.tickMode < tickMode then tickMode = allChannel.tickMode end
+        if allChannel.popMode < popMode then popMode = allChannel.popMode end
     end
 
     controller = controller or { controller = true }
