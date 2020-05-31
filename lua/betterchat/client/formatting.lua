@@ -490,6 +490,16 @@ hook.First( { "OnGamemodeLoaded", "Initialize" }, function()
             return f.oldOnPlayerChat( GAMEMODE, ply, text, teamChat, dead, pre, col1, col2 )
         end
 
+        local compatRet = { hook.Run( "BC_compat_OnPlayerChat", ply, text, teamChat, dead ) }
+        if #compatRet > 0 then
+            local compatReturn = table.remove( compatRet, 1 )
+            if compatReturn then
+                return unpack( compatRet )
+            else
+                ply, text, teamChat, dead = unpack( compatRet )
+            end
+        end
+
         local args = { ply, text, teamChat, dead, pre, col1, col2 }
 
         local maxLen = bc.settings.getServerValue( "maxLength" )

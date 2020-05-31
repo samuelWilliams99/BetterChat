@@ -17,13 +17,22 @@ hook.Add( "Initialize", "BC_playerSayInit", function()
             msg = bc.manager.trimMessage( msg )
 
             if isTeam then
-                if bc.settings.getServerValue( "replaceTeam" ) then
-                    bc.manager.sendTeamOverload( ply, msg )
-                    return ""
-                end
+                if GAMEMODE.ThisClass == "gamemode_terrortown" then
+                    local isSpec = ply:Team() == TEAM_SPEC
+                    local canUseTeam = ply:IsSpecial() and not isSpec
 
-                if bc.settings.getServerValue( "removeTeam" ) then
-                    return ""
+                    if not canUseTeam then
+                        isTeam = false
+                    end
+                else
+                    if bc.settings.getServerValue( "replaceTeam" ) then
+                        bc.manager.sendTeamOverload( ply, msg )
+                        return ""
+                    end
+
+                    if bc.settings.getServerValue( "removeTeam" ) then
+                        return ""
+                    end
                 end
             end
 
@@ -38,7 +47,8 @@ hook.Add( "Initialize", "BC_playerSayInit", function()
 
             if not msg or msg == "" then return "" end
 
-            local recips = isTeam and team.GetPlayers( ply:Team() ) or player.GetAll()
+            --local recips = isTeam and team.GetPlayers( ply:Team() ) or player.GetAll()
+            local recips = bc.manager.getSayRecips( msg, isTeam, ply )
 
             net.Start( "BC_sayOverload" )
             net.WriteEntity( ply )
@@ -73,6 +83,16 @@ hook.Add( "Initialize", "BC_playerSayInit", function()
         end
     end
 end )
+
+function bc.manager.getSayRecips( text, isTeam, sender )
+    local out = {}
+    for k, ply in pairs( player.GetAll() ) do
+        if hook.Run( "PlayerCanSeePlayersChat", text, isTeam, ply, sender ) then
+            table.insert( out, ply )
+        end
+    end
+    return out
+end
 
 function bc.manager.trimMessage( msg )
     local maxLen = bc.settings.getServerValue( "maxLength" )

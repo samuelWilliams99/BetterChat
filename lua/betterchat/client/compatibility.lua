@@ -146,3 +146,74 @@ hook.Add( "BC_getDefaultTab", "BC_ATAG_default", function( ... )
     local data, madeChange = captureAddText( bc.compatibility.atagHook, ... )
     return data, madeChange
 end )
+
+-- TTT
+
+local function AddDetectiveText( ply, text )
+   chat.AddText( Color( 50, 200, 255 ),
+                 ply:Nick(),
+                 Color( 255, 255, 255 ),
+                 ": ", unpack( bc.formatting.formatText( text, nil, ply ) ) )
+end
+
+-- Return true, retVal or false, replaceVals
+hook.Add( "BC_compat_OnPlayerChat", "bc_compat_TTT", function( ply, text, isTeam, isDead )
+    if GAMEMODE.ThisClass ~= "gamemode_terrortown" then return end
+
+    if not IsValid(ply) then return end
+
+    if ply:IsActiveDetective() then
+       AddDetectiveText(ply, text)
+       return true, true
+    end
+
+    local isSpec = ply:Team() == TEAM_SPEC
+
+    if isSpec and not isDead then
+       isDead = true
+    end
+
+    local canUseTeam = ply:IsSpecial() and not isSpec
+    if not canUseTeam then
+        isTeam = false
+    end
+
+    return false, ply, text, isTeam, isDead
+end )
+
+hook.Add( "BC_overload", "bc_compat_TTT", function()
+    if GAMEMODE.ThisClass ~= "gamemode_terrortown" then return end
+
+    bc.compatibility.oldTTTRoleChat = bc.compatibility.oldTTTRoleChat or net.Receivers.ttt_rolechat
+    net.Receivers.ttt_rolechat = function()
+        -- virtually always our role, but future equipment might allow listening in
+        local role = net.ReadUInt(2)
+        local sender = net.ReadEntity()
+        if not IsValid(sender) then return end
+
+        local text = net.ReadString()
+
+        if role == ROLE_TRAITOR then
+            chat.AddText( Color( 255, 30, 40 ),
+                Format( "(%s) ", string.upper( LANG.GetTranslation( "traitor" ) ) ),
+                Color( 255, 200, 20 ),
+                sender:Nick(),
+                Color( 255, 255, 200 ),
+                ": ", unpack( bc.formatting.formatText( text, nil, sender ) ) )
+
+        elseif role == ROLE_DETECTIVE then
+            chat.AddText( Color( 20, 100, 255 ),
+                Format( "(%s) ", string.upper( LANG.GetTranslation( "detective" ) ) ),
+                Color( 25, 200, 255 ),
+                sender:Nick(),
+                Color( 200, 255, 255 ),
+                ": ", unpack( bc.formatting.formatText( text, nil, sender ) ) )
+        end
+    end
+end )
+
+hook.Add( "BC_overloadUndo", "bc_compat_TTT", function()
+    if GAMEMODE.ThisClass ~= "gamemode_terrortown" then return end
+
+    net.Receivers.ttt_rolechat = bc.compatibility.oldTTTRoleChat
+end )
