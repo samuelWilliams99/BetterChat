@@ -87,7 +87,7 @@ end )
 function bc.manager.getSayRecips( text, isTeam, sender )
     local out = {}
     for k, ply in pairs( player.GetAll() ) do
-        if hook.Run( "PlayerCanSeePlayersChat", text, isTeam, ply, sender ) then
+        if hook.Run( "PlayerCanSeePlayersChat", text, isTeam, ply, sender ) ~= false then
             table.insert( out, ply )
         end
     end
