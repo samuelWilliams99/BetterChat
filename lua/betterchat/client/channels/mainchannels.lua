@@ -86,7 +86,7 @@ hook.Add( "BC_initPanels", "BC_initAddMainChannels", function()
 end )
 
 function bc.mainChannels.teamEnabled()
-    return not ( DarkRP or serverSetting( "removeTeam" ) or serverSetting( "replaceTeam" ) )
+    return not serverSetting( "removeTeam" ) or serverSetting( "replaceTeam" )
 end
 
 local function channelButton( menu, chanName )

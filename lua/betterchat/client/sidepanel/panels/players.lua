@@ -4,6 +4,11 @@ include( "betterchat/client/sidepanel/panels/players_add_option.lua" )
 
 bc.sidePanel.players.settings = {}
 
+bc.sidePanel.players.credit = {
+    ["76561198053582133"] = "Creator of BetterChat!",
+    ["76561198112453428"] = "Tester of BetterChat!",
+}
+
 net.Receive( "BC_sendPlayerState", function()
     local t = net.ReadString()
     local ply = net.ReadEntity()
@@ -66,10 +71,10 @@ function bc.sidePanel.players.generateEntry( ply )
     local p = bc.sidePanel.createChild( "Player", ply:SteamID() )
     local w, h = p:GetSize()
 
-    -- My credit :D
-    if ply:SteamID64() == "76561198053582133" then
+    local creditText = bc.sidePanel.players.credit[ply:SteamID64()]
+    if creditText then
         local creditLabel = vgui.Create( "DLabel", p )
-        creditLabel:SetText( "Creator of BetterChat!" )
+        creditLabel:SetText( creditText )
         creditLabel:SizeToContents()
         local textW, textH = creditLabel:GetTextSize()
         creditLabel:SetPos( w - textW - 28, -2 )
@@ -107,6 +112,11 @@ function bc.sidePanel.players.generateEntry( ply )
     nameLabel:SetTextColor( bc.defines.colors.white )
     nameLabel:SetSize( w - 32 - 70, 20 )
     nameLabel:SetPos( 80, 14 )
+    bc.util.steamName( ply, function( steamName )
+        if IsValid( nameLabel ) then
+            nameLabel:SetTooltip( "Steam name: " .. steamName )
+        end
+    end )
     nameLabel.Paint = nil
     nameLabel.lp = {}
     nameLabel.ownID = 1

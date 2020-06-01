@@ -32,7 +32,7 @@ end )
 
 hook.Add( "BC_keyCodeTyped", "BC_autoCompleteHook", function( code, ctrl, shift, entry )
     local txt = entry:GetText()
-    if entry:GetCaretPos() ~= #txt then return end
+    if entry:GetCaretPos() ~= utf8.len( txt ) then return end
     local txtEx = string.Explode( " ", txt )
     if code == KEY_TAB then
         if not ctrl then
@@ -169,7 +169,7 @@ end
 
 function setText( txt )
     bc.graphics.derma.textEntry:SetText( txt )
-    bc.graphics.derma.textEntry:SetCaretPos( #txt )
+    bc.graphics.derma.textEntry:SetCaretPos( utf8.len( txt ) )
 end
 
 --takes a string and assiative array, array format
@@ -214,10 +214,10 @@ function getSimilarEmotes( str )
 
     table.sort( out, function( a, b )
         if bc.autoComplete.emoteUsage[a] == bc.autoComplete.emoteUsage[b] or not bc.settings.getValue( "acUsage" ) then
-            if #a == #b then
+            if utf8.len( a ) == utf8.len( b ) then
                 return a < b
             end
-            return #a < #b
+            return utf8.len( a ) < utf8.len( b )
         end
         return bc.autoComplete.emoteUsage[a] > bc.autoComplete.emoteUsage[b]
     end )

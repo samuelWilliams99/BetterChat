@@ -41,7 +41,7 @@ function bc.overload.overload()
     function chat.Open( mode )
         local chan
         if mode == 1 then
-            if DarkRP then
+            if bc.settings.getServerValue( "removeTeam" ) then
                 if bc.settings.getServerValue( "replaceTeam" ) then
                     local t = chatHelper.teamName( LocalPlayer() )
                     chan = "TeamOverload - " .. t

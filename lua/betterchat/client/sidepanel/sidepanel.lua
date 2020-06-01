@@ -18,11 +18,36 @@ include( "betterchat/client/sidepanel/types/boolean.lua" )
 include( "betterchat/client/sidepanel/types/options.lua" )
 include( "betterchat/client/sidepanel/types/button.lua" )
 include( "betterchat/client/sidepanel/types/color.lua" )
+include( "betterchat/client/sidepanel/types/number.lua" )
+include( "betterchat/client/sidepanel/types/divider.lua" )
+
+local dividerSetting = {
+    overrideWidth = -1,
+    type = "catDivider",
+    shouldAdd = function( channel, self )
+        local found = false
+
+        for k, v in pairs( self.children or {} ) do
+            if bc.sidePanel.channels.shouldAdd( v, channel ) then
+                found = true
+                break
+            end
+        end
+
+        return found
+    end,
+}
 
 function bc.sidePanel.renderSetting( sPanel, data, setting, k )
     local panel = sPanel:GetCanvas()
     local w, h = sPanel:GetSize()
     local y = k * 20 + 12
+
+    if setting.type == "catDivider" then
+        local name = setting.name
+        setting = table.Copy( dividerSetting )
+        setting.name = name
+    end
 
     local noName = setting.overrideWidth == -1
 
@@ -88,7 +113,7 @@ hook.Add( "BC_keyCodeTyped", "BC_sidePanelShortCutHook", function( code, ctrl, s
 end )
 
 function bc.sidePanel.create( name, width, data )
-    local size = { x = width, y = bc.graphics.size.y - 33 }
+    local size = { x = width, y = bc.graphics.size.y - bc.graphics.textEntryHeight - 2 }
     bc.sidePanel.idCounter = bc.sidePanel.idCounter + 1
     local _, h = bc.graphics.derma.frame:GetSize()
     bc.sidePanel.totalWidth = bc.sidePanel.totalWidth + size.x + 2
@@ -126,7 +151,7 @@ function bc.sidePanel.create( name, width, data )
 
     local pOldLayout = g.pane.PerformLayout
     function g.pane:PerformLayout()
-        s.size.y = bc.graphics.size.y - 33
+        s.size.y = bc.graphics.size.y - bc.graphics.textEntryHeight - 2
         self:SetSize( s.size.x, s.size.y )
         pOldLayout( self )
     end

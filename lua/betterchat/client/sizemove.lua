@@ -67,7 +67,7 @@ function bc.sizeMove.resize( w, h, final )
     g.size = { x = w, y = h }
     g.originalFramePos = { x = 38, y = ScrH() - g.size.y - 150 }
 
-    d.frame:SetSize( g.size.x + ( bc.sidePanel.totalWidth or 0 ), g.size.y )
+    d.frame:SetSize( g.size.x + ( bc.sidePanel.totalWidth or 0 ), g.size.y + g.textEntryHeight + 2 )
 
     -- Seems some things don't update until mouseover, trigger them here instead
     if d.channelButton then
@@ -78,6 +78,8 @@ function bc.sizeMove.resize( w, h, final )
     d.psheet:InvalidateLayout()
     d.emoteButton:InvalidateLayout()
     d.textEntry:InvalidateLayout()
+    bc.input.fButton:InvalidateLayout()
+    bc.input.fMenu:InvalidateLayout()
 
     for k, v in pairs( bc.channels.panels ) do
         if not IsValid( v.panel ) then continue end
@@ -96,6 +98,8 @@ function bc.sizeMove.resize( w, h, final )
             data.Panel:InvalidateLayout( true )
         end
     end
+
+    bc.data.saveData()
 end
 
 local function inDragCorner( elem )
@@ -162,4 +166,21 @@ hook.Add( "VGUIMousePressed", "BC_sizeMoveMousePressed", function( self, keyCode
             type = edge
         }
     end
+end )
+
+hook.Add( "BC_postInitPanels", "BC_sizeMoveSetConvars", function()
+    if bc.data.size then
+        GetConVar( "bc_chatWidth" ):SetFloat( bc.data.size.x )
+        GetConVar( "bc_chatHeight" ):SetFloat( bc.data.size.y )
+    end
+end )
+
+concommand.Add( "bc_applysize", function()
+    bc.sizeMove.resize( bc.settings.getValue( "chatWidth" ), bc.settings.getValue( "chatHeight" ), true )
+end )
+
+concommand.Add( "bc_resetsize", function()
+    GetConVar( "bc_chatWidth" ):Revert()
+    GetConVar( "bc_chatHeight" ):Revert()
+    bc.sizeMove.resize( bc.settings.getValue( "chatWidth" ), bc.settings.getValue( "chatHeight" ), true )
 end )

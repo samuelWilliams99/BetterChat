@@ -237,26 +237,25 @@ local function backTrackModifier( tab, state, key )
     end
 end
 
-local function getPlyModifiers( ply )
+function f.getPlyModifiers( ply )
     local out = {}
-    out.italic = bc.settings.isAllowed( ply, "bc_italics" )
+    out.italics = bc.settings.isAllowed( ply, "bc_italics" )
     out.bold = bc.settings.isAllowed( ply, "bc_bold" )
     out.strike = bc.settings.isAllowed( ply, "bc_strike" )
     out.underline = bc.settings.isAllowed( ply, "bc_underline" )
+    out.rainbow = bc.settings.isAllowed( ply, "bc_rainbow" )
+    out.pulsing = bc.settings.isAllowed( ply, "bc_pulsing" )
+    out.shaking = bc.settings.isAllowed( ply, "bc_shaking" )
+    out.spaced = bc.settings.isAllowed( ply, "bc_spaced" )
     return out
 end
 
 function f.formatModifiers( tab, ply )
     local newTab = {}
-    local state = {
-        bold = false,
-        underline = false,
-        strike = false,
-        italic = false
-    }
+    local state = {}
     for k, v in pairs( tab ) do
         if type( v ) == "string" then
-            local tab = f.formatModifiersSingle( v, state, getPlyModifiers( ply ) )
+            local tab = f.formatModifiersSingle( v, state, f.getPlyModifiers( ply ) )
             table.Add( newTab, tab )
         else
             table.insert( newTab, v )
@@ -274,11 +273,15 @@ function f.formatModifiers( tab, ply )
     return newTab
 end
 
-local modifierKeyMap = {
+f.modifierKeyMap = {
     ["~~"] = "strike",
     ["**"] = "bold",
     ["__"] = "underline",
-    ["*"] = "italic"
+    ["*"] = "italics",
+    ["&&"] = "rainbow",
+    ["%%"] = "pulsing",
+    ["$$"] = "shaking",
+    ["||"] = "spaced"
 }
 
 function f.formatModifiersSingle( txt, state, allowed )
@@ -287,7 +290,7 @@ function f.formatModifiersSingle( txt, state, allowed )
     local s, e, escape, c1, c2
     local lastTxt = ""
     while true do
-        s, e, escape, c1, c2 = string.find( " " .. txt, "([\\]?)([%*_~])(.?)" )
+        s, e, escape, c1, c2 = string.find( " " .. txt, "([\\]?)([%*_~&%%%$|])(.?)" )
         if not s or lastTxt == txt then break end -- Prevent inf loop if something goes wrong
         lastTxt = txt
 
@@ -305,7 +308,7 @@ function f.formatModifiersSingle( txt, state, allowed )
             e = e + 1
         end
 
-        local key = modifierKeyMap[c]
+        local key = f.modifierKeyMap[c]
         -- Do nothing (but separate out text so it doesn't get parsed twice/infinitely)
         if escape ~= "" or not key or not allowed[key] then
             table.insert( out, string.sub( txt, 1, s - 1 ) .. c )
@@ -340,9 +343,11 @@ end
 function f.formatSpecialWords( text, tab, sender )
     local patterns = {}
     local players = player.GetAll()
-    local prePattern = "[ '\"%*_~]"
-    local postPatternPly = "[ '\"!%?%*_~s:,]"
-    local postPatternCol = "[ '\"!%?%*_~,]"
+
+    local prePattern = "[ '\"%*_~&%%%$|%]]"
+    local postPatternPly = "[ '\"!%?%*_~&%%%$|%[s:,%.]"
+    local postPatternCol = "[ '\"!%?%*_~&%%%$|%[,%.]"
+
     for k, v in pairs( players ) do
         table.insert( patterns, prePattern .. v:Nick():lower():PatternSafe() .. postPatternPly )
     end
@@ -485,6 +490,16 @@ hook.First( { "OnGamemodeLoaded", "Initialize" }, function()
             return f.oldOnPlayerChat( GAMEMODE, ply, text, teamChat, dead, pre, col1, col2 )
         end
 
+        local compatRet = { hook.Run( "BC_compat_OnPlayerChat", ply, text, teamChat, dead ) }
+        if #compatRet > 0 then
+            local compatReturn = table.remove( compatRet, 1 )
+            if compatReturn then
+                return unpack( compatRet )
+            else
+                ply, text, teamChat, dead = unpack( compatRet )
+            end
+        end
+
         local args = { ply, text, teamChat, dead, pre, col1, col2 }
 
         local maxLen = bc.settings.getServerValue( "maxLength" )
@@ -507,7 +522,7 @@ hook.First( { "OnGamemodeLoaded", "Initialize" }, function()
             tab = f.formatMessage( ply, text, dead )
         end
 
-        bc.channels.message( { ( teamChat and not DarkRP ) and "Team" or "Players", "MsgC" }, unpack( tab ) )
+        bc.channels.message( { ( teamChat and not bc.settings.getServerValue( "removeTeam" ) ) and "Team" or "Players", "MsgC" }, unpack( tab ) )
 
         return true
     end
@@ -521,7 +536,7 @@ function f.print( ... )
             col = v
         elseif ( v == "You" or v == "Yourself" ) and col == bc.defines.colors.ulxYou then
             data[k] = { formatter = true, type = "clickable", signal = "Player-" .. LocalPlayer():SteamID(), text = v }
-        else
+        elseif type( v ) == "string" then
             local isPly = false
             for i, ply in pairs( player.GetAll() ) do
                 if ply:Nick() == v and col == team.GetColor( ply:Team() ) then
@@ -529,7 +544,7 @@ function f.print( ... )
                     isPly = true
                 end
             end
-            if not isPly then
+            if not isPly and #v < 1000 then
                 local tab = f.convertLinks( v )
                 if #tab ~= 1 or tab[1] ~= v then
                     table.remove( data, k )

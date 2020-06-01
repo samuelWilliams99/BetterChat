@@ -95,7 +95,7 @@ hook.Add( "BC_initPanels", "BC_initImages", function()
     local emoteBtn = vgui.Create( "DImageButton", d.chatFrame )
     emoteBtn:SetSize( 20, 20 )
     emoteBtn:SetMaterial( bc.defines.materials.emoteButton )
-    emoteBtn:SetPos( g.size.x - 25, g.size.y - 25 )
+    emoteBtn:SetPos( g.size.x - 25, g.size.y - 30 - bc.graphics.textEntryHeight / 2 )
     emoteBtn:SetIsMenu( true )
     function emoteBtn:OnMousePressed()
         bc.images.toggleEmoteMenu()
@@ -103,7 +103,7 @@ hook.Add( "BC_initPanels", "BC_initImages", function()
     local oldLayout = emoteBtn.PerformLayout
     function emoteBtn:PerformLayout()
         self:SetSize( 20, 20 )
-        self:SetPos( g.size.x - 25, g.size.y - 25 )
+        self:SetPos( g.size.x - 25, g.size.y - 10 - bc.graphics.textEntryHeight / 2 )
         oldLayout( self )
     end
     d.emoteButton = emoteBtn
@@ -165,6 +165,9 @@ hook.Add( "BC_keyCodeTyped", "BC_emoteShortCutHook", function( code, ctrl, shift
         bc.images.toggleEmoteMenu()
     elseif bc.graphics.derma.emoteMenu:IsVisible() then
         if code >= KEY_1 and code <= KEY_9 and ctrl then
+            local c = bc.channels.getActiveChannel()
+            if c.noSend then return true end
+
             local idx = code - KEY_1 + 1
             local p = bc.graphics.derma.emotePSheet:GetActiveTab():GetPanel()
             local emote = p.emotes[idx]
@@ -267,6 +270,9 @@ function bc.images.addEmotesToPanel( panel, data, usage )
         g:SetCursor( "hand" )
         function g:OnMousePressed( t )
             if t == MOUSE_LEFT then
+                local c = bc.channels.getActiveChannel()
+                if c.noSend then return true end
+
                 local entry = bc.graphics.derma.textEntry
                 local txt = entry:GetText()
                 local cPos = entry:GetCaretPos()

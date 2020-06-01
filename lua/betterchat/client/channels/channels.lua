@@ -57,7 +57,7 @@ hook.Add( "BC_preInitPanels", "BC_initChannels", function()
     d.psheet = vgui.Create( "DPropertySheet", d.chatFrame )
     d.psheet:SetName( "BC_tabSheet" )
     d.psheet:SetPos( 0, 5 )
-    d.psheet:SetSize( g.size.x, g.size.y - 37 )
+    d.psheet:SetSize( g.size.x, g.size.y - g.textEntryHeight - 6 )
     d.psheet:SetPadding( 0 )
     d.psheet:SetFadeTime( 0 )
     d.psheet:SetMouseInputEnabled( true )
@@ -74,7 +74,7 @@ hook.Add( "BC_preInitPanels", "BC_initChannels", function()
 
     local oldLayout = d.psheet.PerformLayout
     function d.psheet:PerformLayout()
-        self:SetSize( g.size.x, g.size.y - 37 )
+        self:SetSize( g.size.x, g.size.y - g.textEntryHeight - 6 )
         oldLayout( self )
     end
 
@@ -207,9 +207,11 @@ hook.Add( "BC_keyCodeTyped", "BC_sendMessageHook", function( code, ctrl, shift )
             return true
         end
 
+        if channel.noSend then return true end
+
         if not bc.channels.canMessage() then
             bc.channels.showCooldown = true
-            return
+            return true
         end
 
         bc.graphics.derma.textEntry:SetText( "" )
@@ -220,7 +222,7 @@ hook.Add( "BC_keyCodeTyped", "BC_sendMessageHook", function( code, ctrl, shift )
             if not dontClose then
                 bc.base.close()
             end
-            return
+            return true
         end
 
         if channel.trim then
@@ -340,6 +342,7 @@ function bc.channels.message( channelNames, ... )
         channelNames = { channelNames } --if passed single channel, pack into array
     end
 
+    local allChannel = bc.channels.get( "All" )
 
     local editIdx
     local useEditFunc = true
@@ -400,6 +403,11 @@ function bc.channels.message( channelNames, ... )
 
         if channel.replicateAll then continue end
         table.insert( channels, channel )
+    end
+
+    if relayToAll then
+        if allChannel.tickMode < tickMode then tickMode = allChannel.tickMode end
+        if allChannel.popMode < popMode then popMode = allChannel.popMode end
     end
 
     controller = controller or { controller = true }
@@ -483,20 +491,29 @@ function bc.channels.messageDirect( channel, controller, ... )
 
     if not channel or not table.HasValue( bc.channels.openChannels, channel.name ) then return end
 
+    local data = { ... }
+    if type( controller ) ~= "table" or not controller.controller then -- no controller provided
+        table.insert( data, 1, controller )
+        controller = nil
+    end
+
     if channel.name == "All" then
+        controller = controller or { controller = true }
+        controller.showTimestamps = channel.showTimestamps
+
         for k, v in pairs( bc.channels.channels ) do
             if v.replicateAll then
-                bc.channels.messageDirect( v, controller, ... )
+                bc.channels.messageDirect( v, controller, unpack( data ) )
             end
         end
     end
 
-    local data = { ... }
-
     local doSound = true
     local tickMode = channel.tickMode
     local popMode = channel.popMode
-    if type( controller ) == "table" and controller.controller then --if they gave a controller
+    local showTimestamps = channel.showTimestamps
+
+    if controller then
         if controller.doSound ~= nil then
             doSound = controller.doSound
         end
@@ -505,6 +522,9 @@ function bc.channels.messageDirect( channel, controller, ... )
         end
         if controller.popMode ~= nil then
             popMode = controller.popMode
+        end
+        if controller.showTimestamps ~= nil then
+            showTimestamps = controller.showTimestamps
         end
     else
         table.insert( data, 1, controller )
@@ -525,11 +545,14 @@ function bc.channels.messageDirect( channel, controller, ... )
 
     data = bc.channels.preProcess( data )
 
-    if channel.showTimestamps then
+    if showTimestamps then
         table.insert( data, 1, bc.defines.theme.timeStamps )
         local timeData = os.date( "*t" )
-        table.insert( data, 2, string.format( "%02i:%02i", timeData.hour, timeData.min ) .. " - " )
-        table.insert( data, 3, bc.defines.colors.white )
+        table.insert( data, 2, { formatter = true, type = "decoration", underline = true } )
+        table.insert( data, 3, string.format( "%02i:%02i", timeData.hour, timeData.min ) )
+        table.insert( data, 4, { formatter = true, type = "decoration" } )
+        table.insert( data, 5, " " )
+        table.insert( data, 6, bc.defines.colors.white )
     end
 
     local richText = bc.channels.panels[chanName].text
@@ -575,7 +598,7 @@ function bc.channels.messageDirect( channel, controller, ... )
                         richText:InsertColorChange( prevCol )
                     end
                 elseif obj.type == "decoration" then
-                    richText:SetDecorations( obj.bold, obj.italic, obj.underline, obj.strike )
+                    richText:SetDecorations( obj )
                 elseif obj.type == "themeColor" then
                     local col = table.Copy( bc.defines.theme[obj.name] )
                     if col then
@@ -698,6 +721,11 @@ function bc.channels.add( data )
     bc.channels.rememberDefaults( data )
     bc.data.loadChannel( data )
     bc.sidePanel.channels.applyDefaults( data )
+
+    if not data.useOverrideFont then
+        table.Add( data.disabledSettings, { "fontFamily", "fontSize", "fontBold", "fontAntiAlias", "fontLineSpacing" } )
+    end
+
     table.insert( bc.channels.channels, data )
     return data
 end
@@ -728,6 +756,9 @@ function bc.channels.open( name )
     bc.sidePanel.channels.generateSettings( sPanel, data )
     table.insert( bc.channels.openChannels, data.name )
 
+    data.font = bc.fontManager.getChannelFont( data )
+    data.lineSpacing = bc.fontManager.getChannelLineSpacing( data )
+
     local panel = vgui.Create( "DPanel", d.psheet )
 
     function panel:Paint( w, h )
@@ -740,7 +771,8 @@ function bc.channels.open( name )
 
     local richText = vgui.Create( "DRicherText", panel )
     richText:SetPos( 10, 10 )
-    richText:SetSize( g.size.x - 20, g.size.y - 42 - 37 )
+    richText:SetSize( g.size.x - 20, g.size.y - 42 - g.textEntryHeight - 6 )
+    richText:SetLineSpacing( data.lineSpacing )
     richText:SetFont( data.font or g.font )
     richText:SetMaxLines( bc.settings.getValue( "chatHistory" ) )
     richText:SetHighlightColor( bc.defines.theme.textHighlight )
@@ -761,7 +793,7 @@ function bc.channels.open( name )
 
     local rtOldLayout = richText.PerformLayout
     function richText:PerformLayout()
-        self:SetSize( g.size.x - 20, g.size.y - 42 - 37 )
+        self:SetSize( g.size.x - 20, g.size.y - 42 - g.textEntryHeight - 6 )
         self.panel.settingsBtn:InvalidateLayout()
         rtOldLayout( self )
     end
@@ -816,18 +848,30 @@ function bc.channels.open( name )
                 end )
 
                 local ply = player.GetBySteamID( dataArg )
-                if ply and bc.private.canMessage( ply ) then
-                    m:AddOption( "Open Private Channel", function()
-                        local ply = player.GetBySteamID( dataArg )
-                        if not ply then return end
+                if ply then
+                    if not ply:IsBot() then
+                        m:AddOption( "Copy Steam name", function()
+                            ply = player.GetBySteamID( dataArg )
+                            if not IsValid( ply ) then return end
+                            bc.util.steamName( ply, function( steamName )
+                                SetClipboardText( steamName )
+                            end )
+                        end )
+                    end
 
-                        channel = bc.private.createChannel( ply )
+                    if bc.private.canMessage( ply ) then
+                        m:AddOption( "Open Private Channel", function()
+                            ply = player.GetBySteamID( dataArg )
+                            if not ply then return end
 
-                        if not bc.channels.isOpen( channel.name ) then
-                            bc.channels.open( channel.name )
-                        end
-                        bc.channels.focus( channel.name )
-                    end )
+                            channel = bc.private.createChannel( ply )
+
+                            if not bc.channels.isOpen( channel.name ) then
+                                bc.channels.open( channel.name )
+                            end
+                            bc.channels.focus( channel.name )
+                        end )
+                    end
                 end
             end
         elseif eventType == "RightClickPreMenu" then
@@ -842,7 +886,11 @@ function bc.channels.open( name )
     function richText:NewElement( element, lineNum )
         element.lineNo = lineNum
         element.timeCreated = CurTime()
+        local oldThink = element.Think or function() end
         function element:Think()
+            oldThink( element )
+            if not self:GetDoRender() then return end
+
             if bc.base.isOpen then
                 local col = self:GetTextColor()
                 col.a = 255

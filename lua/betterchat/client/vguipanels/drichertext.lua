@@ -1,4 +1,5 @@
 include( "drichertextgraphic.lua" )
+include( "dlabelpaintable.lua" )
 
 local RICHERTEXT = {}
 
@@ -7,8 +8,12 @@ local function getFrom( idx, ... ) -- Simple helper function that picks an input
     return d[idx]
 end
 
+local function isLabel( elem )
+    return elem:GetName() == "DLabelPaintable"
+end
+
 local function getElementSize( elem, subHalfChar )
-    if elem:GetClassName() == "Label" then
+    if isLabel( elem ) then
         surface.SetFont( elem:GetFont() )
         local txt = elem:GetText()
         local sx, sy = surface.GetTextSize( txt )
@@ -24,10 +29,6 @@ end
 
 local function getTextSizeX( txt, subHalfChar )
     return getFrom( 1, surface.GetTextSize( txt ) )
-end
-
-local function isLabel( elem )
-    return elem:GetClassName() == "Label"
 end
 
 local function orderChars( s, e )
@@ -84,6 +85,8 @@ function RICHERTEXT:Init()
 
     self.lastScroll = -1
 
+    self.lineSpacing = -2
+
     function self:Think()
         if self.select.mouseDown then
             local sPanel = self.scrollPanel
@@ -124,7 +127,8 @@ function RICHERTEXT:Init()
 
         self.scrollToBottomBtn.m_Image:SetImageColor( Color( 255, 255, 255, self.STBButtonAnim * 2.55 ) )
 
-        if self.lastScroll ~= scrollBar.Scroll then
+        if self.lastScroll ~= scrollBar.Scroll or self.toUpdateScroll then
+            self.toUpdateScroll = false
             local sPanel = self.scrollPanel
             local sx, sy = sPanel:GetSize()
 
@@ -253,6 +257,7 @@ function RICHERTEXT:Init()
     self.showGraphics = true
     self.maxLines = 200
     self.yRemoved = 0
+    self.linesRemoved = 0
     self.allowDecorations = true
 
     self.textColor = Color( 255, 255, 255, 255 )
@@ -299,8 +304,11 @@ function RICHERTEXT:SetHighlightColor( col )
     self.select.selectCol = col
 end
 
-function RICHERTEXT:Reload() -- Clear the text, reset a bunch of shit, then run through the logs again
+function RICHERTEXT:TriggerScrollUpdate()
+    self.toUpdateScroll = true
+end
 
+function RICHERTEXT:Clear()
     for k1, v1 in pairs( self.lines ) do
         for k, v in pairs( v1 ) do
             v:Remove()
@@ -316,6 +324,11 @@ function RICHERTEXT:Reload() -- Clear the text, reset a bunch of shit, then run 
     self.addNewLine = false
     self.graphics = {}
     self.yRemoved = 0
+    self.linesRemoved = 0
+end
+
+function RICHERTEXT:Reload() -- Clear the text, reset a bunch of shit, then run through the logs again
+    self:Clear()
 
     local funcs = {
         ["text"] = RICHERTEXT.AppendText,
@@ -327,12 +340,25 @@ function RICHERTEXT:Reload() -- Clear the text, reset a bunch of shit, then run 
         ["decorations"] = RICHERTEXT.SetDecorations
     }
 
-    self.logCopy = table.Copy( self.log )
+    local logs = self.log
     self.log = {}
 
-    for k = 1, #self.logCopy do
-        funcs[self.logCopy[k].type]( self, unpack( self.logCopy[k].data or {} ) )
+    local lastLog = logs[#logs]
+    local firstLine = -1
+    if lastLog then
+        firstLine = lastLog.lineCountPre - self.maxLines
     end
+
+    for k = 1, #logs do
+        local log = logs[k]
+        if log.lineCountPre >= firstLine then
+            funcs[log.type]( self, unpack( log.data ) )
+        end
+    end
+end
+
+function RICHERTEXT:Log( logType, ... )
+    table.insert( self.log, { type = logType, data = { ... }, lineCountPre = #self.lines + self.linesRemoved } )
 end
 
 function RICHERTEXT:OnRemove()
@@ -384,7 +410,7 @@ function RICHERTEXT:setClickEvents( panel )
                 this.select.lastClick = CurTime()
 
                 if this.select.clickCounter > 1 then
-                    this.select.clickCounter = ( ( this.select.clickCounter ) % 2 ) + 2 --make it loop quad back to double, and quin to trip etc. so 1,2,3,4,5 -> 1,2,3,2,3
+                    this.select.clickCounter = ( this.select.clickCounter % 2 ) + 2 --make it loop quad back to double, and quin to trip etc. so 1,2,3,4,5 -> 1,2,3,2,3
                 end
 
                 local x, y = this:ScreenToCanvas( gui.MousePos() )
@@ -447,7 +473,7 @@ function RICHERTEXT:setClickEvents( panel )
                     this.select.endChar = {
                         line = sChar.line,
                         element = #line,
-                        char = ( isLabel( line[#line] ) and ( #line[#line]:GetText() ) or 2 )
+                        char = isLabel( line[#line] ) and ( #line[#line]:GetText() ) or 2
                     }
                     this.select.hasSelection = true
                 end
@@ -549,6 +575,10 @@ function RICHERTEXT:GetSelectedText()
     return txt
 end
 
+function RICHERTEXT:areCharsEqual( c1, c2 )
+    return c1.line == c2.line and c1.element == c2.element and c1.char == c2.char
+end
+
 function RICHERTEXT:getCharacter( x, y )
     local lineNum = math.floor( y / self.fontHeight ) + 1 --calc line easily, since all lines are same height
     lineNum = math.Clamp( lineNum, 1, #self.lines - 1 )
@@ -608,7 +638,7 @@ function RICHERTEXT:getCharacter( x, y )
         end
 
     else
-        local ex, ey = element:GetPos()
+        local ex = element:GetPos()
         if ( x - ex ) > element:GetWide() / 2 then
             realChar = 2
         end
@@ -619,6 +649,11 @@ end
 function RICHERTEXT:SetFont( font )
     if not font then return end
     self.innerFont = font
+    surface.SetFont( font )
+    local _, h = surface.GetTextSize( "A" )
+    self.fontHeight = h + self.lineSpacing
+    self.textHeight = h
+
     self:AddLabel()
 end
 
@@ -626,12 +661,24 @@ function RICHERTEXT:GetFont()
     return self.innerFont
 end
 
-function RICHERTEXT:SetDecorations( bold, italics, underline, strike )
-    table.insert( self.log, { type = "decorations", data = { bold, italics, underline, strike } } )
-    self.textBold = bold
-    self.textItalics = italics
-    self.textUnderline = underline
-    self.textStrike = strike
+function RICHERTEXT:SetLineSpacing( v )
+    self.lineSpacing = v
+end
+
+function RICHERTEXT:GetLineSpacing()
+    return self.lineSpacing
+end
+
+function RICHERTEXT:SetDecorations( data )
+    self:Log( "decorations", data )
+    self.textBold = data.bold
+    self.textItalics = data.italics
+    self.textUnderline = data.underline
+    self.textStrike = data.strike
+    self.textRainbow = data.rainbow
+    self.textPulsing = data.pulsing
+    self.textShaking = data.shaking
+    self.textSpaced = data.spaced
     self:AddLabel()
 end
 
@@ -648,26 +695,69 @@ function RICHERTEXT:SetVerticalScrollbarEnabled( draw )
 end
 
 function RICHERTEXT:AddLine()
+    -- Remove last el if its empty
+    do -- scope out "line"
+        local line = self.lines[#self.lines]
+        local lastElement = line[#line]
+        if lastElement and #lastElement.rawText == 0 and isLabel( lastElement ) then
+            lastElement:Remove() -- just fuckin delete its entire existance
+            table.remove( line, #line )
+        end
+    end
+
     self.offset.y = self.offset.y + self.fontHeight -- Set offset to start of next line
     self.offset.x = 0
     table.insert( self.linesYs, { top = self.offset.y, bottom = self.offset.y + self.fontHeight } )
     table.insert( self.lines, {} ) -- Add empty line to lines stack
 
     if #self.lines > self.maxLines then
-        local offset = 0
-        while( #self.lines > self.maxLines ) do
+        while #self.lines > self.maxLines do
             for k, v in pairs( self.lines[1] ) do
                 v:Remove()
             end
             table.remove( self.lines, 1 )
-            offset = offset + ( self.linesYs[1].bottom - self.linesYs[1].top )
             table.remove( self.linesYs, 1 )
         end
+
+        local offset = self.linesYs[1].top - self.yRemoved
         self.yRemoved = self.linesYs[1].top
+        self.linesRemoved = self.linesRemoved + 1
+
         for k, line in pairs( self.lines ) do
             for i, el in pairs( line ) do
                 local x, y = el:GetPos()
                 el:SetPos( x, y - offset )
+            end
+        end
+
+        if self.select.hasSelection then
+            if self.select.startChar.line > 1 then
+                self.select.startChar.line = self.select.startChar.line - 1
+            else
+                self.select.startChar.element = 1
+                self.select.startChar.char = 1
+            end
+
+            if self.select.endChar.line > 1 then
+                self.select.endChar.line = self.select.endChar.line - 1
+            else
+                self.select.endChar.element = 1
+                self.select.endChar.char = 1
+            end
+
+            if self:areCharsEqual( self.select.startChar, self.select.endChar ) then
+                self.select.hasSelection = false
+            end
+        end
+
+        local scrollBar = self.scrollPanel:GetVBar()
+        if scrollBar.Scroll < scrollBar.CanvasSize - 1 then -- if not at bottom, move up by one line
+            local newScroll = scrollBar.Scroll - self.fontHeight
+            if newScroll < 0 then
+                scrollBar:SetScroll( 0 )
+                self:TriggerScrollUpdate()
+            else
+                scrollBar:SetScroll( newScroll )
             end
         end
     end
@@ -712,7 +802,7 @@ function RICHERTEXT:MakeClickable( element )
     local rText = self
 
     element:SetCursor( "hand" )
-    local clickVal = self.clickable
+    element.signal = self.clickable
     element.isClickable = true
     rText.lastClick = 0
     rText.clickCounter = 1
@@ -731,11 +821,12 @@ function RICHERTEXT:MakeClickable( element )
 
                 local tName = "RICHERTEXT_elementClickTimer"
                 if not timer.Exists( tName ) then
+                    local eSelf = self
                     timer.Create( tName, 0.2, 1, function()
                         if rText.clickCounter == 1 then
-                            rText:EventHandler( "LeftClick", clickVal )
+                            rText:EventHandler( "LeftClick", eSelf.signal )
                         elseif rText.clickCounter == 2 then
-                            rText:EventHandler( "DoubleClick", clickVal )
+                            rText:EventHandler( "DoubleClick", eSelf.signal )
                         end
                     end )
                 end
@@ -743,11 +834,11 @@ function RICHERTEXT:MakeClickable( element )
         elseif keyCode == MOUSE_RIGHT then
             if rText.EventHandler then
                 local m = DermaMenu()
-                local dontOpen = rText:EventHandler( "RightClickPreMenu", clickVal, m )
+                local dontOpen = rText:EventHandler( "RightClickPreMenu", self.signal, m )
 
                 rText:createContextMenu( true, m )
 
-                dontOpen = dontOpen or rText:EventHandler( "RightClick", clickVal, m )
+                dontOpen = dontOpen or rText:EventHandler( "RightClick", self.signal, m )
                 if not dontOpen then
                     m:Open()
                 end
@@ -772,21 +863,55 @@ function RICHERTEXT:GetLabelFont()
 end
 
 local function addLabelPaint( label )
-    function label:PaintOver( _w, h )
-        local w = self:GetTextSize()
+    function label:Paint( w, h )
+        if not self.showText then return end
+
         local tCol = self:GetTextColor()
+
+        if tCol.a == 0 then return end
+
         local thickness = self.textBold and 2 or 1
+        local textW = self:GetTextSize()
+        local x = 0
+        local y = 0
+
+        if self.textShaking then
+            x = math.random( -2, 2 )
+            y = math.random( -2, 2 )
+        end
+
+        draw.DrawText( self._text, self:GetFont(), x, y - 1, tCol )
+
         if self.textUnderline then
             surface.SetDrawColor( Color( 0, 0, 0, tCol.a ) )
-            surface.DrawRect( 1, h - thickness, w, thickness )
+            surface.DrawRect( x + 1, y + h - thickness, textW, thickness )
             surface.SetDrawColor( tCol )
-            surface.DrawRect( 0, h - thickness - 1, w, thickness )
+            surface.DrawRect( x, y + h - thickness - 1, textW, thickness )
         end
         if self.textStrike then
             surface.SetDrawColor( Color( 0, 0, 0, tCol.a ) )
-            surface.DrawRect( 1, h / 2 + 1, w, thickness )
+            surface.DrawRect( x + 1, y + h / 2 + 1, textW, thickness )
             surface.SetDrawColor( tCol )
-            surface.DrawRect( 0, h / 2, w, thickness )
+            surface.DrawRect( x, y + h / 2, textW, thickness )
+        end
+    end
+end
+
+local function addLabelColorThink( label )
+    local timeAdded = CurTime()
+    local origColor = label:GetTextColor()
+    local oldThink = label.Think or function() end
+    function label:Think()
+        oldThink( self )
+        if not self.showText then return end
+
+        if self.textRainbow then
+            self:SetTextColor( HSVToColor((CurTime() - timeAdded) * 180 % 360, 1, 1) )
+        elseif self.textPulsing then
+            local t = CurTime() - timeAdded
+            local prog = ( 1 + math.sin( t * 4 ) ) / 4
+            local curColor = chatHelper.lerpCol( origColor, bc.defines.colors.black, prog )
+            self:SetTextColor( curColor )
         end
     end
 end
@@ -795,35 +920,38 @@ function RICHERTEXT:AddLabel()
     local line = self.lines[#self.lines] -- Get last line
     local idx = self:PrepNewElement()
 
-    local label = vgui.Create( "DLabel", self.scrollPanel:GetCanvas() ) -- Make a fokin label
+    local label = vgui.Create( "DLabelPaintable", self.scrollPanel:GetCanvas() ) -- Make a fokin label
     label:SetFont( self:GetLabelFont() )
-    if self.doFormatting then
-        label.textUnderline = self.textUnderline
-        label.textStrike = self.textStrike
-        label.textBold = self.textBold
-        addLabelPaint( label )
-    end
+    label.showText = true
     label:SetTextColor( table.Copy( self.textColor ) )
     label:SetText( "" )
     label.rawText = ""
     label.rawTextIdx = idx
     label:SetPos( 5 + self.offset.x, self.offset.y - self.yRemoved )
-    label:SetSize( self:GetWide() - self.offset.x - 40, self.fontHeight )
+    label:SetSize( self:GetWide() - self.offset.x - 40, self.textHeight )
     label:SetMouseInputEnabled( true )
     label:MoveToFront()
 
-    function label:SetDoRender( v )
-        if self.showText == v then return end
-        self.showText = v
-        if v then
-            local text = self.text or self:GetText()
-            if text[1] == "#" then text = "#" .. text end
+    if self.doFormatting then
+        label.textUnderline = self.textUnderline
+        label.textStrike = self.textStrike
+        label.textBold = self.textBold
+        label.textRainbow = self.textRainbow
+        label.textPulsing = self.textPulsing
+        label.textShaking = self.textShaking
+        addLabelPaint( label )
 
-            self:SetText( text )
-        else
-            self.text = self:GetText()
-            self:SetText( "" )
+        if self.textRainbow or self.textPulsing then
+            addLabelColorThink( label )
         end
+    end
+
+    function label:SetDoRender( v )
+        self.showText = v
+    end
+
+    function label:GetDoRender()
+        return self.showText
     end
 
     self:setClickEvents( label ) -- Set its events (right click menu and text select events)
@@ -884,15 +1012,20 @@ function RICHERTEXT:addNewLines( txt ) -- Goes through big bit of text, puts in 
         offsetX = offsetX + getElementSizeX( lastElement )
     end
 
+    local space = self.textSpaced and "   " or " "
+
     local limitX = self:GetWide() - 50
-    local data = string.Explode( " ", txt )
+    local data = string.Explode( space, txt )
     local out = {}
+
     surface.SetFont( self.innerFont )
+
     local k = 1
     local loopLimit = 200
     while k <= #data and loopLimit > 0 do
         loopLimit = loopLimit - 1
-        local word = data[k] .. ( k == #data and "" or " " )
+        local word = data[k] .. ( k == #data and "" or space )
+
         local sizeX = getFrom( 1, surface.GetTextSize( word ) )
         if offsetX + sizeX > limitX then
             if not isNewLineObj( out[#out] ) and offsetX > 0 then
@@ -900,11 +1033,14 @@ function RICHERTEXT:addNewLines( txt ) -- Goes through big bit of text, puts in 
                 k = k - 1
                 offsetX = 0
             else
-                -- 20 = guess for minimum characters needed to fill a whole line. to save a little performance
-                for l = 20, #word do
-                    local str = string.Left( word, l )
-                    local sizeX = getFrom( 1, surface.GetTextSize( str ) )
-                    if offsetX + sizeX > limitX - 10 then
+                -- guess for minimum characters needed to fill a whole line. to save a little performance
+                local startIdx = 20
+                local str = string.Left( word, startIdx )
+                local wordSizeX = surface.GetTextSize( str )
+                for l = startIdx + 1, #word do
+                    wordSizeX = wordSizeX + surface.GetTextSize( word[l] )
+
+                    if offsetX + wordSizeX > limitX - 10 then
                         table.insert( out, string.Left( word, l - 1 ) )
                         table.insert( out, { isNewLine = true } )
                         data[k] = string.Right( word, #word - l + 1 )
@@ -920,23 +1056,26 @@ function RICHERTEXT:addNewLines( txt ) -- Goes through big bit of text, puts in 
         end
         k = k + 1
     end
-    local nlPoses = {}
+    local nlPosMap = {}
     local pCounter = 1
     for k, v in pairs( out ) do
         if isNewLineObj( v ) then
-            table.insert( nlPoses, pCounter )
+            nlPosMap[pCounter] = true
             out[k] = "\n"
         end
         pCounter = pCounter + #out[k]
     end
-    return table.concat( out, "" ), nlPoses
+    return table.concat( out, "" ), nlPosMap
 end
-
 
 function RICHERTEXT:AppendText( txt, noLog ) --Deals with the tumour that is tabs before passing to AppendTextNoTabs
     if not noLog then
-        table.insert( self.log, { type = "text", data = { txt } } )
+        self:Log( "text", txt, noLog )
     end
+    if self.textSpaced then
+        txt = table.concat( txt:Split( "" ), " " )
+    end
+
     local tabChunks = string.Explode( "\t", txt )
     for k = 1, #tabChunks do
         local chunk = tabChunks[k]
@@ -972,11 +1111,13 @@ function RICHERTEXT:AppendText( txt, noLog ) --Deals with the tumour that is tab
 end
 
 function RICHERTEXT:AppendTextNoTab( txt ) --This func cannot handle tabs
-    txt, nlPoses = self:addNewLines( txt )
+    local nlPosMap
+    txt, nlPosMap = self:addNewLines( txt )
     local line = self.lines[#self.lines]
     if #line == 0 or not isLabel( line[#line] ) then
         self:AddLabel()
     end
+
     local curText = ""
     for k = 1, #txt do
         local char = txt[k]
@@ -988,12 +1129,11 @@ function RICHERTEXT:AppendTextNoTab( txt ) --This func cannot handle tabs
                 lastElement = line[#line]
             end
             local tmpText = lastElement:GetText() .. string.Replace( curText, "\t", "" ) -- Should a tab have made its way in here, get rid of it! Then append to labels text
-            if tmpText[1] == "#" then tmpText = "#" .. tmpText end --dLabels remove the first character if its a hash, so add in new one to counter that
 
             lastElement:SetText( tmpText ) -- Update label
             lastElement.rawText = lastElement.rawText .. curText -- Update label's raw text
 
-            if not table.HasValue( nlPoses, k ) then
+            if not nlPosMap[k] then
                 lastElement.rawText = lastElement.rawText .. "\n"
             end
 
@@ -1015,14 +1155,13 @@ function RICHERTEXT:AppendTextNoTab( txt ) --This func cannot handle tabs
             lastElement = line[#line]
         end
         local tmpText = lastElement:GetText() .. string.Replace( curText, "\t", "" )
-        if tmpText[1] == "#" then tmpText = "#" .. tmpText end --dLabels remove the first character if its a hash, so add in new one to counter that
 
         lastElement:SetText( tmpText )
         lastElement.rawText = lastElement.rawText .. curText -- Basically do the shit from the start of new line 
     end
 end
 function RICHERTEXT:InsertColorChange( r, g, b, a )
-    table.insert( self.log, { type = "col", data = { r, g, b, a } } )
+    self:Log( "col", r, g, b, a )
     if not self.doFormatting then return end
     if IsColor( r ) then
         self.textColor = r
@@ -1033,13 +1172,13 @@ function RICHERTEXT:InsertColorChange( r, g, b, a )
     self:AddLabel()
 end
 function RICHERTEXT:InsertClickableTextStart( sigVal )
-    table.insert( self.log, { type = "clickStart", data = { sigVal } } )
+    self:Log( "clickStart", sigVal )
     if not self.doFormatting then return end
     self.clickable = sigVal
     self:AddLabel()
 end
 function RICHERTEXT:InsertClickableTextEnd()
-    table.insert( self.log, { type = "clickEnd", data = {} } )
+    self:Log( "clickEnd" )
     if not self.doFormatting then return end
     self.clickable = nil
     self:AddLabel()
@@ -1060,6 +1199,7 @@ function RICHERTEXT:AddGraphic( element, rawText )
         size.x = size.x * self.fontHeight
         size.y = size.y * self.fontHeight
         element:SetSize( size.x, size.y )
+        element:UpdateDoRender( true )
     end
 
     local imagePadding = 2
@@ -1126,14 +1266,15 @@ function RICHERTEXT:AddGraphic( element, rawText )
 end
 
 function RICHERTEXT:AddImage( ... )
-    table.insert( self.log, { type = "image", data = { ... } } )
+    self:Log( "image", ... )
     return self:CreateGraphic( "image", ... )
 end
 
 function RICHERTEXT:AddGif( ... )
-    table.insert( self.log, { type = "gif", data = { ... } } )
+    local data = { ... }
+    self:Log( "gif", ... )
     if not self.showGifs then
-        self:AppendText( self.log[#self.log].data[2], true )
+        self:AppendText( data[2], true )
         return
     end
     return self:CreateGraphic( "gif", ... )

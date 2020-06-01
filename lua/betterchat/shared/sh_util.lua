@@ -80,6 +80,7 @@ end
 local function max4( a, b, c, d ) return math.max( a + 0, b + 0, c + 0, d + 0 ) end
 local protocols = { [""] = 0, ["http://"] = 0, ["https://"] = 0, ["ftp://"] = 0 }
 
+-- Somewhat poor performance on non-space strings
 function bc.util.getNextUrl( inputStr )
     local pos_start, pos_end, url, prot, subd, tld, colon, port, slash, path =
         string.find( inputStr, "(([%w_.~!*:@&+$/?%%#-]-)(%w[-.%w]*%.)(%w+)(:?)(%d*)(/?)([%w_.~!*:@&+$/?%%#=-]*))" )
@@ -97,7 +98,6 @@ function bc.util.getNextUrl( inputStr )
             and ( colon == "" or port ~= "" and port + 0 < 65536 ) then
         return pos_start, pos_end, string.sub( inputStr, pos_start, pos_end )
     end
-    return nil
 end
 -- End urlFinding
 
@@ -109,62 +109,6 @@ function bc.util.isColor( tab )
 end
 
 if CLIENT then
-
-    local function makeFonts( name, data )
-        name = "BC_" .. name
-        data.antialias = false
-        data.shadow = true
-        data.extended = true
-
-        for boldI = 0, 1 do
-            local bold = boldI == 1
-            for italicsI = 0, 1 do
-                local italics = italicsI == 1
-                local newName = name
-                local newData = table.Copy( data )
-                if bold then
-                    newName = newName .. "_bold"
-                    newData.weight = newData.weight + 200
-                end
-                if italics then
-                    newName = newName .. "_italics"
-                    newData.italic = true
-                end
-                surface.CreateFont( newName, newData )
-            end
-        end
-    end
-
-    makeFonts( "default", {
-        font = system.IsLinux() and "DejaVu Sans" or "Tahoma",
-        size = 21,
-        weight = 500,
-    } )
-
-    makeFonts( "defaultLarge", {
-        font = system.IsLinux() and "DejaVu Sans" or "Tahoma",
-        size = 26,
-        weight = 500,
-    } )
-
-    makeFonts( "monospace", {
-        font = "Lucida Console",
-        size = 15,
-        weight = 500,
-    } )
-
-    makeFonts( "monospaceLarge", {
-        font = "Lucida Console",
-        size = 22,
-        weight = 500,
-    } )
-
-    makeFonts( "monospaceSmall", {
-        font = "Lucida Console",
-        size = 10,
-        weight = 300,
-    } )
-
     local blur = Material( "pp/blurscreen" )
 
     function bc.util.blur( panel, layers, density, alpha, w, h )
@@ -353,4 +297,9 @@ function bc.util.you( ply )
         text = "You",
         color = bc.defines.colors.ulxYou
     }
+end
+
+function bc.util.steamName( ply, cb )
+    if ply:IsBot() then return end
+    steamworks.RequestPlayerInfo( ply:SteamID64(), cb )
 end

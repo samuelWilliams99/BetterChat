@@ -9,12 +9,18 @@ function bc.graphics.build()
     local d = g.derma
 
     g.font = "BC_default"
+    g.textEntryFont = bc.fontManager.getGlobalFont( not bc.settings.getValue( "fontScaleEntry" ) )
     g.minSize = { x = 400, y = 250 }
 
     g.originalSize = { x = 600, y = 300 }
     g.size = table.Copy( bc.data.size or g.originalSize )
 
     g.originalFramePos = { x = 38, y = ScrH() - g.size.y - 150 }
+
+    local h = draw.GetFontHeight( g.textEntryFont )
+    g.textEntryHeight = math.Max( h + 9, 31 )
+    g.textEntryFontHeight = h
+
     local framePos = table.Copy( bc.data.pos or g.originalFramePos )
 
     timer.Create( "BC_visCheck", 1 / 60, 0, function()
@@ -31,7 +37,7 @@ function bc.graphics.build()
 
     d.frame = vgui.Create( "DFrame" )
     d.frame:SetPos( framePos.x, framePos.y )
-    d.frame:SetSize( g.size.x, g.size.y )
+    d.frame:SetSize( g.size.x, g.size.y + g.textEntryHeight + 2 )
     d.frame:SetTitle( "" )
     d.frame:SetName( "BC_chatFrame" )
     d.frame:ShowCloseButton( false )
@@ -78,10 +84,12 @@ function bc.graphics.build()
     function d.chatFrame:Paint( w, h )
         if not self.doPaint then return end
         bc.util.blur( self, 10, 20, 255 )
+
+
         --main box
-        draw.RoundedBox( 0, 0, 0, w, h - 33, bc.defines.theme.background )
+        draw.RoundedBox( 0, 0, 0, w, h - g.textEntryHeight - 2, bc.defines.theme.background )
         --left text bg
-        draw.RoundedBox( 0, 0, h - 31, w - 32, 31, bc.defines.theme.background )
+        draw.RoundedBox( 0, 0, h - g.textEntryHeight, w - 32, g.textEntryHeight, bc.defines.theme.background )
         --left text fg
         local c = bc.channels.getActiveChannel()
         local col = bc.defines.theme.foreground
@@ -89,9 +97,9 @@ function bc.graphics.build()
             col = table.Copy( c.textEntryColor )
             col.a = 100
         end
-        draw.RoundedBox( 0, 5, h - 26, w - 42, 21, col )
+        draw.RoundedBox( 0, 5, h - ( g.textEntryHeight - 5), w - 42, g.textEntryHeight - 10, col )
         --right bg
-        draw.RoundedBox( 0, w - 30, h - 31, 30, 31, bc.defines.theme.background )
+        draw.RoundedBox( 0, w - 30, h - g.textEntryHeight, 30, g.textEntryHeight, bc.defines.theme.background )
 
         --anything else
         hook.Run( "BC_framePaint", self, w, h )
@@ -124,17 +132,17 @@ function bc.graphics.build()
 
     d.textEntry = vgui.Create( "DTextEntry", d.chatFrame )
     d.textEntry:SetName( "BC_chatEntry" )
-    d.textEntry:SetPos( 10, g.size.y - 10 - 16 )
-    d.textEntry:SetSize( g.size.x - 52, 20 )
-    d.textEntry:SetFont( g.font )
+    d.textEntry:SetPos( 10, g.size.y - ( g.textEntryHeight - 5 ) )
+    d.textEntry:SetSize( g.size.x - 52 - 10, g.textEntryHeight - 11 )
+    d.textEntry:SetFont( g.textEntryFont )
     d.textEntry:SetTextColor( bc.defines.theme.inputText )
     d.textEntry:SetCursorColor( bc.defines.theme.inputText )
     d.textEntry:SetHighlightColor( bc.defines.theme.textHighlight )
     d.textEntry:SetHistoryEnabled( true )
 
     function d.textEntry:PerformLayout()
-        self:SetPos( 10, g.size.y - 10 - 16 )
-        self:SetSize( g.size.x - 52, 20 )
+        self:SetPos( 10, g.size.y - ( g.textEntryHeight - 5 ) )
+        self:SetSize( g.size.x - 52 - 10, g.textEntryHeight - 11 )
     end
 
     function d.textEntry:Paint( w, h )
@@ -161,6 +169,14 @@ function bc.graphics.build()
         end
         return hook.Run( "BC_keyCodeTyped", code, ctrl, shift, self )
     end
+
+    function d.textEntry:AllowInput( c )
+        if self.rejectNextChange then
+            self.rejectNextChange = false
+            return true
+        end
+    end
+
     function d.textEntry:OnTextChanged()
         self.maxCharacters = bc.settings.getServerValue( "maxLength" )
         if self and self:GetText() then
@@ -285,7 +301,7 @@ hook.Add( "PlayerBindPress", "BC_overrideChatBind", function( ply, bind, pressed
             if bc.settings.getServerValue( "replaceTeam" ) then
                 local t = chatHelper.teamName( LocalPlayer() )
                 chan = "TeamOverload - " .. t
-            elseif DarkRP or bc.settings.getServerValue( "removeTeam" ) then
+            elseif bc.settings.getServerValue( "removeTeam" ) then
                 return true
             else
                 chan = "Team"
@@ -295,12 +311,10 @@ hook.Add( "PlayerBindPress", "BC_overrideChatBind", function( ply, bind, pressed
         return
     end
 
-    local succ, err = pcall( function()
-        if chan == "Team" and not DarkRP then
-            bc.channels.open( "Team" )
-        end
+    local succ = pcall( function()
         bc.base.open( chan )
     end )
+
     if not succ then
         print( "Chatbox not initialized, disabling." )
         bc.base.enabled = false

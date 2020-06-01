@@ -51,6 +51,7 @@ bc.defines.colors = {
     printYellow = Color( 255, 222, 102 ),
     printBlue = Color( 137, 222, 255 ),
     ulxYou = Color( 75, 0, 130 ),
+    gmodBlue = Color( 124, 190, 255 ),
 }
 
 

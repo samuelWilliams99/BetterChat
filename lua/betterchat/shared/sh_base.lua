@@ -12,6 +12,11 @@ eventNames: BC_camelCase
 include( "betterchat/shared/sh_defines.lua" )
 include( "betterchat/shared/sh_helper.lua" )
 include( "betterchat/shared/sh_util.lua" )
+
+if CLIENT then
+    include( "betterchat/client/fontmanager.lua" )
+end
+
 include( "betterchat/shared/sh_globalsettings.lua" )
 
 if SERVER then
@@ -132,6 +137,7 @@ include( "betterchat/client/input/input.lua" )
 --panels
 include( "betterchat/client/vguipanels/davatarimagerounded.lua" )
 include( "betterchat/client/vguipanels/dnicescrollpanel.lua" )
+include( "betterchat/client/vguipanels/dnumberentry.lua" )
 include( "betterchat/client/vguipanels/drichertext.lua" )
 
 concommand.Add( "bc_enable", function()
@@ -163,6 +169,7 @@ concommand.Add( "bc_reload", function()
     timer.Simple( 0.1, function() -- Delay to allow save
         include( "betterChat/shared/sh_base.lua" )
         bc.base.enable()
+        bc.settings.generateToolMenu()
     end )
 end, true, "Rebuilds BetterChat" )
 
