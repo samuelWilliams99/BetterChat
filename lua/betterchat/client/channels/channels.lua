@@ -491,20 +491,29 @@ function bc.channels.messageDirect( channel, controller, ... )
 
     if not channel or not table.HasValue( bc.channels.openChannels, channel.name ) then return end
 
+    local data = { ... }
+    if type( controller ) ~= "table" or not controller.controller then -- no controller provided
+        table.insert( data, 1, controller )
+        controller = nil
+    end
+
     if channel.name == "All" then
+        controller = controller or { controller = true }
+        controller.showTimestamps = channel.showTimestamps
+
         for k, v in pairs( bc.channels.channels ) do
             if v.replicateAll then
-                bc.channels.messageDirect( v, controller, ... )
+                bc.channels.messageDirect( v, controller, unpack( data ) )
             end
         end
     end
 
-    local data = { ... }
-
     local doSound = true
     local tickMode = channel.tickMode
     local popMode = channel.popMode
-    if type( controller ) == "table" and controller.controller then --if they gave a controller
+    local showTimestamps = channel.showTimestamps
+
+    if controller then
         if controller.doSound ~= nil then
             doSound = controller.doSound
         end
@@ -513,6 +522,9 @@ function bc.channels.messageDirect( channel, controller, ... )
         end
         if controller.popMode ~= nil then
             popMode = controller.popMode
+        end
+        if controller.showTimestamps ~= nil then
+            showTimestamps = controller.showTimestamps
         end
     else
         table.insert( data, 1, controller )
@@ -533,7 +545,7 @@ function bc.channels.messageDirect( channel, controller, ... )
 
     data = bc.channels.preProcess( data )
 
-    if channel.showTimestamps then
+    if showTimestamps then
         table.insert( data, 1, bc.defines.theme.timeStamps )
         local timeData = os.date( "*t" )
         table.insert( data, 2, { formatter = true, type = "decoration", underline = true } )
