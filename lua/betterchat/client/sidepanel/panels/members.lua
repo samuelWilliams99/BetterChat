@@ -19,9 +19,6 @@ hook.Add( "BC_chatTextClick", "BC_groupAccept", function( eventType, dataType, d
     end
 end )
 
-hook.Add( "BC_playerDisconnect", "BC_memberUpdateDiscon", bc.sidePanel.members.reloadAll )
-hook.Add( "BC_playerConnect", "BC_memberUpdateCon", bc.sidePanel.members.reloadAll )
-
 function bc.sidePanel.members.reloadAll()
     if not bc.base.enabled then return end
     for k, v in pairs( bc.channels.channels ) do
@@ -30,6 +27,9 @@ function bc.sidePanel.members.reloadAll()
         end
     end
 end
+
+hook.Add( "BC_playerDisconnect", "BC_memberUpdateDiscon", bc.sidePanel.members.reloadAll )
+hook.Add( "BC_playerConnect", "BC_memberUpdateCon", bc.sidePanel.members.reloadAll )
 
 function bc.sidePanel.members.addMenu( chan )
     local group = chan.group
