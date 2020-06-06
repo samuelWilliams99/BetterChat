@@ -78,13 +78,13 @@ net.Receive( "BC_LM", function()
         message = { bc.defines.theme.logsPrefix, channelName, bc.defines.colors.white, " | ", unpack( data ) }
     end
 
+    if not message then return end
+
     if bc.base.enabled then
         if not bc.channels.get( "Logs" ) then return end
         if not bc.channels.isOpen( "Logs" ) then return end
 
-        if message then
-            bc.channels.message( "Logs", unpack( message ) )
-        end
+        bc.channels.message( "Logs", unpack( message ) )
     else
         chat.AddText( bc.defines.theme.logs, "[LOGS] ", unpack( message ) )
     end
