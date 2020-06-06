@@ -45,37 +45,50 @@ function bc.logs.allowed()
 end
 
 net.Receive( "BC_LM", function()
+    if not bc.base.enabled then return end
+
     local channelType = net.ReadUInt( 4 )
     local channelName = net.ReadString()
     local data = net.ReadTable()
 
-    local chan = bc.channels.get( "Logs" )
-    if not chan then return end
-    if not bc.channels.isOpen( "Logs" ) then return end
+    local message
 
     if channelType == bc.defines.channelTypes.TEAM then
         local ply = data[1]
         if ply:Team() == LocalPlayer():Team() then return end
-        bc.channels.message( "Logs", bc.defines.theme.logsPrefix, "Team:" .. team.GetName( ply:Team() ), bc.defines.colors.white, " | ", unpack( data ) )
+        message = { bc.defines.theme.logsPrefix, "Team:" .. team.GetName( ply:Team() ), bc.defines.colors.white, " | ", unpack( data ) }
     elseif channelType == bc.defines.channelTypes.PRIVATE then
         local from = data[1]
         local to = data[3]
         if from == LocalPlayer() or to == LocalPlayer() then return end
         table.insert( data, 2, bc.defines.colors.printBlue )
         table.insert( data, 4, bc.defines.colors.white )
-        bc.channels.message( "Logs", bc.defines.theme.logsPrefix, "PM", bc.defines.colors.white, " | ", unpack( data ) )
+        message = { bc.defines.theme.logsPrefix, "PM", bc.defines.colors.white, " | ", unpack( data ) }
     elseif channelType == bc.defines.channelTypes.GROUP then
-        local s, e, id = string.find( channelName, "^Group (%d+) " )
-        id = tonumber( id )
-        for k, v in pairs( bc.group.groups ) do
-            if v.id == id then
-                local group = v
-                if bc.channels.isOpen( "Group - " + group.id ) then
-                    return
+        if bc.base.enabled then
+            local s, e, id = string.find( channelName, "^Group (%d+) " )
+            id = tonumber( id )
+            for k, v in pairs( bc.group.groups ) do
+                if v.id == id then
+                    local group = v
+                    if bc.channels.isOpen( "Group - " + group.id ) then
+                        return
+                    end
                 end
             end
         end
-        bc.channels.message( "Logs", bc.defines.theme.logsPrefix, channelName, bc.defines.colors.white, " | ", unpack( data ) )
+        message = { bc.defines.theme.logsPrefix, channelName, bc.defines.colors.white, " | ", unpack( data ) }
+    end
+
+    if bc.base.enabled then
+        if not bc.channels.get( "Logs" ) then return end
+        if not bc.channels.isOpen( "Logs" ) then return end
+
+        if message then
+            bc.channels.message( "Logs", unpack( message ) )
+        end
+    else
+        chat.AddText( bc.defines.theme.logs, "[LOGS] ", unpack( message ) )
     end
 end )
 
