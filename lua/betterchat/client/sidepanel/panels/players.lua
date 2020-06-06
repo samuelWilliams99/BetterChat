@@ -27,6 +27,8 @@ hook.Add( "BC_initPanels", "BC_initSidePanelPlayers", function()
 end )
 
 net.Receive( "BC_userRankChange", function()
+    if not bc.base.enabled then return end
+
     local openPanelPly
     if bc.sidePanel.panels["Player"].isOpen then
         local id = bc.sidePanel.panels["Player"].activePanel
