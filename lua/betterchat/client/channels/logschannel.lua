@@ -45,8 +45,6 @@ function bc.logs.allowed()
 end
 
 net.Receive( "BC_LM", function()
-    if not bc.base.enabled then return end
-
     local channelType = net.ReadUInt( 4 )
     local channelName = net.ReadString()
     local data = net.ReadTable()
