@@ -284,6 +284,13 @@ bc.settings.clientTemplate = {
         extra = "Should messages starting with ! be dimmed",
         default = true,
     },
+    {
+        name = "Close formatter on type",
+        value = "formattingCloseOnType",
+        type = "boolean",
+        extra = "Should the formatting helper close when typing a normal character",
+        default = true,
+    },
 
     {
         name = "Sound",

@@ -1,4 +1,4 @@
-bc.input = {}
+bc.input = bc.input or {}
 local i = bc.input
 include( "betterchat/client/input/autocomplete.lua" )
 
@@ -90,9 +90,8 @@ hook.Add( "BC_keyCodeTyped", "BC_inputHook", function( code, ctrl, shift, entry 
 
             i.applyFMenuValue( num, true )
             return true
-        elseif code ~= KEY_LCONTROL then
+        elseif bc.settings.getValue( "formattingCloseOnType" ) and code ~= KEY_LCONTROL and not ctrl then
             i.hideFormattingMenu()
-            return true
         end
     end
 
@@ -159,7 +158,7 @@ hook.Add( "BC_keyCodeTyped", "BC_inputHook", function( code, ctrl, shift, entry 
         elseif code == KEY_V then
             entry:SetMultiline( true )
         elseif code == KEY_F then
-            i.showFormattingMenu()
+            i.toggleFormattingMenu()
             return true
         end
     end
