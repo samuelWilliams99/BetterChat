@@ -529,6 +529,8 @@ hook.First( { "OnGamemodeLoaded", "Initialize" }, function()
 end )
 
 function f.print( ... )
+    if not bc.base.enabled then return end
+
     local data = { ... }
     local col = bc.defines.colors.white
     for k, v in pairs( data ) do
@@ -555,7 +557,6 @@ function f.print( ... )
             end
         end
     end
-    if not bc.base.enabled then return end
     for k, v in pairs( bc.channels.channels or {} ) do
         if v.doPrints and not v.replicateAll then
             bc.channels.messageDirect( v.name, unpack( data ) )
