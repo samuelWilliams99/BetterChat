@@ -47,7 +47,6 @@ hook.Add( "Initialize", "BC_playerSayInit", function()
 
             if not msg or msg == "" then return "" end
 
-            --local recips = isTeam and team.GetPlayers( ply:Team() ) or player.GetAll()
             local recips = bc.manager.getSayRecips( msg, isTeam, ply )
 
             net.Start( "BC_sayOverload" )
@@ -64,6 +63,9 @@ hook.Add( "Initialize", "BC_playerSayInit", function()
 
             return ""
         end )
+
+        -- We handle this logging now
+        hook.Remove( "PlayerSay", "ULXLogSay" )
     else
         -- Dark RP already does all the hook handling, just wrap up what they have
         local oldPlayerSay = GAMEMODE.PlayerSay
