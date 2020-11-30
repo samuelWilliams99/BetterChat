@@ -293,7 +293,7 @@ hook.Add( "PlayerBindPress", "BC_overrideChatBind", function( ply, bind, pressed
 
     local chan = "All"
 
-    if bind == "messagemode2" then
+    if bind == "messagemode2" or bind == "say_team" then
         if bc.private.lastMessaged and bc.settings.getValue( "teamOpenPM" ) then
             chan = bc.private.lastMessaged.name
             bc.private.lastMessaged = nil
@@ -307,7 +307,7 @@ hook.Add( "PlayerBindPress", "BC_overrideChatBind", function( ply, bind, pressed
                 chan = "Team"
             end
         end
-    elseif bind ~= "messagemode" then
+    elseif bind ~= "messagemode" and bind ~= "say" then
         return
     end
 
