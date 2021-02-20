@@ -308,7 +308,7 @@ end
 
 function bc.images.addGif( richText, obj )
     richText:InsertClickableTextStart( "Link-" .. obj.url )
-    richText:AddGif( obj.url, obj.text .. "\n", 5, 5 )
+    richText:AddGif( obj.url, obj.text .. "\n", obj.xScale or 5, obj.yScale or 5 )
     richText:InsertClickableTextEnd()
 end
 
