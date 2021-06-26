@@ -258,7 +258,7 @@ function bc.util.runReplacedHook( event, ... )
             for k, v in pairs( hookTbl[i] ) do
                 if ( v.isstring ) then
                     local success, a, b, c, d, e, f = xpcall( v.fn, function( e )
-                        print( "Error in " .. event .. ", " .. k .. ": " .. tostring( a ) )
+                        print( "Error in " .. event .. ", " .. k .. ": " .. tostring( e ) )
                         print( debug.traceback() )
                     end, ... )
 
@@ -268,7 +268,7 @@ function bc.util.runReplacedHook( event, ... )
                 else
                     if ( IsValid( k ) ) then
                         local success, a, b, c, d, e, f = xpcall( v.fn, function( e )
-                            print( "Error in " .. event .. ", " .. k .. ": " .. tostring( a ) )
+                            print( "Error in " .. event .. ", " .. k .. ": " .. tostring( e ) )
                             print( debug.traceback() )
                         end, ... )
 
