@@ -47,6 +47,8 @@ hook.Add( "Initialize", "BC_playerSayInit", function()
 
             if not msg or msg == "" then return "" end
 
+            msg = bc.manager.trimMessage( msg )
+
             local recips = bc.manager.getSayRecips( msg, isTeam, ply )
 
             net.Start( "BC_sayOverload" )
@@ -101,6 +103,7 @@ function bc.manager.trimMessage( msg )
     if #msg > maxLen then
         msg = string.sub( msg, 1, maxLen )
     end
+    msg = string.gsub( msg, "\n", "" )
     return msg
 end
 
