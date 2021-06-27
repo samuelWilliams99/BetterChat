@@ -8,6 +8,7 @@ include( "sv_privatemessages.lua" )
 include( "sv_adminmessages.lua" )
 include( "sv_groups.lua" )
 include( "sv_giphy.lua" )
+include( "sv_emotes.lua" )
 
 hook.Add( "Initialize", "BC_playerSayInit", function()
     if not DarkRP then

@@ -316,6 +316,12 @@ bc.settings.clientTemplate = {
         type = "catDivider"
     },
     {
+        name = "Manage Emotes",
+        type = "button",
+        noMenu = function() return not bc.settings.isAllowed( "manageEmotes" ) end,
+        extra = "Add, remove and modify server emotes",
+        value = "manageEmotes"
+    {
         name = "Enable/Restart BetterChat",
         type = "button",
         extra = "Restart the entirety of BetterChat, this will remove all chat history.",
@@ -485,6 +491,11 @@ hook.Add( "Initialize", "BC_ulxSetup", function()
             value = "spaced",
             defaultAccess = ULib.ACCESS_ALL,
             extra = "Ability to use $$spaced$$ in chat",
+        },
+        {
+            value = "manageemotes",
+            defaultAccess = ULib.ACCESS_SUPERADMIN,
+            extra = "Ability to add, remove and modify server emotes"
         },
     }
 
@@ -679,7 +690,8 @@ function bc.settings.generateToolMenu( panel )
 
     panel:ClearControls()
     for _, setting in pairs( bc.settings.clientTemplate ) do
-        if setting.noMenu then continue end
+        if setting.noMenu == true then continue end
+        if setting.noMenu and setting.noMenu() then continue end
 
         local val = "bc_" .. ( setting.value or "" )
 
