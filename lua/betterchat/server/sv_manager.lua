@@ -239,7 +239,7 @@ end )
 function bc.manager.sendTeamOverload( ply, msg )
     if not bc.settings.getServerValue( "replaceTeam" ) then return end
 
-    msg = bc.manager.trimMessage( msg )
+    msg = bc.manager.trimMessage( tostring( msg ) )
 
     local t = ply:Team()
     local plys = team.GetPlayers( t )
